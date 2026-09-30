@@ -2065,17 +2065,25 @@ functions. Superseded chunks are released, and storage destruction now closes
 both Lua interpreters. Native checks cover these lifetime and timing contracts.
 The eight formula audio comparisons also assert that patch preparation compiled
 the scripts and that note attack/rendering perform no additional compilation.
-Edits after preparation still take the synchronous fallback and require a live
-audio handoff before the remaining real-time requirement can be closed.
-The measured live-edit result is recorded in
-[`parity/formula-live-compilation.json`](parity/formula-live-compilation.json).
-An atomic diagnostic counter permits observation without touching the audio Lua
-interpreter from the UI thread. At both 44.1 and 48 kHz, two edits preserve held
-notes and change new-note pitch, but each next note attack increments the source
-compilation count once. The two passing sound-continuity tests therefore do not
-close the off-callback compilation gate. Their Playwright attachments retain the
-before-Apply, before-attack and after-attack counts. The native deferred-execution
-and compilation-lifetime check also passes with the atomic counter.
+Edits after preparation now use a live handoff. Each control pump compares
+every modulator's source with the one last prepared or published, so the
+editor, undo, modulator presets and paste are all covered. A changed source is
+compiled in a control-only staging interpreter, with the same chunk name and
+error formatting as before, and dumped to bytecode. It is published as an
+immutable source through a per-modulator mailbox. At a block boundary, the
+engine owner (the callback, or the control thread while audio is inactive)
+loads the bytecode into the arena-backed audio interpreter. It swaps the
+strings into its prepared slot and returns the replaced ones for control-side
+deletion. The callback therefore never parses source, and browser audio
+evaluation no longer reads the UI-owned formula string. A loader's own patch
+preparation discards stale handoffs.
+
+[`parity/formula-live-compilation.json`](parity/formula-live-compilation.json)
+records that, at 44.1 and 48 kHz, each edit is compiled once on the control
+thread and adopted once. Callback compilations and callback system-heap calls
+stay unchanged. The held note keeps its function and the next note takes the new
+pitch. A second test covers undo, a syntax error (reported, and zero output),
+and an edit adopted by the control thread while the context is suspended.
 After this change, both native and browser builds pass, as do the focused
 ThreadSanitizer check and **61 Chrome checks in 3.2 minutes** covering formula
 audio/editing, Lua editing, wavetable scripting/export, audio lifecycle, and patch

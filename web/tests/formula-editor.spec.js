@@ -175,14 +175,18 @@ for(const rate of [44100,48000])test(`formula edits preserve held voices and rea
     return crossings.length>4?Math.abs(context.sampleRate*(crossings.length-1)/(crossings.at(-1)-crossings[0])/expected-1):1;
   },note)).toBeLessThan(0.002);
   await checkPitch(60);
-  // Diagnostic only: sound continuity is asserted below, but live source
-  // preparation is a separate, still-open real-time migration gate.
-  const compilations=()=>page.evaluate(()=>Module._surge_browser_formula_compilation_count());
+  // Live edits compile on the control thread and are adopted as bytecode at a
+  // block boundary: the callback never compiles and never reaches the system heap.
+  const compilations=()=>page.evaluate(()=>({audio:Module._surge_browser_formula_compilation_count(),
+    live:Module._surge_browser_formula_live_compilations(),adopted:Module._surge_browser_formula_live_adoptions(),
+    heap:Module._surge_browser_audio_allocations()+Module._surge_browser_audio_releases()}));
   const compilationEvidence=[];
   let previous=0;
   for(const value of [0.5,-0.25]){
+    await page.evaluate(()=>Module._surge_browser_audio_allocations_reset());
     const beforeApply=await compilations();
     await apply(page,constant(value));
+    await expect.poll(async()=>(await compilations()).adopted).toBe(beforeApply.adopted+1);
     const blocks=await page.evaluate(()=>Module._surge_browser_audio_blocks());
     await expect.poll(()=>page.evaluate(()=>Module._surge_browser_audio_blocks())).toBeGreaterThan(blocks+64);
     // Native formula evaluators retain their function for an existing voice;
@@ -193,7 +197,9 @@ for(const rate of [44100,48000])test(`formula edits preserve held voices and rea
     const beforeAttack=await compilations();
     await page.evaluate(()=>Module._surge_browser_midi(0x90,60,100,0));
     await checkPitch(60+12*value);previous=value;
-    compilationEvidence.push({value,beforeApply,beforeAttack,afterAttack:await compilations()});
+    const afterAttack=await compilations();
+    compilationEvidence.push({value,beforeApply,beforeAttack,afterAttack});
+    expect(afterAttack).toEqual({audio:beforeApply.audio,live:beforeApply.live+1,adopted:beforeApply.adopted+1,heap:0});
   }
   await page.evaluate(()=>Module._surge_browser_midi(0x80,60,0,0));
   await expect.poll(()=>page.evaluate(()=>Module._surge_browser_active_voices())).toBe(0);
@@ -228,4 +234,56 @@ test('formula prelude context menu selects and copies text without exposing edit
   const endOfSecondLine=[...original.split('\n').slice(0,2).join('\n')].length;
   await expect.poll(()=>prelude.evaluate(node=>[node.juceData.selectionStart,node.juceData.selectionEnd])).toEqual([endOfSecondLine,endOfSecondLine]);
   await expect(prelude).toHaveValue(original);
+});
+
+test('formula undo, syntax errors and suspended edits reach audio without callback compilation',async({page})=>{
+  test.setTimeout(120000);
+  await start(page,pitchFixture());await apply(page,constant(0));
+  await page.getByRole('button',{name:'Enable audio',exact:true}).click();
+  await expect.poll(()=>page.evaluate(()=>Module._surge_browser_audio_status())).toBe(2);
+  await page.evaluate(()=>{
+    const {context,node}=SurgeAudioInput.input.graph;node.disconnect();
+    const analyser=context.createAnalyser();analyser.fftSize=4096;
+    const silence=context.createGain();silence.gain.value=0;
+    node.connect(analyser);analyser.connect(silence);silence.connect(context.destination);
+    globalThis.formulaProbe={context,analyser};
+  });
+  const pitch=note=>expect.poll(()=>page.evaluate(note=>{
+    const {context,analyser}=formulaProbe,samples=new Float32Array(analyser.fftSize);
+    analyser.getFloatTimeDomainData(samples);const crossings=[];
+    for(let i=1;i<samples.length;i++)if(samples[i-1]<=0&&samples[i]>0)crossings.push(i-1-samples[i-1]/(samples[i]-samples[i-1]));
+    return crossings.length>4?Math.abs(context.sampleRate*(crossings.length-1)/(crossings.at(-1)-crossings[0])/(440*2**((note-69)/12))-1):1;
+  },note)).toBeLessThan(0.002);
+  const counts=()=>page.evaluate(()=>({audio:Module._surge_browser_formula_compilation_count(),
+    adopted:Module._surge_browser_formula_live_adoptions()}));
+  const retrigger=async note=>{
+    await page.evaluate(()=>Module._surge_browser_midi(0x80,60,0,0));
+    await expect.poll(()=>page.evaluate(()=>Module._surge_browser_active_voices())).toBe(0);
+    await page.evaluate(()=>Module._surge_browser_midi(0x90,60,100,0));
+    await pitch(note);
+  };
+  await page.evaluate(()=>Module._surge_browser_midi(0x90,60,100,0));await pitch(60);
+  const initial=await counts();
+  await apply(page,constant(0.5));await expect.poll(async()=>(await counts()).adopted).toBe(initial.adopted+1);
+  await retrigger(66);
+  // Undo restores the storage directly; the control pump publishes it.
+  await close(page);
+  await page.getByRole('button',{name:'Undo',exact:true}).dispatchEvent('click');
+  await expect.poll(async()=>(await counts()).adopted).toBe(initial.adopted+2);
+  await retrigger(60);
+  // A syntax error is compiled (and reported) off the callback; voices get zero.
+  await open(page);await apply(page,constant(0.75)+' function (');
+  await expect.poll(async()=>(await counts()).adopted).toBe(initial.adopted+3);
+  await retrigger(60);
+  // While suspended, the control thread adopts the edit itself.
+  await page.evaluate(()=>formulaProbe.context.suspend());
+  await expect.poll(()=>page.evaluate(()=>Module._surge_browser_audio_status())).toBe(4);
+  const blocks=await page.evaluate(()=>Module._surge_browser_audio_blocks());
+  await apply(page,constant(1));
+  await expect.poll(async()=>(await counts()).adopted).toBe(initial.adopted+4);
+  expect(await page.evaluate(()=>Module._surge_browser_audio_blocks())).toBe(blocks);
+  await page.getByRole('button',{name:'Enable audio',exact:true}).click();
+  await expect.poll(()=>page.evaluate(()=>Module._surge_browser_audio_status())).toBe(2);
+  await retrigger(72);
+  expect((await counts()).audio).toBe(initial.audio);
 });

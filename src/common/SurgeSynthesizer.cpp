@@ -21,6 +21,7 @@
  */
 
 #include "SurgeSynthesizer.h"
+#include "dsp/modulators/FormulaModulationHelper.h"
 #if SURGE_WEB
 #include <emscripten.h>
 #include "dsp/effects/ConvolutionEffect.h"
@@ -5039,6 +5040,8 @@ void SurgeSynthesizer::processAudioThreadOpsWhenAudioEngineUnavailable(bool dang
             SurgeSynthesizer *synth;
             ~Release() { synth->releaseBrowserEngine(); }
         } release{this};
+        // No callback runs, so the control thread adopts formula edits itself.
+        Surge::Formula::adoptLiveEdits(&storage);
 #endif
         processEnqueuedPatchIfNeeded();
 
@@ -5420,6 +5423,11 @@ void SurgeSynthesizer::process()
         mech::clear_block<BLOCK_SIZE>(output[1]);
         return;
     }
+
+#if SURGE_WEB
+    // Formula edits compiled off the callback take effect at this block boundary.
+    Surge::Formula::adoptLiveEdits(&storage);
+#endif
 
     if (retriggerHeldNotesPending.exchange(false))
     {

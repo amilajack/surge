@@ -16,6 +16,16 @@ void surge_poll_audio_startup();
 void surge_attach_wavetables(SurgeSynthProcessor *);
 void surge_poll_wavetables();
 static SurgeSynthProcessor *browserProcessor{};
+extern "C" EMSCRIPTEN_KEEPALIVE double surge_browser_formula_live_compilations()
+{
+    return browserProcessor ? static_cast<double>(browserProcessor->surge->storage.formulaGlobalData
+                                                     ->audioFunctions.liveCompilations.load()) : -1.;
+}
+extern "C" EMSCRIPTEN_KEEPALIVE double surge_browser_formula_live_adoptions()
+{
+    return browserProcessor ? static_cast<double>(browserProcessor->surge->storage.formulaGlobalData
+                                                     ->audioFunctions.liveAdoptions.load()) : -1.;
+}
 extern "C" EMSCRIPTEN_KEEPALIVE double surge_browser_formula_compilation_count()
 {
     return browserProcessor
@@ -171,6 +181,10 @@ static void prepareQueuedPatch()
                      SurgeFactory.prepare($0, $1, UTF8ToString($2)); }, id, requestToken, path.c_str());
         }
     }
+    // Compile formula edits here, never in a callback. A loader owns the patch
+    // while the engine is halted; its preparation also covers its formulas.
+    if (!s.halt_engine.load(std::memory_order_acquire))
+        Surge::Formula::publishLiveEdits(&s.storage);
     s.processAudioThreadOpsWhenAudioEngineUnavailable();
     // Maintain the committed snapshot even if the API's first read occurs
     // while a background loader owns the mutable patch string.

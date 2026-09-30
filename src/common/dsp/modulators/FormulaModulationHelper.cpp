@@ -51,6 +51,13 @@ GlobalData::~GlobalData()
         lua_close(static_cast<lua_State *>(audioState));
     if (displayState)
         lua_close(static_cast<lua_State *>(displayState));
+#if SURGE_WEB
+    if (stagingState)
+        lua_close(static_cast<lua_State *>(stagingState));
+    for (auto *slots : {&audioFunctions.pendingSources, &audioFunctions.retiredSources})
+        for (auto &slot : *slots)
+            delete slot.exchange(nullptr);
+#endif
 #endif
 }
 
@@ -150,6 +157,16 @@ end
     if (compileOnly)
     {
         auto &prepared = functions.preparedChunks[s.lfo_id - 1];
+#if SURGE_WEB
+        if (!is_display)
+        {
+            // The caller owns the engine exclusively: discard live edits made
+            // for the replaced source and record this one as published.
+            delete functions.pendingSources[s.lfo_id - 1].exchange(nullptr);
+            delete functions.retiredSources[s.lfo_id - 1].exchange(nullptr);
+            functions.publishedDefinitions[s.lfo_id - 1] = fs->formulaString;
+        }
+#endif
         if (prepared.prepared && prepared.definition == fs->formulaString)
             return prepared.registryReference >= 0;
         std::string definition = fs->formulaString, error;
@@ -160,6 +177,7 @@ end
             luaL_unref(s.L, LUA_REGISTRYINDEX, prepared.registryReference);
         prepared.definition = std::move(definition);
         prepared.error = std::move(error);
+        prepared.hash = fs->formulaHash;
         prepared.registryReference = reference;
         prepared.prepared = true;
         return compiled;
@@ -177,9 +195,20 @@ end
 
     // OK so now evaluate the formula. This is a mistake - the loading and
     // compiling can be expensive so lets look it up by hash first
+    // Browser audio evaluation uses only its adopted chunk, never the UI-owned
+    // source string, which a live edit may be replacing on another thread.
+    const auto &prepared = functions.preparedChunks[s.lfo_id - 1];
+#if SURGE_WEB
+    const bool adopted = !is_display && prepared.prepared;
+#else
+    const bool adopted = false;
+#endif
+    const std::string &definition = adopted ? prepared.definition : fs->formulaString;
+    const size_t definitionHash = adopted ? prepared.hash : fs->formulaHash;
+
     // Fixed buffers: this runs at note-on on the audio thread.
     char pvn[TXT_SIZE];
-    snprintf(pvn, TXT_SIZE, "pvn%d_%llu", int(is_display), (unsigned long long)fs->formulaHash);
+    snprintf(pvn, TXT_SIZE, "pvn%d_%llu", int(is_display), (unsigned long long)definitionHash);
     snprintf(s.funcName, TXT_SIZE, "%s_f", pvn);
     snprintf(s.funcNameInit, TXT_SIZE, "%s_fInit", pvn);
 
@@ -190,7 +219,7 @@ end
     bool hasString = false;
     if (lua_isstring(s.L, -1))
     {
-        if (fs->formulaString != lua_tostring(s.L, -1))
+        if (definition != lua_tostring(s.L, -1))
         {
             s.adderror("Hash collision in function! Bad luck...");
         }
@@ -216,8 +245,7 @@ end
     {
         std::string emsg;
         int res = 0;
-        const auto &prepared = functions.preparedChunks[s.lfo_id - 1];
-        if (prepared.prepared && prepared.definition == fs->formulaString)
+        if (prepared.prepared && prepared.definition == definition)
         {
             if (prepared.registryReference >= 0)
             {
@@ -235,7 +263,7 @@ end
         {
             functions.compilationAttempts.fetch_add(1, std::memory_order_relaxed);
             res = Surge::LuaSupport::parseStringDefiningMultipleFunctions(
-                s.L, fs->formulaString, formulaEntryPoints, emsg);
+                s.L, definition, formulaEntryPoints, emsg);
         }
 
         if (res >= 1)
@@ -277,7 +305,7 @@ end
         }
 
         // this happens here because we did parse it at least. Don't parse again until it is changed
-        lua_pushstring(s.L, fs->formulaString.c_str());
+        lua_pushstring(s.L, definition.c_str());
         lua_setglobal(s.L, pvn);
     }
 
@@ -569,6 +597,94 @@ void preparePatchCompilation(SurgeStorage *storage)
         for (auto &formula : scene)
             prepareCompilation(storage, &formula, false);
 }
+
+#if SURGE_WEB
+static int dumpBytecode(lua_State *, const void *data, size_t size, void *target)
+{
+    static_cast<std::string *>(target)->append(static_cast<const char *>(data), size);
+    return 0;
+}
+
+void publishLiveEdits(SurgeStorage *storage)
+{
+#if HAS_LUA
+    auto &stateData = *storage->formulaGlobalData;
+    auto &functions = stateData.audioFunctions;
+    for (auto &slot : functions.retiredSources)
+        delete slot.exchange(nullptr, std::memory_order_acq_rel);
+    // Until patch preparation creates the audio interpreter (under exclusive
+    // ownership), it compiles every slot itself; nothing is live yet.
+    if (!stateData.audioState)
+        return;
+    int index = 0;
+    for (auto &scene : storage->getPatch().formulamods)
+        for (auto &fs : scene)
+        {
+            const int slot = index++;
+            if (fs.formulaString == functions.publishedDefinitions[slot])
+                continue;
+            if (!stateData.stagingState)
+                stateData.stagingState = luaL_newstate();
+            auto *L = static_cast<lua_State *>(stateData.stagingState);
+            if (!L)
+                return;
+            auto source = std::make_unique<FunctionCache::LiveSource>();
+            source->definition = fs.formulaString;
+            source->hash = std::hash<std::string>{}(source->definition);
+            // Same chunk name and error formatting as audio-side compilation.
+            if (Surge::LuaSupport::compileString(L, source->definition, source->error))
+            {
+                lua_dump(L, dumpBytecode, &source->bytecode);
+                lua_pop(L, 1);
+            }
+            functions.liveCompilations.fetch_add(1, std::memory_order_relaxed);
+            functions.publishedDefinitions[slot] = source->definition;
+            // An unadopted older edit is superseded and was never seen by audio.
+            delete functions.pendingSources[slot].exchange(source.release(), std::memory_order_acq_rel);
+        }
+#endif
+}
+
+void adoptLiveEdits(SurgeStorage *storage)
+{
+#if HAS_LUA
+    auto &stateData = *storage->formulaGlobalData;
+    auto &functions = stateData.audioFunctions;
+    auto *L = static_cast<lua_State *>(stateData.audioState);
+    if (!L)
+        return;
+    for (int slot = 0; slot < int(functions.preparedChunks.size()); ++slot)
+    {
+        // Wait for control to reclaim the previous handoff; the slot holds one.
+        if (functions.retiredSources[slot].load(std::memory_order_acquire))
+            continue;
+        auto *source = functions.pendingSources[slot].exchange(nullptr, std::memory_order_acq_rel);
+        if (!source)
+            continue;
+        int reference = -1;
+        if (!source->bytecode.empty())
+        {
+            // Loading prepared bytecode allocates only from the interpreter's arena.
+            if (luaL_loadbuffer(L, source->bytecode.data(), source->bytecode.size(), "lua-script") == 0)
+                reference = luaL_ref(L, LUA_REGISTRYINDEX);
+            else
+                lua_pop(L, 1);
+        }
+        auto &prepared = functions.preparedChunks[slot];
+        if (prepared.registryReference >= 0)
+            luaL_unref(L, LUA_REGISTRYINDEX, prepared.registryReference);
+        // Swapping strings moves ownership without allocating or freeing here.
+        std::swap(prepared.definition, source->definition);
+        std::swap(prepared.error, source->error);
+        prepared.hash = source->hash;
+        prepared.registryReference = reference;
+        prepared.prepared = true;
+        functions.liveAdoptions.fetch_add(1, std::memory_order_relaxed);
+        functions.retiredSources[slot].store(source, std::memory_order_release);
+    }
+#endif
+}
+#endif
 
 void requestSharedDataWipe(SurgeStorage *storage)
 {

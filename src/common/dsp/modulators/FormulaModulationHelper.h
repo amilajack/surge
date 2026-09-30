@@ -51,6 +51,7 @@ struct FunctionCache
     struct PreparedChunk
     {
         std::string definition, error;
+        size_t hash{0};
         int registryReference{-1};
         bool prepared{false};
     };
@@ -69,6 +70,20 @@ struct FunctionCache
     std::array<PreparedChunk, n_scenes * n_lfos> preparedChunks;
     // Read by control-thread diagnostics while the audio interpreter runs.
     std::atomic<uint64_t> compilationAttempts{0};
+#if SURGE_WEB
+    // A live edit compiled by the control thread; immutable once published.
+    struct LiveSource
+    {
+        std::string definition, error, bytecode;
+        size_t hash{0};
+    };
+    // Per slot: control publishes into pending; the engine owner adopts it at a
+    // block boundary and returns the replaced strings through retired, which
+    // only the control thread deletes. The audio side never frees a source.
+    std::array<std::atomic<LiveSource *>, n_scenes * n_lfos> pendingSources{}, retiredSources{};
+    std::array<std::string, n_scenes * n_lfos> publishedDefinitions; // control only
+    std::atomic<uint64_t> liveCompilations{0}, liveAdoptions{0};
+#endif
 };
 
 struct GlobalData
@@ -80,6 +95,8 @@ struct GlobalData
     FunctionCache &functions(bool display) { return display ? displayFunctions : audioFunctions; }
     void *audioState{nullptr}, *displayState{nullptr};
 #if SURGE_WEB
+    // Control-thread interpreter used only to compile live edits to bytecode.
+    void *stagingState{nullptr};
     // Backs audioState; created with it, off the audio callback, and outlives it.
     std::unique_ptr<LuaArena> audioArena;
 #endif
@@ -162,6 +179,14 @@ bool prepareCompilation(SurgeStorage *storage, FormulaModulatorStorage *fs, bool
 // Prepare every slot while the caller exclusively owns the audio engine.
 // Compilation errors remain cached for the normal evaluator error-reporting path.
 void preparePatchCompilation(SurgeStorage *storage);
+#if SURGE_WEB
+// Control thread, while no loader owns the patch: compile every formula whose
+// source changed since it was last prepared or published, and publish it.
+void publishLiveEdits(SurgeStorage *storage);
+// Engine owner at a block boundary: adopt published compilations by loading
+// their bytecode. Never parses source and never frees a published source.
+void adoptLiveEdits(SurgeStorage *storage);
+#endif
 
 bool isUserDefined(std::string);
 
