@@ -461,40 +461,7 @@ juce::PopupMenu SurgeGUIEditor::makeTuningMenu(const juce::Point<int> &where, bo
         tuningSubMenu.addSeparator();
 
         tuningSubMenu.addItem(Surge::GUI::toOSCase("Load .scl Tuning..."), [this]() {
-            auto cb = [this](const fs::path &sf) {
-                auto ext = sf.extension().string();
-                std::transform(ext.begin(), ext.end(), ext.begin(), tolower);
-
-                if (!sf.has_extension() || ext != ".scl")
-                {
-                    synth->storage.reportError("Please select only .scl files!", "Invalid Choice");
-                    std::cout << "FILE is [" << sf << "]" << std::endl;
-                    return;
-                }
-                try
-                {
-                    auto sc = Tunings::readSCLFile(sf);
-                    Tunings::Tuning(sc, synth->storage.currentMapping).withSkippedNotesInterpolated();
-
-                    if (!this->synth->storage.retuneToScale(sc))
-                    {
-                        synth->storage.reportError("This .scl file is not valid!",
-                                                   "File Format Error");
-                        return;
-                    }
-                    this->synth->refresh_editor = true;
-                }
-                catch (Tunings::TuningError &e)
-                {
-                    synth->storage.reportError(e.what(), "Load Error");
-                    return;
-                }
-                tuningChanged();
-                auto tuningLabel = path_to_string(fs::path(synth->storage.currentScale.name));
-                tuningLabel = tuningLabel.substr(0, tuningLabel.find_last_of("."));
-                juceEditor->processor.paramChangeToListeners(
-                    nullptr, true, juceEditor->processor.SCT_TUNING_SCL, .0, .0, .0, tuningLabel);
-            };
+            auto cb = [this](const fs::path &sf) { loadSCLFile(sf); };
 
             auto scl_path = this->synth->storage.datapath / "tuning_library" / "SCL";
 
@@ -525,41 +492,7 @@ juce::PopupMenu SurgeGUIEditor::makeTuningMenu(const juce::Point<int> &where, bo
         });
 
         tuningSubMenu.addItem(Surge::GUI::toOSCase("Load .kbm Keyboard Mapping..."), [this]() {
-            auto cb = [this](const fs::path &sf) {
-                auto ext = sf.extension().string();
-                std::transform(ext.begin(), ext.end(), ext.begin(), tolower);
-
-                if (!sf.has_extension() || ext != ".kbm")
-                {
-                    synth->storage.reportError("Please select only .kbm files!", "Invalid Choice");
-                    std::cout << "FILE is [" << sf << "]" << std::endl;
-                    return;
-                }
-                try
-                {
-                    auto kb = Tunings::readKBMFile(sf);
-                    Tunings::Tuning(synth->storage.currentScale, kb).withSkippedNotesInterpolated();
-
-                    if (!this->synth->storage.remapToKeyboard(kb))
-                    {
-                        synth->storage.reportError("This .kbm file is not valid!",
-                                                   "File Format Error");
-                        return;
-                    }
-
-                    this->synth->refresh_editor = true;
-                }
-                catch (Tunings::TuningError &e)
-                {
-                    synth->storage.reportError(e.what(), "Load Error");
-                    return;
-                }
-                tuningChanged();
-                auto mappingLabel = synth->storage.currentMapping.name;
-                mappingLabel = mappingLabel.substr(0, mappingLabel.find_last_of("."));
-                juceEditor->processor.paramChangeToListeners(
-                    nullptr, true, juceEditor->processor.SCT_TUNING_KBM, .0, .0, .0, mappingLabel);
-            };
+            auto cb = [this](const fs::path &sf) { loadKBMFile(sf); };
 
             auto kbm_path = this->synth->storage.datapath / "tuning_library" / "KBM Concert Pitch";
 
@@ -2174,4 +2107,78 @@ void SurgeGUIEditor::loadModulatorPresetFrom(const fs::path &path, int scene, in
     }
 
     synth->refresh_editor = true;
+}
+
+// Shared by the Tuning menu and the browser's factory tuning library.
+void SurgeGUIEditor::loadSCLFile(const fs::path &sf)
+{
+    auto ext = sf.extension().string();
+    std::transform(ext.begin(), ext.end(), ext.begin(), tolower);
+
+    if (!sf.has_extension() || ext != ".scl")
+    {
+        synth->storage.reportError("Please select only .scl files!", "Invalid Choice");
+        std::cout << "FILE is [" << sf << "]" << std::endl;
+        return;
+    }
+    try
+    {
+        auto sc = Tunings::readSCLFile(sf);
+        Tunings::Tuning(sc, synth->storage.currentMapping).withSkippedNotesInterpolated();
+
+        if (!this->synth->storage.retuneToScale(sc))
+        {
+            synth->storage.reportError("This .scl file is not valid!",
+                                       "File Format Error");
+            return;
+        }
+        this->synth->refresh_editor = true;
+    }
+    catch (Tunings::TuningError &e)
+    {
+        synth->storage.reportError(e.what(), "Load Error");
+        return;
+    }
+    tuningChanged();
+    auto tuningLabel = path_to_string(fs::path(synth->storage.currentScale.name));
+    tuningLabel = tuningLabel.substr(0, tuningLabel.find_last_of("."));
+    juceEditor->processor.paramChangeToListeners(
+        nullptr, true, juceEditor->processor.SCT_TUNING_SCL, .0, .0, .0, tuningLabel);
+}
+
+void SurgeGUIEditor::loadKBMFile(const fs::path &sf)
+{
+    auto ext = sf.extension().string();
+    std::transform(ext.begin(), ext.end(), ext.begin(), tolower);
+
+    if (!sf.has_extension() || ext != ".kbm")
+    {
+        synth->storage.reportError("Please select only .kbm files!", "Invalid Choice");
+        std::cout << "FILE is [" << sf << "]" << std::endl;
+        return;
+    }
+    try
+    {
+        auto kb = Tunings::readKBMFile(sf);
+        Tunings::Tuning(synth->storage.currentScale, kb).withSkippedNotesInterpolated();
+
+        if (!this->synth->storage.remapToKeyboard(kb))
+        {
+            synth->storage.reportError("This .kbm file is not valid!",
+                                       "File Format Error");
+            return;
+        }
+
+        this->synth->refresh_editor = true;
+    }
+    catch (Tunings::TuningError &e)
+    {
+        synth->storage.reportError(e.what(), "Load Error");
+        return;
+    }
+    tuningChanged();
+    auto mappingLabel = synth->storage.currentMapping.name;
+    mappingLabel = mappingLabel.substr(0, mappingLabel.find_last_of("."));
+    juceEditor->processor.paramChangeToListeners(
+        nullptr, true, juceEditor->processor.SCT_TUNING_KBM, .0, .0, .0, mappingLabel);
 }

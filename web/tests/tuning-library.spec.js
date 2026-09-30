@@ -47,3 +47,19 @@ test('tuning editor library reports a failed download and allows retry without c
   await page.keyboard.press('Escape');await expect(page.locator('#surge-tuning-library')).toHaveCount(0);
   await expect(page.getByRole('textbox',{name:'Scala Scale',exact:true})).toHaveValue(/12 Tone Equal Temperament/);
 });
+test('factory tuning library loads scales and mappings directly into Surge',async({page})=>{
+  await open(page,true);
+  const pick=extension=>page.evaluate(extension=>[...SurgeFactory.library.entries.values()].find(e=>
+    e.path.startsWith('tuning_library/')&&e.extension===extension),extension);
+  const scale=await pick('.scl'),mapping=await pick('.kbm');
+  for(const [entry,kind,box] of [[scale,'scale','Scala Scale'],[mapping,'mapping','Keyboard Mapping']]){
+    const relative=entry.path.slice('tuning_library/'.length);
+    await page.getByRole('searchbox',{name:'Search factory tunings'}).fill(relative);
+    await page.getByRole('button',{name:`Load ${kind} ${relative}`,exact:true}).click();
+    await expect(page.locator('#surge-tuning-library [role=status]')).toHaveText(`Loaded ${kind}: ${relative}`);
+    const text=readFileSync('../resources/data/'+entry.path,'utf8');
+    // The editor shows the file's own text, as it does for the Tuning menu loaders.
+    await expect(page.getByRole('textbox',{name:box,exact:true})).toHaveValue(text.replace(/\r\n/g,'\n'));
+  }
+  expect(await page.evaluate(paths=>paths.map(p=>Module.FS.readFile('/factory/'+p).length),[scale.path,mapping.path])).toEqual([scale.size,mapping.size]);
+});

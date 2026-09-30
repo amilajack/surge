@@ -421,6 +421,9 @@ class SurgeGUIEditor : public Surge::GUI::IComponentTagValue::Listener,
 
     std::string tuningToHtml();
     void tuningChanged();
+    // Load a scale or keyboard mapping as the Tuning menu does, reporting errors.
+    void loadSCLFile(const fs::path &file);
+    void loadKBMFile(const fs::path &file);
 
     // Surge's own tuning, or the one MTS-ESP is sending when this instance is a client
     bool isMTSESPClient() const;

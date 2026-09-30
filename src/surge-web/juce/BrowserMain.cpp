@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 #include "SurgeSynthProcessor.h"
 #include "SurgeSynthEditor.h"
+#include "SurgeGUIEditor.h"
 #include "PatchDB.h"
 #include "PatchFileValidation.h"
 #include "dsp/effects/ConvolutionKernelWorker.h"
@@ -70,6 +71,20 @@ extern "C" EMSCRIPTEN_KEEPALIVE unsigned surge_browser_convolution_reload_applie
 extern "C" EMSCRIPTEN_KEEPALIVE int surge_browser_scene()
 {
     return browserProcessor ? browserProcessor->surge->storage.getPatch().scene_active.val.i : -1;
+}
+// The standalone editor is created directly, so it is not the processor's active editor.
+static SurgeSynthEditor *browserEditor{};
+// Loads a factory tuning file through the Tuning menu's own loaders.
+extern "C" EMSCRIPTEN_KEEPALIVE int surge_browser_load_tuning(const char *path)
+{
+    auto *gui = browserEditor ? browserEditor->browserGUIEditor() : nullptr;
+    if (!gui || !path) return 0;
+    const fs::path file(path);
+    const auto extension = file.extension().string();
+    if (extension == ".scl") gui->loadSCLFile(file);
+    else if (extension == ".kbm") gui->loadKBMFile(file);
+    else return 0;
+    return 1;
 }
 extern "C" EMSCRIPTEN_KEEPALIVE const char *surge_browser_validate_file(const char *path)
 {
@@ -223,6 +238,7 @@ int main()
     surge_attach_audio(&processor);
     surge_attach_wavetables(&processor);
     static std::unique_ptr<juce::AudioProcessorEditor> editor(processor.createEditor());
+    browserEditor = dynamic_cast<SurgeSynthEditor *>(editor.get());
     editor->addToDesktop(0);
     editor->setVisible(true);
     // Animation frames may stop while the page is hidden. Keep engine handoffs
