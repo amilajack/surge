@@ -20,10 +20,10 @@ def checked(data, item):
 
 def restore(stage):
     config = json.loads((stage / 'factory-source.json').read_text())
-    commit = config['commit']
-    if not re.fullmatch('[0-9a-f]{40}', commit):
-        raise ValueError('Expected a pinned factory source commit')
-    public = stage / 'public'
+    commit, version = config['commit'], config['version']
+    if not re.fullmatch('[0-9a-f]{40}', commit) or not re.fullmatch('[0-9a-f]{64}', version):
+        raise ValueError('Expected a pinned factory source commit and application version')
+    public = stage / 'public' / 'v' / version
     manifest = json.loads((public / 'library/manifest.json').read_text())
     entries = {x['path']: x for x in manifest['entries']}
     prefix = 'surge-' + commit + '/resources/data/'
@@ -52,21 +52,30 @@ def stage_package(package, destination, commit):
     module = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(module)
     distribution = module.verify(package)
+    # The distribution directory is named by its manifest digest. Serve it at an
+    # immutable versioned path; only the root page revalidates, and its <base>
+    # element resolves every application and library URL inside that version.
+    version = hashlib.sha256((package / 'distribution.json').read_bytes()).hexdigest()
     destination.mkdir(parents=True, exist_ok=False)
     public = destination / 'public'
-    public.mkdir()
+    app = public / 'v' / version
+    app.mkdir(parents=True)
     manifest = json.loads((package / 'library/manifest.json').read_text())
     index = 'library/' + manifest['patchIndex']['url']
     for name in distribution['files']:
         if name.startswith('library/objects/') and name != index:
             continue
-        target = public / name
+        target = app / name
         target.parent.mkdir(parents=True, exist_ok=True)
         shutil.copyfile(package / name, target)
-    shutil.copyfile(package / 'distribution.json', public / 'distribution.json')
+    shutil.copyfile(package / 'distribution.json', app / 'distribution.json')
+    html = (package / 'index.html').read_text()
+    if html.count('<head>') != 1 or '<base ' in html:
+        raise ValueError('Unexpected application HTML head')
+    (public / 'index.html').write_text(html.replace('<head>', f'<head><base href="/v/{version}/">'))
     shutil.copyfile(__file__, destination / 'build.py')
     (destination / '.vercelignore').write_text(
-        'public/library/objects/*\n!public/' + index + '\n.env*\n')
+        f'public/v/{version}/library/objects/*\n!public/v/{version}/{index}\n.env*\n')
     source = public / 'source'
     source.mkdir()
     # Reconstruct from the pinned upstream commit, including migration changes
@@ -92,7 +101,7 @@ def stage_package(package, destination, commit):
     notices = importlib.util.module_from_spec(notices_spec)
     notices_spec.loader.exec_module(notices)
     (public / 'THIRD-PARTY-NOTICES.txt').write_text(notices.render())
-    (destination / 'factory-source.json').write_text(json.dumps({'commit': commit}) + '\n')
+    (destination / 'factory-source.json').write_text(json.dumps({'commit': commit, 'version': version}) + '\n')
     (destination / 'vercel.json').write_text(json.dumps({
         '$schema': 'https://openapi.vercel.sh/vercel.json',
         'framework': None, 'installCommand': '', 'buildCommand': 'python3 build.py --restore .',
@@ -103,7 +112,7 @@ def stage_package(package, destination, commit):
                 {'key': 'Cross-Origin-Embedder-Policy', 'value': 'require-corp'},
                 {'key': 'Cross-Origin-Resource-Policy', 'value': 'same-origin'},
                 {'key': 'Cache-Control', 'value': 'public, max-age=0, must-revalidate'}]},
-            {'source': '/library/objects/(.*)', 'headers': [
+            {'source': '/v/(.*)', 'headers': [
                 {'key': 'Cache-Control', 'value': 'public, max-age=31536000, immutable'}]},
             {'source': '/(.*).wasm', 'headers': [
                 {'key': 'Content-Type', 'value': 'application/wasm'}]}

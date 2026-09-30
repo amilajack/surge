@@ -12,6 +12,10 @@ test('static package rejects corrupt inputs and publishes reproducible version d
   execFileSync('python3',[path.join(root,'web/tests/package-static.test.py')],{timeout:10000});
 });
 
+test('Vercel staging serves the application from an immutable versioned path',()=>{
+  execFileSync('python3',[path.join(root,'web/tests/vercel-static.test.py')],{timeout:20000});
+});
+
 test('source archive preserves changed worktrees and embedded submodules reproducibly',()=>{
   execFileSync('python3',[path.join(root,'web/tests/source-archive.test.py')],{timeout:10000});
 });

@@ -28,9 +28,16 @@ from that pinned upstream archive at build time and verifies size and SHA-256
 against the packaged manifest. The app has no backend, and browser asset requests
 stay on the deployed origin.
 
-The configuration serves `/` as the application, enables cross-origin isolation,
-and serves Wasm with `application/wasm`. Content-addressed factory objects have
-immutable caching; application filenames revalidate on repeat visits. No harness
+The configuration enables cross-origin isolation and serves Wasm with
+`application/wasm`. The whole application, including the factory library, is
+published under `/v/<distribution-digest>/`, where the digest is the SHA-256 of
+the package's `distribution.json`. That path is cached as immutable. Only the
+root `index.html` revalidates; its `<base href="/v/<digest>/">` resolves every
+script, worker, Wasm, data and library URL inside that one version, so a page
+never mixes files from two builds. `tests/vercel-static.test.py` checks the
+layout and headers. `verify-deployment.mjs` also accepts a loopback URL; the
+staged `public/` directory (with the factory objects copied in) passes it
+locally. No harness
 binaries, credentials, or local user files are included. A source overlay plus
 pinned upstream reconstruction instructions and the available license notices
 are published under `/source/` and `/THIRD-PARTY-NOTICES.txt`.

@@ -2,7 +2,8 @@
 import {chromium, expect} from '@playwright/test';
 import {mkdirSync,writeFileSync} from 'node:fs';
 const [url,output='/tmp/surge-deployment-check']=process.argv.slice(2);
-if(!url?.startsWith('https://'))throw Error('Pass the deployed HTTPS origin');
+// Loopback HTTP is a secure context too, which allows checking a staged deployment locally.
+if(!url?.startsWith('https://') && !/^http:\/\/(127\.0\.0\.1|localhost)(:\d+)?(\/|$)/.test(url||''))throw Error('Pass the deployed HTTPS origin or a loopback URL');
 mkdirSync(output,{recursive:true});
 const browser=await chromium.launch({channel:'chrome',headless:true,args:['--disable-audio-output']});
 const context=await browser.newContext({viewport:{width:1280,height:1000}});
