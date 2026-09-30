@@ -210,8 +210,13 @@
           }
           node.setAttribute('aria-description',data.help||data.description||'');
           node.setAttribute('aria-disabled',String(data.disabled));
-          for(const [key,attribute]of Object.entries({checked:'aria-checked',selected:'aria-selected',expanded:'aria-expanded',value:'aria-valuenow',min:'aria-valuemin',max:'aria-valuemax',valueText:'aria-valuetext'})){
+          for(const [key,attribute]of Object.entries({checked:'aria-checked',selected:'aria-selected',expanded:'aria-expanded',value:'aria-valuenow',min:'aria-valuemin',max:'aria-valuemax',valueText:'aria-valuetext',
+              rowCount:'aria-rowcount',columnCount:'aria-colcount',rowSpan:'aria-rowspan',columnSpan:'aria-colspan'})){
             if(data[key]!==undefined)node.setAttribute(attribute,String(data[key]));else node.removeAttribute(attribute);
+          }
+          // JUCE indices are zero-based; ARIA's are one-based.
+          for(const [key,attribute]of Object.entries({rowIndex:'aria-rowindex',columnIndex:'aria-colindex'})){
+            if(data[key]!==undefined&&data[key]>=0)node.setAttribute(attribute,String(data[key]+1));else node.removeAttribute(attribute);
           }
           if(['slider','textbox','combobox','checkbox','radio'].includes(role)&&data.readonly!==undefined)
             node.setAttribute('aria-readonly',String(data.readonly));
@@ -223,6 +228,16 @@
           for(const child of data.children)visit(child,node);
         };
         for(const data of tree)visit(data,root);
+        // Keyboard input stays on the canvas; point assistive technology at the
+        // control JUCE has focused there, so focus changes made from the canvas
+        // (shortcuts, clicks, Tab) are announced.
+        for(const canvas of document.querySelectorAll('canvas')){
+          const focused=[...nodes.values()].find(n=>n.juceData.focused&&n.dataset.jucePeer===canvas.id);
+          if(focused){
+            if(!focused.id)focused.id='juce-accessible-'+focused.juceData.id;
+            if(canvas.getAttribute('aria-activedescendant')!==focused.id)canvas.setAttribute('aria-activedescendant',focused.id);
+          }else canvas.removeAttribute('aria-activedescendant');
+        }
         for(const [id,node]of nodes)if(!seen.has(id)){
           if(document.activeElement===node)ring.style.display='none';
           node.remove();nodes.delete(id);

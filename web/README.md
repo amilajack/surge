@@ -1650,10 +1650,14 @@ boundary until a newer canvas composition starts, in both the same editor and a
 different editor. The late completion cannot terminate the newer composition or
 split its undo transaction.
 
-This remains partial accessibility support: complete table/text interfaces,
-compound widget navigation, canvas-to-screen-reader focus tracking,
-and manual assistive-technology verification remain open. Browser text editing
-and accessibility-tree assertions do not establish complete screen-reader parity.
+JUCE tables and cells now export their size and position (`aria-rowcount`,
+`aria-colcount`, `aria-rowindex`, `aria-colindex` and spans), for example the
+tuning editor's 128-row table. Keyboard input stays on the canvas, which points
+assistive technology at JUCE's focused control through `aria-activedescendant`.
+Focus changes made from the canvas (control-group shortcuts, Tab, clicks) are
+therefore exposed without moving DOM focus off the canvas, which would break
+canvas shortcuts. `accessibility-focus.spec.js` covers both. Manual
+screen-reader verification of spoken output remains open.
 
 ## Audio deadline profiling
 

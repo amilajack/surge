@@ -64,6 +64,27 @@ var browserAccessibleNode(AccessibilityHandler &handler)
             data->setProperty("step", range.getInterval());
         }
     }
+    // Tables (for example the patch database browser) and their cells.
+    if (auto *table = handler.getTableInterface())
+    {
+        data->setProperty("rowCount", table->getNumRows());
+        data->setProperty("columnCount", table->getNumColumns());
+    }
+    if (auto *cell = handler.getCellInterface())
+        if (auto *owner = cell->getTableHandler())
+            if (auto *table = owner->getTableInterface())
+            {
+                if (const auto rows = table->getRowSpan(handler))
+                {
+                    data->setProperty("rowIndex", rows->begin);
+                    data->setProperty("rowSpan", rows->num);
+                }
+                if (const auto columns = table->getColumnSpan(handler))
+                {
+                    data->setProperty("columnIndex", columns->begin);
+                    data->setProperty("columnSpan", columns->num);
+                }
+            }
     if (auto *text = handler.getTextInterface(); text && !text->isDisplayingProtectedText())
     {
         data->setProperty("text", text->getAllText());
