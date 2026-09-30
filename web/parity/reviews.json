@@ -6013,5 +6013,352 @@
     "evidence": [
       "web/tests/fx-preset-failure.spec.js"
     ]
+  },
+  "src/surge-xt/gui/overlays/ModulationEditor.cpp:editor-implementation:ModulationEditor": {
+    "status": "verified",
+    "sourceDigest": "52b77381540200d6bc5ac8afbbbe66b4ffdd37c742a89a08d28c21b557fdb3cc",
+    "browserEquivalent": "The original modulation list overlay (Alt+M): routings from every source group added through its source and target menus, filters, sorting, clipboard export, and per-row depth, mute, edit and clear, checked in the saved patch.",
+    "evidence": [
+      "web/tests/modulation-list.spec.js",
+      "web/tests/keyboard-shortcuts.spec.js",
+      "web/tests/skin-connectors.spec.js"
+    ]
+  },
+  "src/surge-xt/gui/overlays/ModulationEditor.cpp:menu-call:af4cf0f880a99afa": {
+    "status": "verified",
+    "sourceDigest": "52b77381540200d6bc5ac8afbbbe66b4ffdd37c742a89a08d28c21b557fdb3cc",
+    "browserEquivalent": "Filter by source; only that source's rows remain.",
+    "runtimeExpansion": [
+      "Alternate Bipolar",
+      "Filter EG (A)",
+      "Latest Key (A)",
+      "Macro 2",
+      "Macro 3",
+      "Modwheel",
+      "Random Bipolar (Normal)",
+      "Scene LFO 2 (A)",
+      "Velocity",
+      "Voice LFO 1 (B)",
+      "Voice LFO 1 (EG Only) (A)"
+    ],
+    "evidence": [
+      "web/tests/modulation-list.spec.js"
+    ]
+  },
+  "src/surge-xt/gui/overlays/ModulationEditor.cpp:menu-call:74d5ef4b63f31ec1": {
+    "status": "verified",
+    "sourceDigest": "52b77381540200d6bc5ac8afbbbe66b4ffdd37c742a89a08d28c21b557fdb3cc",
+    "browserEquivalent": "Filter by target; only rows for that parameter remain.",
+    "runtimeExpansion": [
+      "A Osc 1 Pitch",
+      "A Amp EG Attack",
+      "A Filter 1 Cutoff",
+      "B Osc 2 Pitch",
+      "Global Volume"
+    ],
+    "evidence": [
+      "web/tests/modulation-list.spec.js"
+    ]
+  },
+  "src/surge-xt/gui/overlays/ModulationEditor.cpp:menu-call:e2a897d714123e96": {
+    "status": "verified",
+    "sourceDigest": "52b77381540200d6bc5ac8afbbbe66b4ffdd37c742a89a08d28c21b557fdb3cc",
+    "browserEquivalent": "Filter by target section; only rows in that section remain.",
+    "runtimeExpansion": [
+      "Filters",
+      "Global",
+      "Oscillators",
+      "Mixer",
+      "Envelopes",
+      "Modulators",
+      "FX"
+    ],
+    "evidence": [
+      "web/tests/modulation-list.spec.js"
+    ]
+  },
+  "src/surge-xt/gui/overlays/ModulationEditor.cpp:menu-call:e2a897d714123e96:2": {
+    "status": "verified",
+    "sourceDigest": "52b77381540200d6bc5ac8afbbbe66b4ffdd37c742a89a08d28c21b557fdb3cc",
+    "browserEquivalent": "Filter by target scene; only rows for that scene remain.",
+    "runtimeExpansion": [
+      "Scene B",
+      "Global",
+      "Scene A"
+    ],
+    "evidence": [
+      "web/tests/modulation-list.spec.js"
+    ]
+  },
+  "src/surge-xt/gui/overlays/ModulationEditor.cpp:menu-call:e45e2c3825d2daeb": {
+    "status": "verified",
+    "sourceDigest": "52b77381540200d6bc5ac8afbbbe66b4ffdd37c742a89a08d28c21b557fdb3cc",
+    "browserEquivalent": "Clears the filter; every row returns.",
+    "evidence": [
+      "web/tests/modulation-list.spec.js"
+    ]
+  },
+  "src/surge-xt/gui/overlays/ModulationEditor.cpp:menu-call:3c3351731ebcc8a8": {
+    "status": "verified",
+    "sourceDigest": "52b77381540200d6bc5ac8afbbbe66b4ffdd37c742a89a08d28c21b557fdb3cc",
+    "browserEquivalent": "Outputs of indexed sources in the Add Modulation Source menu.",
+    "runtimeExpansion": [
+      "Voice LFO 1",
+      "Voice LFO 1 (Raw Waveform)",
+      "Voice LFO 1 (EG Only)",
+      "Scene LFO 2",
+      "Random Bipolar (Normal)"
+    ],
+    "evidence": [
+      "web/tests/modulation-list.spec.js"
+    ]
+  },
+  "src/surge-xt/gui/overlays/ModulationEditor.cpp:menu-call:f285ae95028f26bc": {
+    "status": "verified",
+    "sourceDigest": "52b77381540200d6bc5ac8afbbbe66b4ffdd37c742a89a08d28c21b557fdb3cc",
+    "browserEquivalent": "Submenus for indexed sources.",
+    "runtimeExpansion": [
+      "Voice LFO 1 ... Voice LFO 6",
+      "Scene LFO 2",
+      "Random Bipolar"
+    ],
+    "evidence": [
+      "web/tests/modulation-list.spec.js"
+    ]
+  },
+  "src/surge-xt/gui/overlays/ModulationEditor.cpp:menu-call:4896b139b7cfb98e": {
+    "status": "verified",
+    "sourceDigest": "52b77381540200d6bc5ac8afbbbe66b4ffdd37c742a89a08d28c21b557fdb3cc",
+    "browserEquivalent": "Non-indexed sources; choosing one enables the target button.",
+    "runtimeExpansion": [
+      "Macro 1",
+      "Macro 2",
+      "Macro 3",
+      "Filter EG",
+      "Velocity",
+      "Modwheel",
+      "Latest Key",
+      "Alternate Bipolar"
+    ],
+    "evidence": [
+      "web/tests/modulation-list.spec.js"
+    ]
+  },
+  "src/surge-xt/gui/overlays/ModulationEditor.cpp:menu-call:d0dd69047b1a618a": {
+    "status": "verified",
+    "sourceDigest": "52b77381540200d6bc5ac8afbbbe66b4ffdd37c742a89a08d28c21b557fdb3cc",
+    "browserEquivalent": "Global Macros group.",
+    "evidence": [
+      "web/tests/modulation-list.spec.js"
+    ]
+  },
+  "src/surge-xt/gui/overlays/ModulationEditor.cpp:menu-call:1550bb22f92e828a": {
+    "status": "verified",
+    "sourceDigest": "52b77381540200d6bc5ac8afbbbe66b4ffdd37c742a89a08d28c21b557fdb3cc",
+    "browserEquivalent": "Global MIDI group.",
+    "runtimeExpansion": [
+      "MIDI"
+    ],
+    "evidence": [
+      "web/tests/modulation-list.spec.js"
+    ]
+  },
+  "src/surge-xt/gui/overlays/ModulationEditor.cpp:menu-call:358f767c252e6123": {
+    "status": "verified",
+    "sourceDigest": "52b77381540200d6bc5ac8afbbbe66b4ffdd37c742a89a08d28c21b557fdb3cc",
+    "browserEquivalent": "Global Internal group.",
+    "evidence": [
+      "web/tests/modulation-list.spec.js"
+    ]
+  },
+  "src/surge-xt/gui/overlays/ModulationEditor.cpp:menu-call:733c4e001609bd47": {
+    "status": "verified",
+    "sourceDigest": "52b77381540200d6bc5ac8afbbbe66b4ffdd37c742a89a08d28c21b557fdb3cc",
+    "browserEquivalent": "Scene A Voice LFOs group.",
+    "evidence": [
+      "web/tests/modulation-list.spec.js"
+    ]
+  },
+  "src/surge-xt/gui/overlays/ModulationEditor.cpp:menu-call:3d2bc8bab0e21a9d": {
+    "status": "verified",
+    "sourceDigest": "52b77381540200d6bc5ac8afbbbe66b4ffdd37c742a89a08d28c21b557fdb3cc",
+    "browserEquivalent": "Scene A Scene LFOs group.",
+    "evidence": [
+      "web/tests/modulation-list.spec.js"
+    ]
+  },
+  "src/surge-xt/gui/overlays/ModulationEditor.cpp:menu-call:b45de6e5d2fdbc8a": {
+    "status": "verified",
+    "sourceDigest": "52b77381540200d6bc5ac8afbbbe66b4ffdd37c742a89a08d28c21b557fdb3cc",
+    "browserEquivalent": "Scene A Envelopes group.",
+    "evidence": [
+      "web/tests/modulation-list.spec.js"
+    ]
+  },
+  "src/surge-xt/gui/overlays/ModulationEditor.cpp:menu-call:bee7bba94d58391c": {
+    "status": "verified",
+    "sourceDigest": "52b77381540200d6bc5ac8afbbbe66b4ffdd37c742a89a08d28c21b557fdb3cc",
+    "browserEquivalent": "Scene A MIDI group (lowest, highest and latest key).",
+    "runtimeExpansion": [
+      "Lowest Key",
+      "Highest Key",
+      "Latest Key"
+    ],
+    "evidence": [
+      "web/tests/modulation-list.spec.js"
+    ]
+  },
+  "src/surge-xt/gui/overlays/ModulationEditor.cpp:menu-call:12c33ffb7fbbbe47": {
+    "status": "verified",
+    "sourceDigest": "52b77381540200d6bc5ac8afbbbe66b4ffdd37c742a89a08d28c21b557fdb3cc",
+    "browserEquivalent": "Scene B Voice LFOs group; its sources offer scene B targets.",
+    "evidence": [
+      "web/tests/modulation-list.spec.js"
+    ]
+  },
+  "src/surge-xt/gui/overlays/ModulationEditor.cpp:menu-call:2419757f1cc2acc1": {
+    "status": "verified",
+    "sourceDigest": "52b77381540200d6bc5ac8afbbbe66b4ffdd37c742a89a08d28c21b557fdb3cc",
+    "browserEquivalent": "Scene B Scene LFOs group.",
+    "evidence": [
+      "web/tests/modulation-list.spec.js"
+    ]
+  },
+  "src/surge-xt/gui/overlays/ModulationEditor.cpp:menu-call:b664a966e568a079": {
+    "status": "verified",
+    "sourceDigest": "52b77381540200d6bc5ac8afbbbe66b4ffdd37c742a89a08d28c21b557fdb3cc",
+    "browserEquivalent": "Scene B Envelopes group.",
+    "evidence": [
+      "web/tests/modulation-list.spec.js"
+    ]
+  },
+  "src/surge-xt/gui/overlays/ModulationEditor.cpp:menu-call:eddecb5d7e7ddafe": {
+    "status": "verified",
+    "sourceDigest": "52b77381540200d6bc5ac8afbbbe66b4ffdd37c742a89a08d28c21b557fdb3cc",
+    "browserEquivalent": "Scene B MIDI group.",
+    "evidence": [
+      "web/tests/modulation-list.spec.js"
+    ]
+  },
+  "src/surge-xt/gui/overlays/ModulationEditor.cpp:menu-call:4f691f64afc94314": {
+    "status": "verified",
+    "sourceDigest": "52b77381540200d6bc5ac8afbbbe66b4ffdd37c742a89a08d28c21b557fdb3cc",
+    "browserEquivalent": "Target parameters; choosing one adds the routing (saved in the patch).",
+    "runtimeExpansion": [
+      "Osc 1 Pitch",
+      "Filter 1 Cutoff",
+      "Filter 1 Resonance",
+      "Filter 2 Cutoff",
+      "Amp EG Attack",
+      "Amp EG Decay",
+      "Osc 1 Volume",
+      "Pan",
+      "Global Volume",
+      "Osc 2 Pitch (scene B)"
+    ],
+    "evidence": [
+      "web/tests/modulation-list.spec.js"
+    ]
+  },
+  "src/surge-xt/gui/overlays/ModulationEditor.cpp:menu-call:ebf5ae73b627038d": {
+    "status": "verified",
+    "sourceDigest": "52b77381540200d6bc5ac8afbbbe66b4ffdd37c742a89a08d28c21b557fdb3cc",
+    "browserEquivalent": "Target control-group submenus.",
+    "runtimeExpansion": [
+      "Osc 1 (Classic)",
+      "Osc 2 (Classic)",
+      "Filter 1 (Off)",
+      "Filter 2 (Off)",
+      "AEG",
+      "FEG"
+    ],
+    "evidence": [
+      "web/tests/modulation-list.spec.js"
+    ]
+  },
+  "src/surge-xt/gui/overlays/ModulationEditor.cpp:menu-call:c74ef993575631b8": {
+    "status": "verified",
+    "sourceDigest": "52b77381540200d6bc5ac8afbbbe66b4ffdd37c742a89a08d28c21b557fdb3cc",
+    "browserEquivalent": "Target section submenus for global, scene A and scene B.",
+    "runtimeExpansion": [
+      "Patch",
+      "Scene",
+      "Oscillators",
+      "Mixer",
+      "Filters",
+      "Envelopes",
+      "Voice LFOs",
+      "Scene LFOs"
+    ],
+    "evidence": [
+      "web/tests/modulation-list.spec.js"
+    ]
+  },
+  "src/surge-xt/gui/widgets/MenuCustomComponents.cpp:menu-call:ac4bd347e699daf3": {
+    "status": "verified",
+    "sourceDigest": "4bb56a7da2f0c103591463be70e0f0393c9adbd40b864aa5bf0314d7a5e12be7",
+    "browserEquivalent": "With Add Sub-Menus for Modulation Menu Items on, each modulation row offers Edit, which opens the depth type-in.",
+    "runtimeExpansion": [
+      "Edit Velocity"
+    ],
+    "evidence": [
+      "web/tests/modulation-list.spec.js"
+    ]
+  },
+  "src/surge-xt/gui/widgets/MenuCustomComponents.cpp:menu-call:edbbc1c79ae3cf5b": {
+    "status": "verified",
+    "sourceDigest": "4bb56a7da2f0c103591463be70e0f0393c9adbd40b864aa5bf0314d7a5e12be7",
+    "browserEquivalent": "Mute toggles the routing's mute (saved) and becomes Unmute.",
+    "runtimeExpansion": [
+      "Mute Velocity",
+      "Unmute Velocity"
+    ],
+    "evidence": [
+      "web/tests/modulation-list.spec.js"
+    ]
+  },
+  "src/surge-xt/gui/widgets/MenuCustomComponents.cpp:menu-call:aa2e56c110f7fc68": {
+    "status": "verified",
+    "sourceDigest": "4bb56a7da2f0c103591463be70e0f0393c9adbd40b864aa5bf0314d7a5e12be7",
+    "browserEquivalent": "Clear removes the routing.",
+    "runtimeExpansion": [
+      "Clear Velocity"
+    ],
+    "evidence": [
+      "web/tests/modulation-list.spec.js"
+    ]
+  },
+  "src/surge-xt/gui/widgets/MenuCustomComponents.cpp:menu-call:ac4bd347e699daf3:2": {
+    "status": "verified",
+    "sourceDigest": "4bb56a7da2f0c103591463be70e0f0393c9adbd40b864aa5bf0314d7a5e12be7",
+    "browserEquivalent": "The all-modulations row (two or more routings) offers Mute All Modulations.",
+    "runtimeExpansion": [
+      "Mute All Modulations"
+    ],
+    "evidence": [
+      "web/tests/modulation-list.spec.js"
+    ]
+  },
+  "src/surge-xt/gui/widgets/MenuCustomComponents.cpp:menu-call:edbbc1c79ae3cf5b:2": {
+    "status": "verified",
+    "sourceDigest": "4bb56a7da2f0c103591463be70e0f0393c9adbd40b864aa5bf0314d7a5e12be7",
+    "browserEquivalent": "Unmute All Modulations restores every routing.",
+    "runtimeExpansion": [
+      "Unmute All Modulations"
+    ],
+    "evidence": [
+      "web/tests/modulation-list.spec.js"
+    ]
+  },
+  "src/surge-xt/gui/widgets/MenuCustomComponents.cpp:menu-call:aa2e56c110f7fc68:2": {
+    "status": "verified",
+    "sourceDigest": "4bb56a7da2f0c103591463be70e0f0393c9adbd40b864aa5bf0314d7a5e12be7",
+    "browserEquivalent": "Clear All Modulations removes every routing on the parameter.",
+    "runtimeExpansion": [
+      "Clear All Modulations"
+    ],
+    "evidence": [
+      "web/tests/modulation-list.spec.js"
+    ]
   }
 }
