@@ -4923,17 +4923,30 @@ void loadPatchInBackgroundThread(SurgeSynthesizer *sy)
         // Consume only the selection whose download has completed.
         if (patchid < 0 || !synth->patchid_queue.compare_exchange_strong(patchid, -1))
         {
-            synth->halt_engine = false;
-            auto myThread = std::move(synth->patchLoadThread);
-            myThread->detach();
-            return;
+            patchid = -1;
+            if (!synth->has_patchid_file)
+            {
+                synth->halt_engine = false;
+                auto myThread = std::move(synth->patchLoadThread);
+                myThread->detach();
+                return;
+            }
+            // A patch file queued while a factory selection is still downloading is the newer
+            // action: it supersedes that selection and loads now. queuePatchFileLoad already
+            // drops the selection; this also covers callers that set has_patchid_file directly.
+            auto pending = synth->patchid_queue.load();
+            if (pending >= 0)
+                synth->patchid_queue.compare_exchange_strong(pending, -1);
         }
 #else
         patchid = synth->patchid_queue;
         synth->patchid_queue = -1;
 #endif
-        synth->stopSound();
-        synth->loadPatch(patchid);
+        if (patchid >= 0)
+        {
+            synth->stopSound();
+            synth->loadPatch(patchid);
+        }
     }
     if (synth->has_patchid_file)
     {

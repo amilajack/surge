@@ -2,9 +2,11 @@ import {test,expect} from './fixtures.js';
 import {readFileSync} from 'node:fs';
 const patch=name=>Array.from(readFileSync(new URL(`../../resources/data/patches_factory/Templates/${name}.fxp`,import.meta.url)));
 const sine=readFileSync(new URL('../../resources/data/wavetables/Basic/Sine.wt',import.meta.url));
-const patchName=page=>page.evaluate(()=>Module.ccall('surge_browser_patch_name','string',[],[]));
+// Module.ccall exists before the Wasm exports during startup; wait for the export itself.
+const patchName=page=>page.evaluate(()=>globalThis.Module?._surge_browser_patch_name?Module.ccall('surge_browser_patch_name','string',[],[]):null);
 async function start(page){
-  await page.goto('/surge-xt-browser.html');await expect.poll(()=>patchName(page)).toBe('Init Saw');
+  // Startup can exceed the default poll timeout when several browsers load in parallel.
+  await page.goto('/surge-xt-browser.html');await expect.poll(()=>patchName(page),{timeout:20000}).toBe('Init Saw');
   await page.evaluate(()=>{
     const original=SurgeBrowser.importFiles.bind(SurgeBrowser);globalThis.dropReads=0;
     SurgeBrowser.importFiles=async files=>{try{return await original(files);}finally{dropReads++;}};
@@ -83,4 +85,26 @@ test('scripted wavetable drops generate samples and reject malformed metadata wi
   }
   await page.locator('canvas').first().focus();await page.keyboard.press('Alt+w');
   await expect(page.getByRole('textbox',{name:'Wavetable Code',exact:true})).toHaveValue(script);
+});
+
+test('a patch drop during a pending factory download loads with audio running and supersedes it',async({page})=>{
+  await start(page);
+  await page.getByRole('button',{name:'Enable audio',exact:true}).click();
+  await expect.poll(()=>page.evaluate(()=>Module._surge_browser_audio_status())).toBe(2);
+  const url=await page.evaluate(()=>SurgeFactory.library.entries.get('patches_factory/Templates/Init FM2.fxp').url);
+  let release,requested;
+  const held=new Promise(resolve=>{release=resolve}),seen=new Promise(resolve=>{requested=resolve});
+  await page.route('**/library/'+url,async route=>{requested();await held;await route.continue();});
+  await page.evaluate(()=>Module.ccall('surge_browser_request_patch','number',['string'],['/factory/patches_factory/Templates/Init FM2.fxp']));
+  await seen;
+  // The dropped file is the newer action (queuePatchFileLoad drops the pending selection):
+  // it loads while the download is still pending, and audio keeps running.
+  await drop(page,'dropped.fxp',patch('Init Sine'));
+  await expect.poll(()=>patchName(page)).toBe('dropped');
+  const blocks=await page.evaluate(()=>Module._surge_browser_audio_blocks());
+  await expect.poll(()=>page.evaluate(()=>Module._surge_browser_audio_blocks())).toBeGreaterThan(blocks+32);
+  release();
+  await expect.poll(()=>page.evaluate(()=>SurgeFactory.library.pending.size)).toBe(0);
+  await page.waitForTimeout(500);
+  expect(await patchName(page)).toBe('dropped');
 });
