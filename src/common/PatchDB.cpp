@@ -1574,7 +1574,10 @@ std::vector<std::string> PatchDB::readUserFavorites(bool *retry)
     catch (SQL::Exception &e)
     {
 #if SURGE_WEB
-        if (retry && (e.rc == SQLITE_BUSY || e.rc == SQLITE_LOCKED))
+        // A reload during a write can persist a hot journal. Only the writer's
+        // read-write connection can roll it back; until then this read-only
+        // connection reports READONLY. Retry like any other transient contention.
+        if (retry && (e.rc == SQLITE_BUSY || e.rc == SQLITE_LOCKED || (e.rc & 0xff) == SQLITE_READONLY))
         {
             *retry = true;
             return {};
