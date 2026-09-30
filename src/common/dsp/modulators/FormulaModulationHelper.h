@@ -26,12 +26,16 @@
 #include "SurgeStorage.h"
 #include "StringOps.h"
 #include "LuaSupport.h"
+#if SURGE_WEB
+#include "LuaArena.h"
+#endif
 
 #include <atomic>
 #include <array>
 #include <cstdint>
 #include <memory>
 #include <string>
+#include <string_view>
 #include <variant>
 #include <vector>
 
@@ -50,7 +54,17 @@ struct FunctionCache
         int registryReference{-1};
         bool prepared{false};
     };
-    std::unordered_set<std::string> knownBadFunctions; // these are functions which cause an error
+    // Transparent lookup by function name, without building a string on the audio thread.
+    struct NameHash
+    {
+        using is_transparent = void;
+        std::size_t operator()(std::string_view name) const
+        {
+            return std::hash<std::string_view>{}(name);
+        }
+    };
+    std::unordered_set<std::string, NameHash, std::equal_to<>>
+        knownBadFunctions; // these are functions which cause an error
     std::unordered_map<FormulaModulatorStorage *, std::unordered_set<std::string>> functionsPerFMS;
     std::array<PreparedChunk, n_scenes * n_lfos> preparedChunks;
     // Read by control-thread diagnostics while the audio interpreter runs.
@@ -65,6 +79,10 @@ struct GlobalData
     FunctionCache audioFunctions, displayFunctions;
     FunctionCache &functions(bool display) { return display ? displayFunctions : audioFunctions; }
     void *audioState{nullptr}, *displayState{nullptr};
+#if SURGE_WEB
+    // Backs audioState; created with it, off the audio callback, and outlives it.
+    std::unique_ptr<LuaArena> audioArena;
+#endif
     std::atomic<bool> audioSharedWipeRequested{false};
     std::atomic<bool> displaySharedWipeRequested{false};
 };

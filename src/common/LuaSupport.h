@@ -47,6 +47,7 @@ typedef int lua_State;
 #endif
 
 #include <cstdint>
+#include <cstdio>
 #include <string>
 #include <vector>
 
@@ -160,8 +161,11 @@ enum class FFTTransform
  */
 struct SGLD
 {
-    SGLD(const std::string &lab, lua_State *L) : label(lab), L(L)
+    // Guards run on the audio thread around formula evaluation, so the label is
+    // copied into fixed storage rather than a heap-allocated string.
+    SGLD(const char *lab, lua_State *L) : L(L)
     {
+        snprintf(label, sizeof(label), "%s", lab);
 #if HAS_LUA
         if (L)
         {
@@ -169,9 +173,10 @@ struct SGLD
         }
 #endif
     }
+    SGLD(const std::string &lab, lua_State *L) : SGLD(lab.c_str(), L) {}
     ~SGLD();
 
-    std::string label;
+    char label[96];
     lua_State *L;
     int top;
 };

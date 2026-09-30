@@ -225,7 +225,7 @@ Native reference capture:
 
 ```
 cmake -S . -B build-reference -DSURGE_ENGINE_ONLY=ON -DSURGE_BUILD_TESTRUNNER=OFF -DENABLE_LTO=OFF -DSURGE_SKIP_WERROR=ON -DCMAKE_EXPORT_COMPILE_COMMANDS=ON
-cmake --build build-reference --target surge-engine-reference surge-convolution-worker-check surge-effect-retirement-check surge-effect-binding-check --parallel 4
+cmake --build build-reference --target surge-engine-reference surge-convolution-worker-check surge-effect-retirement-check surge-effect-binding-check surge-control-snapshot-check surge-oscillator-extra-configuration-check --parallel 4
 build-reference/src/surge-web/surge-engine-reference resources/data "resources/data/patches_factory/Templates/Init FM2.fxp" 48000 /tmp/fm2.f32
 ```
 
@@ -615,6 +615,31 @@ callback only try-locks, and they refuse to run while the engine is halted.
 `surge_browser_control_state` reports the gate and the release flag;
 `audio-ownership.spec.js` checks them across suspend, a synchronous load while
 suspended, resume, and a live load.
+
+Heap use inside callbacks is audited. The browser app links with `--wrap` for
+the whole malloc family (`BrowserAllocationAudit.c`), so C, C++ and Lua requests
+made while a thread runs a callback (including offline rendering) are observed.
+Those requests are served from a 64 MiB real-time pool reserved before audio
+starts: power-of-two size classes with free lists, constant time, never taking
+dlmalloc's lock and never growing memory. Requests the pool cannot serve fall
+back to the system heap and are counted. `surge_browser_audio_allocations` and
+`surge_browser_audio_releases` report those system-heap calls; the pool
+counters report what the pool served.
+
+The engine itself avoids most callback allocation in browser builds:
+- voice lists use a fixed node pool (`VoiceListAllocator.h`);
+- the audio formula interpreter allocates from its own 16 MiB arena
+  (`LuaArena.h`), and formula evaluation no longer builds temporary strings;
+- start-up preparation warms JUCE's MIDI keyboard listener list, which otherwise
+  grows its storage on the first note.
+
+What remains in the pool: first attacks after a formula patch loads (installing
+the compiled chunk runs the user's top-level code, which must keep its native
+timing), and Twist and String oscillators, which allocate buffers when a voice
+starts, as on desktop. `audio-allocation.spec.js` plays notes, controllers, voice
+stealing, panic, parameter edits, and live loads of FM2, formula, Twist/String,
+vocoder and audio-input patches. It requires zero system-heap calls and checks
+that pool blocks are returned.
 
 Restart preparation also waits for the loader before changing sample rate or
 warming up effects. Waiting does not block the browser event loop, and the new

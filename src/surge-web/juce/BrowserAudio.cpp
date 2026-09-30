@@ -14,6 +14,8 @@ extern "C" int surge_enable_audio();
 extern "C" void surge_browser_audio_changed(int);
 extern "C" void surge_browser_audio_failed(int);
 extern "C" void surge_retire_audio_thread(void *);
+extern "C" thread_local int surge_audio_callback_depth;
+extern "C" int surge_browser_audio_pool_reserve(size_t);
 namespace
 {
 SurgeSynthProcessor *processor{};
@@ -103,8 +105,16 @@ void process(juce::AudioBuffer<float> &buffer, uint64_t firstFrame)
     if (processor->surge->browserPatchLoadRequested.exchange(false, std::memory_order_acq_rel))
         processor->surge->browserPatchLoadPending.store(true, std::memory_order_release);
 }
+bool renderCallback(int ni, const AudioSampleFrame *in, int no, AudioSampleFrame *out);
 bool render(int ni, const AudioSampleFrame *in, int no, AudioSampleFrame *out, int,
             const AudioParamFrame *, void *)
+{
+    ++surge_audio_callback_depth;
+    const auto result = renderCallback(ni, in, no, out);
+    --surge_audio_callback_depth;
+    return result;
+}
+bool renderCallback(int ni, const AudioSampleFrame *in, int no, AudioSampleFrame *out)
 {
     callbacks.fetch_add(1, std::memory_order_relaxed);
     renderStage.store(1, std::memory_order_relaxed);
@@ -202,6 +212,9 @@ void prepareAndStart()
     audioSampleRate = rate;
     midi.ensureSize(65536);
     midi.clear();
+    // Real-time pool for allocations made inside callbacks (for example voices
+    // whose oscillators allocate). Reserved once, before any callback runs.
+    surge_browser_audio_pool_reserve(size_t(64) << 20);
     processor->prepareToPlay(rate, 128);
     // No worklet is running yet and the loader mutex is held. This also covers
     // formula edits made while audio was disabled, without executing user code.
@@ -210,6 +223,13 @@ void prepareAndStart()
     juce::AudioBuffer<float> warmup(2, 128);
     warmup.clear();
     processor->processBlock(warmup, midi);
+    // JUCE's ListenerList grows its iterator storage on its first notification.
+    // Notify once here, as incoming MIDI would, so no callback performs it.
+    {
+        juce::ScopedValueSetter<bool> fromMidi(processor->isAddingFromMidi, true);
+        processor->midiKeyboardState.processNextMidiEvent(juce::MidiMessage::noteOn(1, 0, 1.f));
+        processor->midiKeyboardState.processNextMidiEvent(juce::MidiMessage::noteOff(1, 0));
+    }
     // Patches remain editable while the worklet module loads. The ready callback
     // reserves processing before creating/connecting the node on the main thread.
     processor->surge->audio_processing_active = false;
@@ -461,7 +481,10 @@ static double renderOffline(int frames, const float *left, const float *right)
         const int offset = frames - remaining;
         if (left) std::copy_n(left + offset, count, buffer.getWritePointer(0));
         if (right || left) std::copy_n((right ? right : left) + offset, count, buffer.getWritePointer(1));
+        // Offline blocks run the callback path, so they count toward the audit too.
+        ++surge_audio_callback_depth;
         process(buffer, offlineFrame);
+        --surge_audio_callback_depth;
         offlineFrame += count;
         for (int channel = 0; channel < 2; ++channel)
             for (int sample = 0; sample < count; ++sample)

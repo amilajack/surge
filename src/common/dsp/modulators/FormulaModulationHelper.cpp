@@ -54,6 +54,9 @@ GlobalData::~GlobalData()
 #endif
 }
 
+// Built once, not at every first attack on the audio thread.
+static const std::vector<std::string> formulaEntryPoints{"process", "init"};
+
 static bool prepareEvaluator(SurgeStorage *storage, FormulaModulatorStorage *fs, EvaluatorState &s,
                              bool is_display, bool compileOnly)
 {
@@ -67,7 +70,14 @@ static bool prepareEvaluator(SurgeStorage *storage, FormulaModulatorStorage *fs,
         if (stateData.audioState == nullptr)
         {
 #if HAS_LUA
+#if SURGE_WEB
+            // Sized for the factory formula library with ample headroom; beyond
+            // it, allocations fall back to the heap (and the callback audit sees them).
+            stateData.audioArena = std::make_unique<LuaArena>(std::size_t(16) << 20);
+            stateData.audioState = lua_newstate(&LuaArena::allocate, stateData.audioArena.get());
+#else
             stateData.audioState = luaL_newstate();
+#endif
             if (!stateData.audioState)
                 return false;
             Surge::LuaSupport::openLibraries((lua_State *)(stateData.audioState));
@@ -167,15 +177,14 @@ end
 
     // OK so now evaluate the formula. This is a mistake - the loading and
     // compiling can be expensive so lets look it up by hash first
-    auto h = fs->formulaHash;
-    auto pvn = std::string("pvn") + std::to_string(is_display) + "_" + std::to_string(h);
-    auto pvf = pvn + "_f";
-    auto pvfInit = pvn + "_fInit";
-    snprintf(s.funcName, TXT_SIZE, "%s", pvf.c_str());
-    snprintf(s.funcNameInit, TXT_SIZE, "%s", pvfInit.c_str());
+    // Fixed buffers: this runs at note-on on the audio thread.
+    char pvn[TXT_SIZE];
+    snprintf(pvn, TXT_SIZE, "pvn%d_%llu", int(is_display), (unsigned long long)fs->formulaHash);
+    snprintf(s.funcName, TXT_SIZE, "%s_f", pvn);
+    snprintf(s.funcNameInit, TXT_SIZE, "%s_fInit", pvn);
 
     // Handle hash collisions
-    lua_getglobal(s.L, pvn.c_str());
+    lua_getglobal(s.L, pvn);
     s.isvalid = false;
 
     bool hasString = false;
@@ -193,14 +202,12 @@ end
     lua_pop(s.L, 1); // we don't need the string or whatever on the stack
     if (hasString)
     {
-        snprintf(s.funcName, TXT_SIZE, "%s", pvf.c_str());
-        snprintf(s.funcNameInit, TXT_SIZE, "%s", pvfInit.c_str());
         // CHECK that I can actually get the function here
         lua_getglobal(s.L, s.funcName);
         s.isvalid = lua_isfunction(s.L, -1);
         lua_pop(s.L, 1);
 
-        if (functions.knownBadFunctions.find(s.funcName) != functions.knownBadFunctions.end())
+        if (functions.knownBadFunctions.find(std::string_view(s.funcName)) != functions.knownBadFunctions.end())
         {
             s.isvalid = false;
         }
@@ -215,7 +222,7 @@ end
             if (prepared.registryReference >= 0)
             {
                 lua_rawgeti(s.L, LUA_REGISTRYINDEX, prepared.registryReference);
-                res = Surge::LuaSupport::evaluateCompiledFunctions(s.L, {"process", "init"}, emsg);
+                res = Surge::LuaSupport::evaluateCompiledFunctions(s.L, formulaEntryPoints, emsg);
             }
             else
             {
@@ -228,7 +235,7 @@ end
         {
             functions.compilationAttempts.fetch_add(1, std::memory_order_relaxed);
             res = Surge::LuaSupport::parseStringDefiningMultipleFunctions(
-                s.L, fs->formulaString, {"process", "init"}, emsg);
+                s.L, fs->formulaString, formulaEntryPoints, emsg);
         }
 
         if (res >= 1)
@@ -271,7 +278,7 @@ end
 
         // this happens here because we did parse it at least. Don't parse again until it is changed
         lua_pushstring(s.L, fs->formulaString.c_str());
-        lua_setglobal(s.L, pvn.c_str());
+        lua_setglobal(s.L, pvn);
     }
 
     if (s.isvalid)
@@ -658,18 +665,18 @@ void valueAt(int phaseIntPart, float phaseFracPart, SurgeStorage *storage,
     auto gs = Surge::LuaSupport::SGLD("valueAt", s->L);
     struct OnErrorReplaceWithZero
     {
-        OnErrorReplaceWithZero(lua_State *L, std::string fn) : L(L), fn(fn) {}
+        OnErrorReplaceWithZero(lua_State *L, const char *fn) : L(L), fn(fn) {}
         ~OnErrorReplaceWithZero()
         {
             if (replace)
             {
                 // std::cout << "Would nuke " << fn << std::endl;
                 lua_getglobal(L, "surge_reserved_formula_error_stub");
-                lua_setglobal(L, fn.c_str());
+                lua_setglobal(L, fn);
             }
         }
         lua_State *L;
-        std::string fn;
+        const char *fn; // The evaluator's own name buffer outlives this guard.
         bool replace = true;
     } onerr(s->L, s->funcName);
 
@@ -874,7 +881,7 @@ void valueAt(int phaseIntPart, float phaseFracPart, SurgeStorage *storage,
         {
             auto &functions = storage->formulaGlobalData->functions(s->is_display);
 
-            if (functions.knownBadFunctions.find(s->funcName) != functions.knownBadFunctions.end())
+            if (functions.knownBadFunctions.find(std::string_view(s->funcName)) != functions.knownBadFunctions.end())
                 s->adderror(
                     "You must define the 'output' field in the returned table as a number or a "
                     "float array!");

@@ -60,6 +60,13 @@ struct parametermeta
 class EffectRetirementWorker;
 struct PreparedEffect;
 
+#if SURGE_WEB
+#include "VoiceListAllocator.h"
+using SurgeVoiceList = std::list<SurgeVoice *, Surge::VoiceListAllocator<SurgeVoice *>>;
+#else
+using SurgeVoiceList = std::list<SurgeVoice *>;
+#endif
+
 class alignas(16) SurgeSynthesizer
 {
   public:
@@ -635,7 +642,7 @@ class alignas(16) SurgeSynthesizer
     bool approachingAllSoundOff{false};
     // TODO: FIX SCENE ASSUMPTION (for halfbandA/B - use std::array)
     sst::filters::HalfRate::HalfRateFilter halfbandA, halfbandB, halfbandIN;
-    std::list<SurgeVoice *> voices[n_scenes];
+    SurgeVoiceList voices[n_scenes];
     std::unique_ptr<Effect> fx[n_fx_slots];
 #if SURGE_WEB
     std::unique_ptr<EffectRetirementWorker> browserEffectRetirement;

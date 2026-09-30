@@ -575,7 +575,7 @@ void SurgeSynthesizer::playNoteByFrequency(float freq, char velocity, int32_t id
 
 void SurgeSynthesizer::softkillVoice(int s)
 {
-    list<SurgeVoice *>::iterator iter, max_playing, max_released;
+    SurgeVoiceList::iterator iter, max_playing, max_released;
     int max_age = -1, max_age_release = -1;
     iter = voices[s].begin();
 
@@ -610,7 +610,7 @@ void SurgeSynthesizer::softkillVoice(int s)
 // only allow 'margin' number of voices to be softkilled simultaneously
 void SurgeSynthesizer::enforcePolyphonyLimit(int s, int margin)
 {
-    list<SurgeVoice *>::iterator iter;
+    SurgeVoiceList::iterator iter;
 
     int paddedPoly = std::min((storage.getPatch().polylimit.val.i + margin), MAX_VOICES - 1);
     if (voices[s].size() > paddedPoly)
@@ -909,7 +909,7 @@ void SurgeSynthesizer::playVoice(int scene, char channel, char key, char velocit
     case pm_mono_fp:
     case pm_latch:
     {
-        list<SurgeVoice *>::const_iterator iter;
+        SurgeVoiceList::const_iterator iter;
         bool glide = false;
 
         int primode = storage.getPatch().scene[scene].monoVoicePriorityMode;
@@ -1136,7 +1136,7 @@ void SurgeSynthesizer::playVoice(int scene, char channel, char key, char velocit
 
         if (createVoice)
         {
-            list<SurgeVoice *>::const_iterator iter;
+            SurgeVoiceList::const_iterator iter;
             SurgeVoice *recycleThis{nullptr};
             float aegStart{0.}, fegStart{0.};
             for (iter = voices[scene].begin(); iter != voices[scene].end(); iter++)
@@ -1233,7 +1233,7 @@ void SurgeSynthesizer::playVoice(int scene, char channel, char key, char velocit
 
 void SurgeSynthesizer::releaseScene(int s)
 {
-    list<SurgeVoice *>::const_iterator iter;
+    SurgeVoiceList::const_iterator iter;
     for (iter = voices[s].begin(); iter != voices[s].end(); iter++)
     {
         freeVoice(*iter);
@@ -1399,7 +1399,7 @@ void SurgeSynthesizer::releaseNotePostHoldCheck(int scene, char channel, char ke
                                                 int32_t host_noteid)
 {
     channelState[channel].keyState[key].keystate = 0;
-    list<SurgeVoice *>::const_iterator iter;
+    SurgeVoiceList::const_iterator iter;
     for (int s = 0; s < n_scenes; s++)
     {
         bool do_switch = false;
@@ -2780,7 +2780,7 @@ void SurgeSynthesizer::stopSound()
 
     for (int s = 0; s < n_scenes; s++)
     {
-        list<SurgeVoice *>::const_iterator iter;
+        SurgeVoiceList::const_iterator iter;
         for (iter = voices[s].begin(); iter != voices[s].end(); iter++)
         {
             freeVoice(*iter);
@@ -3357,7 +3357,7 @@ void SurgeSynthesizer::switch_toggled()
 {
     for (int s = 0; s < n_scenes; s++)
     {
-        list<SurgeVoice *>::iterator iter;
+        SurgeVoiceList::iterator iter;
         for (iter = voices[s].begin(); iter != voices[s].end(); iter++)
         {
             SurgeVoice *v = *iter;
@@ -5550,7 +5550,7 @@ void SurgeSynthesizer::process()
         }
     }
 
-    list<SurgeVoice *>::iterator iter;
+    SurgeVoiceList::iterator iter;
 
     for (int sc = 0; sc < n_scenes; sc++)
     {

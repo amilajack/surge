@@ -34,4 +34,5 @@ then
   configure_args+=(--fresh)
 fi
 emcmake cmake "${configure_args[@]}" -DENABLE_LTO=OFF -DSURGE_BUILD_TESTRUNNER=OFF -DSURGE_SKIP_WERROR=ON
-cmake --build "$root/build-web" --target surge-xt-browser surge-web surge-juce-browser-check --parallel "${SURGE_BUILD_JOBS:-4}"
+cmake --build "$root/build-web" --target surge-xt-browser surge-web surge-juce-browser-check \
+  surge-wavetable-snapshot-check --parallel "${SURGE_BUILD_JOBS:-4}"

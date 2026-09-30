@@ -50,7 +50,8 @@ target_include_directories(surge-xt-browser-editor PUBLIC
 target_compile_definitions(surge-xt-browser-editor PUBLIC
   JucePlugin_Name="Surge\ XT" BUILD_IS_RELEASE=1 HAS_CLAP_JUCE_EXTENSIONS=0)
 target_link_libraries(surge-xt-browser-editor PUBLIC surge-common surge-platform surge-juce-browser sst-filters-extras)
-add_executable(surge-xt-browser BrowserMain.cpp BrowserAudio.cpp BrowserWavetables.cpp BrowserAudioThread.c)
+add_executable(surge-xt-browser BrowserMain.cpp BrowserAudio.cpp BrowserWavetables.cpp BrowserAudioThread.c
+  BrowserAllocationAudit.c)
 target_link_libraries(surge-xt-browser PRIVATE surge-xt-browser-editor)
 # Isolated, version-checked retirement shim for the pinned SDK's hybrid worklet.
 set_source_files_properties(BrowserAudioThread.c PROPERTIES INCLUDE_DIRECTORIES
@@ -61,6 +62,10 @@ target_link_options(surge-xt-browser PRIVATE "SHELL:--pre-js ${CMAKE_SOURCE_DIR}
   --shell-file ${CMAKE_SOURCE_DIR}/web/juce-shell.html
   "SHELL:--pre-js ${CMAKE_SOURCE_DIR}/web/browser/platform.js" -lidbfs.js
   "-sEXPORTED_RUNTIME_METHODS=['ccall','FS','stringToNewUTF8']")
+# Observe every heap operation made inside the audio callback (BrowserAllocationAudit.c).
+foreach(function malloc calloc realloc free posix_memalign aligned_alloc memalign)
+  target_link_options(surge-xt-browser PRIVATE -Wl,--wrap=${function})
+endforeach()
 set_target_properties(surge-xt-browser PROPERTIES SUFFIX .html RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/web)
 
 set_property(TARGET surge-xt-browser surge-juce-browser-check APPEND PROPERTY LINK_DEPENDS
