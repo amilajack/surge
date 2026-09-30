@@ -65,7 +65,8 @@ test('folder export preserves a portable skin bundle and existing destinations, 
 test('partial folder failure retains sources, reports partial output and retries into a fresh folder',async({page})=>{
   const {dialog,files}=await setup(page);
   await page.evaluate(()=>{folderFailAfter=1;});await dialog.getByRole('button',{name:'Download this folder',exact:true}).click();
-  await expect(dialog.getByRole('alert')).toContainText('Some destination files may have been written');
+  // The test destination cannot remove its partial folder, so the files written are named.
+  await expect(dialog.getByRole('alert')).toContainText('Written before the failure: ');
   expect(await page.evaluate(()=>folderAborted)).toBe(true);
   expect(await sourceHashes(page,source,Object.keys(files))).toEqual(files);
   const partial=await exportedHashes(page);

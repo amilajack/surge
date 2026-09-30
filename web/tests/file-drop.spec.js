@@ -47,7 +47,9 @@ for(const format of ['wt','wav'])test(`${format} wavetable drops preserve exact 
   });
   expect(await samples()).toEqual(expected);
   await drop(page,'invalid.'+format,[1,2,3]);
-  await expect(page.locator('#file-status')).toContainText('could not be decoded');
+  // .wt files are validated before they reach JUCE; WAV files are also impulse
+  // responses, so the native wavetable loader reports them.
+  await expect(page.locator('#file-status')).toContainText(format==='wt'?'Invalid invalid.wt':'could not be decoded');
   expect(await samples()).toEqual(expected);
 });
 test('a slow earlier file drop cannot replace a newer patch drop',async({page})=>{

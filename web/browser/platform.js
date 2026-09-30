@@ -113,9 +113,11 @@ if (typeof window !== 'undefined') {
           if (paths.includes(name)) throw Error('Duplicate file name in selection');
           paths.push(name);
           FS.writeFile(name, file.bytes);
-          if (/\.fxp$/i.test(file.name) && Module['_surge_browser_validate_patch']) {
-            const error = Module['ccall']('surge_browser_validate_patch', 'string', ['string'], [name]);
-            if (error) throw Error('Invalid patch: ' + error);
+          // Patches, wavetables, tuning files and presets are validated with
+          // the native parsers' rules; one invalid file rejects the batch.
+          if (Module['_surge_browser_validate_file']) {
+            const error = Module['ccall']('surge_browser_validate_file', 'string', ['string'], [name]);
+            if (error) throw Error((/\.fxp$/i.test(file.name) ? 'Invalid patch: ' : 'Invalid ' + file.name + ': ') + error);
           }
         }
         // Storage failures are surfaced, but retain imported data in memory.
@@ -153,15 +155,32 @@ if (typeof window !== 'undefined') {
         }
       });
     },
-    async copyDirectory(handle, directory) {
-      FS.mkdirTree(directory);
-      for await (const entry of handle.values()) {
-        const destination = directory + '/' + platform.safeName(entry.name);
-        if (entry.kind === 'directory') await platform.copyDirectory(entry, destination);
-        else FS.writeFile(destination, new Uint8Array(await (await entry.getFile()).arrayBuffer()));
-      }
+    removeTree(path) {
+      if (!FS.analyzePath(path).exists) return;
+      if (FS.isDir(FS.lstat(path).mode)) {
+        for (const name of FS.readdir(path)) if (name !== '.' && name !== '..') platform.removeTree(path + '/' + name);
+        FS.rmdir(path);
+      } else FS.unlink(path);
     },
-    async exportDirectory(directory, handle) {
+    // A folder read either completes or leaves nothing behind.
+    async copyDirectory(handle, directory) {
+      const copy = async (handle, directory) => {
+        FS.mkdirTree(directory);
+        for await (const entry of handle.values()) {
+          const destination = directory + '/' + platform.safeName(entry.name);
+          if (entry.kind === 'directory') await copy(entry, destination);
+          else FS.writeFile(destination, new Uint8Array(await (await entry.getFile()).arrayBuffer()));
+        }
+      };
+      try { await copy(handle, directory); }
+      catch (error) { try { platform.removeTree(directory); } catch {} throw error; }
+    },
+    // On failure the error lists every destination file that was completely written.
+    async exportDirectory(directory, handle, written = [], prefix = '') {
+      try { await platform.exportInto(directory, handle, written, prefix); }
+      catch (error) { if (!error.written) error.written = written; throw error; }
+    },
+    async exportInto(directory, handle, written, prefix) {
       // The virtual export directory is new for each picker. Check the actual
       // destination too so a repeated frame export cannot overwrite earlier work.
       const occupied = new Set();
@@ -173,12 +192,13 @@ if (typeof window !== 'undefined') {
           let destination = name, suffix = 2;
           while (occupied.has(destination)) destination = name + ' ' + suffix++;
           occupied.add(destination);
-          await platform.exportDirectory(source, await handle.getDirectoryHandle(destination, {create:true}));
+          await platform.exportInto(source, await handle.getDirectoryHandle(destination, {create:true}), written, prefix + destination + '/');
         } else {
           const file = await handle.getFileHandle(name, {create:true});
           const writer = await file.createWritable();
           try { await writer.write(FS.readFile(source)); await writer.close(); }
           catch (error) { await writer.abort().catch(() => {}); throw error; }
+          written.push(prefix + name);
         }
       }
     },
@@ -195,7 +215,8 @@ if (typeof window !== 'undefined') {
           const local = '/user/directories/' + crypto.randomUUID() + '/' + platform.safeName(handle.name);
           if (save) FS.mkdirTree(local);
           else await platform.copyDirectory(handle, local);
-          if (!complete([local])) return;
+          const accepted = complete([local]);
+          if (!accepted || (accepted === 2 && !await platform.awaitDeferred(token))) return;
           // JUCE's export callbacks finish their file writes synchronously.
           if (save) await platform.exportDirectory(local, handle);
           await platform.flush();
@@ -205,7 +226,11 @@ if (typeof window !== 'undefined') {
           const local = '/user/exports/' + crypto.randomUUID() + '/' + platform.safeName(handle.name);
           const exportDirectory = local.slice(0, local.lastIndexOf('/'));
           FS.mkdirTree(exportDirectory);
-          if (!complete([local])) return;
+          const accepted = complete([local]);
+          if (!accepted) return;
+          // 2: the application finishes this export later (for example after a
+          // wavetable script generates off the main thread) and signals completion.
+          if (accepted === 2 && !await platform.awaitDeferred(token)) return;
           let output = local;
           if (!FS.analyzePath(output).exists) {
             // Native callbacks may normalize the filename extension. This
@@ -231,9 +256,35 @@ if (typeof window !== 'undefined') {
           complete(await platform.importFiles(files));
         }
       } catch (error) {
-        if (completed || error.name !== 'AbortError') platform.reportFile('File operation failed: ' + String(error));
+        if (completed || error.name !== 'AbortError')
+          platform.reportFile('File operation failed: ' + String(error) +
+            (error.written ? (error.written.length ? ' Written before the failure: ' + error.written.join(', ') : ' No files were written.') : ''));
         if (!completed) complete([]);
       }
+    },
+    deferred: new Map(),
+    // Resolves true when the application finished the export, false if it failed
+    // or the user canceled. Nothing is written to the destination in that case.
+    awaitDeferred(token) {
+      return new Promise(resolve => {
+        const cancel = document.createElement('button');
+        cancel.textContent = 'Cancel export';
+        cancel.style.cssText = 'position:fixed;right:8px;bottom:175px;z-index:1000';
+        const finish = (ok, message) => {
+          if (!platform.deferred.has(token)) return;
+          platform.deferred.delete(token);
+          cancel.remove();
+          platform.reportFile(message || '');
+          resolve(ok);
+        };
+        platform.deferred.set(token, finish);
+        platform.reportFile('Preparing export…');
+        cancel.onclick = () => finish(false, 'Export canceled. No file was written.');
+        document.body.append(cancel);
+      });
+    },
+    deferredDone(token, ok, message) {
+      platform.deferred.get(token)?.(!!ok, ok ? '' : 'File operation failed: ' + (message || 'The export could not be completed.'));
     },
     ready: null
   };

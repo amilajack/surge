@@ -28,8 +28,8 @@ for(const extension of ['scl','kbm'])test(`invalid ${extension} import preserves
   await importFile(page,'scl',scale);await importFile(page,'kbm',mapping);
   const before=await state(page);expect(before.scale).toContain('Browser retained scale');expect(before.mapping).toContain('432');
   await importFile(page,extension,'invalid tuning data\n');
-  await expect(page.getByRole('button',{name:'OK',exact:true})).toBeAttached();
-  await page.getByRole('button',{name:'OK',exact:true}).dispatchEvent('click');
+  // Rejected by the tuning parser before the file reaches the application.
+  await expect(page.locator('#file-status')).toContainText('Invalid tuning file');
   expect(await state(page)).toEqual(before);
 });
 
@@ -41,14 +41,13 @@ async function drop(page,extension,text,fail=false){
     canvas.dispatchEvent(new DragEvent('drop',{bubbles:true,cancelable:true,dataTransfer:transfer,clientX:bounds.left+10,clientY:bounds.top+10}));
   },{extension,text,fail});
 }
-for(const extension of ['scl','kbm'])test(`invalid dropped ${extension} retains the current tuning through the JUCE file-drop path`,async({page})=>{
+for(const extension of ['scl','kbm'])test(`invalid dropped ${extension} is rejected before the JUCE file-drop path and retains the current tuning`,async({page})=>{
   await page.goto('/surge-xt-browser.html');
   await expect(page.getByRole('button',{name:'Main Menu',exact:true})).toBeAttached();
   await importFile(page,'scl',scale);await importFile(page,'kbm',mapping);
   const before=await state(page);
   await drop(page,extension,'invalid tuning data\n');
-  await expect(page.getByRole('button',{name:'OK',exact:true})).toBeAttached();
-  await page.getByRole('button',{name:'OK',exact:true}).dispatchEvent('click');
+  await expect(page.locator('#file-status')).toContainText('Invalid tuning file');
   expect(await state(page)).toEqual(before);
 });
 test('valid dropped tuning files reach the original editor',async({page})=>{

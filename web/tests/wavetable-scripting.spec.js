@@ -520,8 +520,8 @@ test('invalid snapshot import retains the previous captured samples',async({page
   await page.evaluate(()=>{window.showOpenFilePicker=async()=>[{getFile:async()=>new File(['invalid wavetable'],'Invalid.wt')}];});
   await scriptMenu(page,'Import Wavetable Data');
   await page.getByRole('group',{name:/^Snapshot 1 \(/}).getByRole('button',{name:'Load .wav/.wt',exact:true}).dispatchEvent('click');
-  await expect(page.getByText(/The previous snapshot was retained/).first()).toBeAttached();
-  await page.getByRole('button',{name:'OK',exact:true}).dispatchEvent('click');
+  // The .wt file is rejected before it reaches the snapshot loader.
+  await expect(page.locator('#file-status')).toContainText('Invalid Invalid.wt');
   await generate(page,'function init(wt) wt.name="Retained snapshot" return wt end\nfunction generate(wt) return wt.snapshot[1][1] end');
   await expect.poll(()=>name(page)).toBe('Retained snapshot');
   expect(await snapshot(page)).toEqual(original);

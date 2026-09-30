@@ -64,12 +64,18 @@
             while(occupied.has(destination))destination=stem+' '+(suffix++)+extension;
             copying=true;
             if(dialog.isConnected)status.textContent='Downloading '+name+'…';
-            await SurgeBrowser.exportDirectory(source,await parent.getDirectoryHandle(destination,{create:true}));
+            try{await SurgeBrowser.exportDirectory(source,await parent.getDirectoryHandle(destination,{create:true}));}
+            catch(reason){
+              // The destination folder is new: remove it so a failure leaves nothing behind.
+              let removed=false;try{await parent.removeEntry(destination,{recursive:true});removed=true;}catch{}
+              reason.partial=removed?'':(reason.written?.length?'. Written before the failure: '+reason.written.join(', '):'. No files were written');
+              throw reason;
+            }
             if(dialog.isConnected)status.textContent='Downloaded folder '+destination;
           }catch(reason){
             if(dialog.isConnected){
               if(reason?.name==='AbortError'&&!copying)status.textContent='Folder download canceled. Files remain in browser storage.';
-              else error.textContent='Unable to download folder: '+String(reason)+(copying?'. Some destination files may have been written.':'')+' Files remain in browser storage.';
+              else error.textContent='Unable to download folder: '+String(reason)+(reason?.partial??'')+'. Files remain in browser storage.';
             }
           }finally{exportFolder.disabled=false;}
         };

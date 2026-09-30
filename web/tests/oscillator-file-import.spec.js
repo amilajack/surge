@@ -133,7 +133,7 @@ for(const format of ['wt','wav','wtscript'])test(`invalid oscillator ${format} i
   const code=page.getByRole('textbox',{name:'Wavetable Code',exact:true}),source=await code.inputValue();
   await picker(page,false,{name:'Invalid.'+format,bytes:Array.from(Buffer.from(format==='wtscript'?'<wtscript><broken/></wtscript>':'invalid'))});
   if(format==='wtscript')await expect(page.getByRole('button',{name:'OK',exact:true})).toBeAttached();
-  else await expect(page.locator('#file-status')).toContainText('could not be decoded');
+  else await expect(page.locator('#file-status')).toContainText(format==='wt'?'Invalid Invalid.wt':'could not be decoded');
   const ok=page.getByRole('button',{name:'OK',exact:true});if(await ok.count())await ok.dispatchEvent('click');
   expect(await name(page)).toBe('Imported');expect(await samples(page)).toEqual(before);await expect(code).toHaveValue(source);
   await picker(page,false,{name:'Retry.wt',bytes});await expect.poll(()=>name(page)).toBe('Retry');

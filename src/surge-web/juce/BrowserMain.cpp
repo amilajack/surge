@@ -71,6 +71,12 @@ extern "C" EMSCRIPTEN_KEEPALIVE int surge_browser_scene()
 {
     return browserProcessor ? browserProcessor->surge->storage.getPatch().scene_active.val.i : -1;
 }
+extern "C" EMSCRIPTEN_KEEPALIVE const char *surge_browser_validate_file(const char *path)
+{
+    static std::string error;
+    Surge::PatchStorage::validateUserFile(fs::path(path), error);
+    return error.c_str();
+}
 extern "C" EMSCRIPTEN_KEEPALIVE const char *surge_browser_validate_patch(const char *path)
 {
     static std::string error;

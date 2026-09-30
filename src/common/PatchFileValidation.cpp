@@ -6,8 +6,11 @@
 #include "tinyxml/tinyxml.h"
 #include "zstd.h"
 #include "binn/binn.h"
+#include <algorithm>
+#include <cctype>
 #include <cstring>
 #include <fstream>
+#include <iterator>
 #include <limits>
 
 namespace Surge::PatchStorage
@@ -144,5 +147,85 @@ bool readValidatedPatch(const fs::path &path, std::vector<char> &data, std::stri
         error = exception.what();
         return false;
     }
+}
+
+namespace
+{
+bool readAll(const fs::path &path, std::string &contents, std::string &error)
+{
+    std::ifstream file(path, std::ios::binary);
+    if (!file) { error = "Unable to open file"; return false; }
+    contents.assign(std::istreambuf_iterator<char>(file), std::istreambuf_iterator<char>());
+    return true;
+}
+std::uint32_t le32(const std::string &d, std::size_t at)
+{
+    return std::uint32_t((unsigned char)d[at]) | std::uint32_t((unsigned char)d[at + 1]) << 8 |
+           std::uint32_t((unsigned char)d[at + 2]) << 16 | std::uint32_t((unsigned char)d[at + 3]) << 24;
+}
+std::uint16_t le16(const std::string &d, std::size_t at)
+{
+    return std::uint16_t((unsigned char)d[at] | (unsigned char)d[at + 1] << 8);
+}
+bool validateWt(const std::string &d, std::string &error)
+{
+    if (d.size() < sizeof(wt_header) || d.compare(0, 4, "vawt") != 0)
+    { error = "This file is not a Surge .wt wavetable"; return false; }
+    const auto samples = std::int32_t(le32(d, 4));
+    const auto frames = le16(d, 8), flags = le16(d, 10);
+    if (samples <= 0 || samples > max_wtable_size || frames == 0 || frames > max_subtables)
+    { error = "Invalid wavetable dimensions"; return false; }
+    const std::size_t width = flags & wtf_int16 ? sizeof(short) : sizeof(float);
+    if (std::size_t(samples) * frames * width > d.size() - sizeof(wt_header))
+    { error = "Truncated wavetable samples"; return false; }
+    return true;
+}
+bool validateXml(const std::string &d, const char *root, const char *what, std::string &error)
+{
+    TiXmlDocument doc;
+    doc.Parse(d.c_str(), nullptr, TIXML_ENCODING_LEGACY);
+    if (doc.Error() || !doc.FirstChildElement(root))
+    { error = std::string("Invalid ") + what; return false; }
+    return true;
+}
+} // namespace
+
+bool validateUserFile(const fs::path &path, std::string &error)
+{
+    error.clear();
+    auto extension = path_to_string(path.extension());
+    std::transform(extension.begin(), extension.end(), extension.begin(),
+                   [](unsigned char c) { return std::tolower(c); });
+    try
+    {
+        if (extension == ".fxp")
+        {
+            std::vector<char> data;
+            return readValidatedPatch(path, data, error);
+        }
+        // Only formats with a single consumer whose acceptance rules are reproduced
+        // exactly. WAV files also serve as impulse responses (with other sample
+        // formats), and .wtscript has a binary container; their native loaders
+        // report failures and retain the current state themselves.
+        static const char *known[] = {".wt", ".scl", ".kbm", ".srgfx", ".modpreset"};
+        if (std::find(std::begin(known), std::end(known), extension) == std::end(known))
+            return true;
+        std::string d;
+        if (!readAll(path, d, error)) return false;
+        if (extension == ".wt") return validateWt(d, error);
+        if (extension == ".scl") { Tunings::parseSCLData(d); return true; }
+        if (extension == ".kbm") { Tunings::parseKBMData(d); return true; }
+        if (extension == ".srgfx") return validateXml(d, "single-fx", "FX preset", error);
+        return validateXml(d, "lfo", "modulator preset", error);
+    }
+    catch (const Tunings::TuningError &exception)
+    {
+        error = std::string("Invalid tuning file: ") + exception.what();
+    }
+    catch (const std::exception &exception)
+    {
+        error = exception.what();
+    }
+    return false;
 }
 }
