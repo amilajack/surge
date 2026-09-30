@@ -193,7 +193,11 @@ SurgeStorage::SurgeStorage(const SurgeStorage::SurgeStorageConfig &config) : oth
 #if SURGE_WEB
     datapath = hasSuppliedDataPath ? fs::path{suppliedDataPath} : fs::path{"/factory"};
     localAppDataPath = "/user/config";
-    userDataPath = "/user";
+    // "Set Custom User Data Folder" imports the chosen folder into /user and
+    // records it in /user/config, so the override persists with browser storage.
+    userDataPath = getOverridenUserPath();
+    if (userDataPath.empty())
+        userDataPath = "/user";
 #elif MAC
     if (!hasSuppliedDataPath)
     {
