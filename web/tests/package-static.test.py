@@ -119,10 +119,30 @@ class PackageTests(unittest.TestCase):
         target = packaging.package(self.build, self.output, {}, archive, receipt)
         manifest = packaging.verify(target)
         self.assertTrue(manifest['source']['snapshotArchiveIncluded'])
-        self.assertFalse(manifest['source']['correspondingSourceIncluded'])
+        self.assertTrue(manifest['source']['correspondingSourceIncluded'])
+        self.assertEqual(manifest['status'], 'development')
         self.assertEqual((target / manifest['source']['archive']).read_bytes(), archive.read_bytes())
         self.assertEqual((target / 'build-receipt.json').read_bytes(), receipt.read_bytes())
         self.assertEqual(target, packaging.package(self.build, self.output, {}, archive, receipt))
+
+    def test_packages_carry_the_audited_notice_bundle(self):
+        target = self.package()
+        notices = (target / 'THIRD-PARTY-NOTICES.txt').read_text()
+        self.assertIn('THIRD-PARTY NOTICES', notices)
+        self.assertIn('THIRD-PARTY-NOTICES.txt', packaging.verify(target)['files'])
+
+    def test_release_requires_source_and_passing_gates(self):
+        with self.assertRaisesRegex(ValueError, 'source archive'):
+            packaging.package(self.build, self.output, self.provenance, release=True)
+        archive, receipt, _ = self.source_binding()
+        with patch.object(packaging, 'release_gates', side_effect=ValueError('Release gate failed: feature-inventory.py')):
+            with self.assertRaisesRegex(ValueError, 'Release gate failed'):
+                packaging.package(self.build, self.output, {}, archive, receipt, release=True)
+        with patch.object(packaging, 'release_gates'):
+            target = packaging.package(self.build, self.output, {}, archive, receipt, release=True)
+        manifest = packaging.verify(target)
+        self.assertEqual(manifest['status'], 'release')
+        self.assertTrue((target / 'DISTRIBUTION.md').read_text().startswith('# Surge XT browser release'))
 
     def test_mismatched_source_or_changed_binary_cannot_publish(self):
         archive, receipt_path, receipt = self.source_binding()

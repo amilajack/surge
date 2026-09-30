@@ -22,6 +22,22 @@ def source_tools():
     return module
 
 
+def load_script(name, file):
+    spec = importlib.util.spec_from_file_location(name, ROOT / 'web/scripts' / file)
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    return module
+
+
+def release_gates(build):
+    """A release needs every desktop entry point reviewed and complete notice coverage."""
+    for command in (['web/scripts/feature-inventory.py', '--require-complete'],
+                    ['web/scripts/license-coverage.py', '--build', str(build.parents[0])]):
+        result = subprocess.run(['python3', *command], cwd=ROOT, capture_output=True, text=True)
+        if result.returncode:
+            raise ValueError(f'Release gate failed: {command[0]}\n{result.stdout}{result.stderr}')
+
+
 def file_records(files):
     return {name: {'size': path.stat().st_size, 'sha256': digest(path)} for name, path in sorted(files.items())}
 
@@ -104,7 +120,7 @@ def verify(directory, version=None):
     manifest_path = local_file(directory, 'distribution.json')
     raw = manifest_path.read_bytes()
     manifest = json.loads(raw)
-    if manifest.get('schema') != 1 or manifest.get('status') != 'development' or manifest.get('permissions') != 'files:0644,directories:0755':
+    if manifest.get('schema') != 1 or manifest.get('status') not in ('development', 'release') or manifest.get('permissions') != 'files:0644,directories:0755':
         raise ValueError('Unsupported distribution manifest')
     if hashlib.sha256(raw).hexdigest() != (version or directory.name):
         raise ValueError('Distribution directory is not its manifest digest')
@@ -122,6 +138,8 @@ def verify(directory, version=None):
         if path.stat().st_size != info['size'] or digest(path) != info['sha256']:
             raise ValueError(f'Distribution integrity failure: {name}')
     source = manifest['source']
+    if manifest['status'] == 'release' and not source.get('correspondingSourceIncluded'):
+        raise ValueError('A release must include its corresponding source')
     if source.get('snapshotArchiveIncluded'):
         receipt = json.loads(local_file(directory, 'build-receipt.json').read_text())
         snapshot, original = check_build_binding(inputs(directory), local_file(directory, source['archive']), receipt)
@@ -130,16 +148,23 @@ def verify(directory, version=None):
     return manifest
 
 
-def package(build, output, provenance, source_archive=None, build_receipt=None):
+def package(build, output, provenance, source_archive=None, build_receipt=None, release=False):
     files = inputs(build)
     if bool(source_archive) != bool(build_receipt):
         raise ValueError('Source archive and build receipt must be supplied together')
+    if release and not source_archive:
+        raise ValueError('A release must include its source archive and build receipt')
+    if release:
+        release_gates(build)
     if source_archive:
         receipt = json.loads(build_receipt.read_text())
         snapshot, original = check_build_binding(files, source_archive, receipt)
+        # The snapshot holds the Surge tree, every submodule and the build scripts;
+        # web/scripts/build.sh pins the Emscripten SDK by version and commit.
         provenance = {'commit': original['commit'], 'dirty': original['dirty'], 'snapshot': snapshot,
                       'snapshotArchiveIncluded': True, 'archive': 'source/surge-source-' + snapshot + '.tar.gz',
-                      'buildReceipt': 'build-receipt.json', 'correspondingSourceIncluded': False}
+                      'buildReceipt': 'build-receipt.json', 'correspondingSourceIncluded': True,
+                      'toolchain': receipt.get('toolchain', 'emsdk 6.0.10 (a2b92777574c2feda07994cd4f1079a3dfc151f8)')}
     output.mkdir(parents=True, exist_ok=True)
     stage = Path(tempfile.mkdtemp(prefix='.surge-package-', dir=output))
     try:
@@ -152,19 +177,25 @@ def package(build, output, provenance, source_archive=None, build_receipt=None):
         (stage / 'licenses').mkdir()
         for notice in ('Lua-LICENSE.txt', 'BitOp-LICENSE.txt'):
             shutil.copyfile(local_file(ROOT, 'cmake/vendor/' + notice), stage / 'licenses' / notice)
+        (stage / 'THIRD-PARTY-NOTICES.txt').write_text(load_script('license_notices', 'license-notices.py').render())
         if source_archive:
             (stage / 'source').mkdir()
             shutil.copyfile(source_archive, stage / provenance['archive'])
             shutil.copyfile(build_receipt, stage / 'build-receipt.json')
         (stage / '_headers').write_text('/*\n  Cross-Origin-Opener-Policy: same-origin\n  Cross-Origin-Embedder-Policy: require-corp\n  Cross-Origin-Resource-Policy: same-origin\n  Cache-Control: public, max-age=31536000, immutable\n')
         (stage / 'DISTRIBUTION.md').write_text(
-            '# Surge XT browser development distribution\n\n'
-            'This is not a completed browser release or a portable-feature parity approval.\n'
-            'Dependency notices and corresponding-source release packaging remain outstanding.\n'
-            'The root Surge licence is included as LICENSE; it is not a complete dependency inventory.\n\n'
-            'Lua and BitOp MIT notices are included in licenses/. Other dependency notices still need audit.\n\n'
-            + ('The source/ archive and build-receipt.json identify the checked snapshot and built file hashes.\n'
-               'This unsigned receipt records the local build workflow, not independent build attestation.\n\n' if source_archive else '') +
+            ('# Surge XT browser release\n\n'
+               'Every desktop entry point has a browser parity review and every compiled file and asset has notice coverage.\n\n'
+               if release else
+               '# Surge XT browser development distribution\n\n'
+               'This is not a completed browser release or a portable-feature parity approval.\n\n') +
+            'The Surge licence is LICENSE. THIRD-PARTY-NOTICES.txt holds every dependency notice and states the\n'
+            'limits of that audit; Lua and BitOp MIT notices are also in licenses/.\n\n'
+            + ('The source/ archive is the corresponding source: the Surge tree, every submodule and the build\n'
+               'scripts, which pin the Emscripten SDK. build-receipt.json identifies the checked snapshot and built\n'
+               'file hashes. This unsigned receipt records the local build workflow, not independent build attestation.\n\n'
+               if source_archive else
+               'No corresponding-source archive is included; package with --source-archive for distribution.\n\n') +
             'Host this entire version directory over HTTPS and open index.html. Keep its URL immutable.\n'
             'Every response needs Cross-Origin-Opener-Policy: same-origin,\n'
             'Cross-Origin-Embedder-Policy: require-corp, and Cross-Origin-Resource-Policy: same-origin.\n'
@@ -172,7 +203,7 @@ def package(build, output, provenance, source_archive=None, build_receipt=None):
             'response headers on other hosts. Serve .wasm as application/wasm and .js as text/javascript.\n'
             'Keep old version directories available while their pages remain open.\n'
             'Do not apply immutable caching to a mutable latest-version redirect or landing page.\n')
-        manifest = {'schema': 1, 'status': 'development', 'permissions': 'files:0644,directories:0755', 'source': provenance, 'files': {}}
+        manifest = {'schema': 1, 'status': 'release' if release else 'development', 'permissions': 'files:0644,directories:0755', 'source': provenance, 'files': {}}
         for path in sorted(stage.rglob('*')):
             if path.is_file():
                 manifest['files'][path.relative_to(stage).as_posix()] = {'size': path.stat().st_size, 'sha256': digest(path)}
@@ -203,6 +234,8 @@ def main():
     parser.add_argument('--verify', type=Path)
     parser.add_argument('--source-archive', type=Path)
     parser.add_argument('--build-receipt', type=Path)
+    parser.add_argument('--release', action='store_true',
+                        help='Mark as a release; requires complete parity reviews, notice coverage and source')
     args = parser.parse_args()
     if args.verify:
         result = verify(args.verify.resolve())
@@ -221,7 +254,7 @@ def main():
         provenance = {'commit': head, 'dirty': dirty, 'correspondingSourceIncluded': False}
     target = package(args.build_dir.resolve(), args.output.resolve(), provenance,
                      args.source_archive.resolve() if args.source_archive else None,
-                     args.build_receipt.resolve() if args.build_receipt else None)
+                     args.build_receipt.resolve() if args.build_receipt else None, args.release)
     print(target)
 
 

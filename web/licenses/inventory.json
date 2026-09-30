@@ -1,7 +1,7 @@
 {
   "schema": 1,
-  "status": "partial-audit",
-  "scope": "Known standalone and reviewed embedded notice documents for linked and header dependencies; this is not a complete distribution notice bundle or a license compatibility determination. Original source documents remain authoritative.",
+  "status": "coverage-audited",
+  "scope": "Notices for every component compiled into surge-xt-browser (checked from compiler dependency files by web/scripts/license-coverage.py), the linked Emscripten runtime libraries, and every shipped font and factory asset tree.",
   "notices": [
     {
       "component": "Surge XT",
@@ -1932,12 +1932,68 @@
       "source": "resources/fonts/README-FiraMono.txt",
       "sha256": "42ec7179165552ca775964a87323da5caea863e74ba168ecdb3a2fdbe2206813",
       "bytes": 142
+    },
+    {
+      "component": "Emscripten",
+      "source": ".toolchains/emsdk-6.0.10/upstream/emscripten/LICENSE",
+      "sha256": "620a78084fc7ca97c0b5dea9abf891f3ffcadfdbf305276f099c9c4e12fc1d86",
+      "bytes": 5093
+    },
+    {
+      "component": "musl libc",
+      "source": ".toolchains/emsdk-6.0.10/upstream/emscripten/system/lib/libc/musl/COPYRIGHT",
+      "sha256": "b870108ec5e7790e9f9919064f1b9421d62d5f9b0e6c230c6adf7ea2da62e97b",
+      "bytes": 6196
+    },
+    {
+      "component": "LLVM libc++",
+      "source": ".toolchains/emsdk-6.0.10/upstream/emscripten/system/lib/libcxx/LICENSE.TXT",
+      "sha256": "539dd7aed86e8a4f12cbdd0e6c50c189c7d74847e4fecc64ce2c6ee3a01da38b",
+      "bytes": 16703
+    },
+    {
+      "component": "LLVM libc++abi",
+      "source": ".toolchains/emsdk-6.0.10/upstream/emscripten/system/lib/libcxxabi/LICENSE.TXT",
+      "sha256": "e2b35be49f7284a45b7baca8fc7b3ab7440e7902392b2528a457816b5bb2a15c",
+      "bytes": 16706
+    },
+    {
+      "component": "LLVM compiler-rt",
+      "source": ".toolchains/emsdk-6.0.10/upstream/emscripten/system/lib/compiler-rt/LICENSE.TXT",
+      "sha256": "1a8f1058753f1ba890de984e48f0242a3a5c29a6a8f2ed9fd813f36985387e8d",
+      "bytes": 16708
+    },
+    {
+      "component": "FreeType",
+      "source": ".toolchains/emsdk-6.0.10/upstream/emscripten/cache/ports/freetype/freetype-VER-2-14-3/LICENSE.TXT",
+      "sha256": "bd36c8b474855fa294c2ec5c184544478ef3720aad37d65a6296a4f264fd2d3b",
+      "bytes": 2149
+    },
+    {
+      "component": "FreeType Project License",
+      "source": ".toolchains/emsdk-6.0.10/upstream/emscripten/cache/ports/freetype/freetype-VER-2-14-3/docs/FTL.TXT",
+      "sha256": "5a5ee54c5001bbad1cdc1a57cc3dd4c42199b2da09d39c7ee41fab002d02967f",
+      "bytes": 6743
+    },
+    {
+      "component": "zlib (Emscripten port)",
+      "source": ".toolchains/emsdk-6.0.10/upstream/emscripten/cache/ports/zlib/zlib-1.3.2/LICENSE",
+      "sha256": "e32ff4e00d9d94930537635291da39e7e612703334bf6fde8c7f1686fe8a45a2",
+      "bytes": 1002
+    },
+    {
+      "component": "FreeType GPLv2 option",
+      "source": ".toolchains/emsdk-6.0.10/upstream/emscripten/cache/ports/freetype/freetype-VER-2-14-3/docs/GPLv2.TXT",
+      "sha256": "c4120c6752c910c299e3bd9cb3a46ff262c268303ca2069b61f92f10a5656c18",
+      "bytes": 17994
     }
   ],
-  "remaining": [
-    "Audit other embedded DSP implementations. Leading MIT notices for every eurorack source/header observed in the current Wasm compiler dependency files are indexed; future dependency coverage must be rechecked.",
-    "Finish JUCE per-file/special-case notice audit and audit Emscripten runtime and ports including FreeType. Primary HarfBuzz, SheenBidi, PNG, JPEG, zlib, Ogg/Vorbis and FLAC notices are indexed.",
-    "Audit factory asset notices. Copyright/license metadata for all six bundled fonts is indexed, alongside the complete OFL text.",
-    "Verify actual compiled/header dependencies against the complete notice set and integrate notices into versioned static packaging."
+  "remaining": [],
+  "limitations": [
+    "This is a mechanical coverage audit: every compiled file and shipped asset maps to indexed notices. It is not a legal determination of license compatibility; that review belongs to the distributor.",
+    "FreeType is distributed under its GPLv2-or-later option (compatible with Surge's GPL-3.0-or-later); its FTL text is included for reference.",
+    "The CMakeRC script vendored in sst-effects, which generates the embedded-resource header, carries no license notice in this repository. Its upstream (vector-of-bool/cmrc) notice should be added before a release.",
+    "Coverage is recorded for the pinned Emscripten 6.0.10 toolchain and the current build; rerun license-coverage.py after dependency or toolchain changes.",
+    "Factory patches rely on their per-file author and license metadata; other factory asset trees are distributed under the Surge repository's license, except the Voxengo impulses, which keep their own terms."
   ]
 }

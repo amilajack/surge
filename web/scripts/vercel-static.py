@@ -96,7 +96,13 @@ def stage_package(package, destination, commit):
         'The archive overlays the modified tracked files and migration additions.\n'
         'See web/README.md and web/scripts/build.sh for pinned-toolchain build instructions.\n'
         'Factory resources are verified against /library/manifest.json during deployment.\n'
-        'This is an unfinished development port, not a parity-certified release.\n')
+        + (f'\nThe complete corresponding source (Surge, every submodule and the build scripts) is\n'
+           f'/v/{version}/{distribution["source"]["archive"]}.\n'
+           if distribution['source'].get('snapshotArchiveIncluded') else
+           '\nThis deployment was packaged without its corresponding-source archive.\n')
+        + ('This is a release: every desktop entry point has a browser parity review.\n'
+           if distribution['status'] == 'release' else
+           'This is an unfinished development port, not a parity-certified release.\n'))
     notices_spec = importlib.util.spec_from_file_location('license_notices', ROOT / 'web/scripts/license-notices.py')
     notices = importlib.util.module_from_spec(notices_spec)
     notices_spec.loader.exec_module(notices)

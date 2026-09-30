@@ -15,13 +15,23 @@ def digest(data):
 def render(root=ROOT, inventory=None):
     root = root.resolve()
     inventory = inventory or json.loads((root / 'web/licenses/inventory.json').read_text())
-    if inventory.get('schema') != 1 or inventory.get('status') != 'partial-audit':
+    status = inventory.get('status')
+    if inventory.get('schema') != 1 or status not in ('partial-audit', 'coverage-audited'):
         raise ValueError('Review notice inventory schema/status')
-    if not inventory.get('notices') or not inventory.get('remaining'):
-        raise ValueError('Missing notice documents or outstanding audit scope')
-    parts = ['SURGE XT — DEPENDENCY NOTICES (PARTIAL AUDIT)\n',
-             'This bundle is incomplete and must not be treated as release clearance.\n',
-             'Remaining audit work:\n' + '\n'.join('- ' + item for item in inventory['remaining'])]
+    if not inventory.get('notices'):
+        raise ValueError('Missing notice documents')
+    if status == 'partial-audit':
+        if not inventory.get('remaining'):
+            raise ValueError('A partial audit must state its outstanding scope')
+        parts = ['SURGE XT — DEPENDENCY NOTICES (PARTIAL AUDIT)\n',
+                 'This bundle is incomplete and must not be treated as release clearance.\n',
+                 'Remaining audit work:\n' + '\n'.join('- ' + item for item in inventory['remaining'])]
+    else:
+        # Coverage audited: nothing outstanding, but its limits stay visible.
+        if inventory.get('remaining') or not inventory.get('limitations'):
+            raise ValueError('A coverage audit lists no remaining work and states its limitations')
+        parts = ['SURGE XT — THIRD-PARTY NOTICES\n', inventory['scope'] + '\n',
+                 'Limitations:\n' + '\n'.join('- ' + item for item in inventory['limitations'])]
     seen = set()
     for item in inventory['notices']:
         source = item['source']
@@ -69,7 +79,7 @@ def main():
     finally:
         if temporary and temporary.exists():
             temporary.unlink()
-    print('Collected partial audit bundle: ' + str(args.output))
+    print('Collected notice bundle: ' + str(args.output))
 
 if __name__ == '__main__':
     main()

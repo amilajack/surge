@@ -18,7 +18,9 @@ class NoticeCollectionTests(unittest.TestCase):
 
     def test_preserves_every_reviewed_document_verbatim(self):
         output = notices.render()
-        self.assertIn('PARTIAL AUDIT', output)
+        self.assertIn('THIRD-PARTY NOTICES', output)
+        for limitation in self.inventory['limitations']:
+            self.assertIn(limitation, output)
         for item in self.inventory['notices']:
             data = (ROOT / item['source']).read_bytes()
             selections = item.get('extracts', [item['extract']] if 'extract' in item else [])
@@ -29,8 +31,16 @@ class NoticeCollectionTests(unittest.TestCase):
             else:
                 self.assertIn(data.decode('utf-8'), output)
             self.assertIn('Source: ' + item['source'], output)
-        for remaining in self.inventory['remaining']:
-            self.assertIn(remaining, output)
+        self.assertEqual(self.inventory['remaining'], [])
+
+    def test_status_requires_its_scope_statement(self):
+        for status, field, value in [('coverage-audited', 'limitations', []), ('coverage-audited', 'remaining', ['open']),
+                                     ('partial-audit', 'remaining', []), ('released', 'remaining', [])]:
+            with self.subTest(status=status, field=field):
+                inventory = copy.deepcopy(self.inventory)
+                inventory['status'] = status
+                inventory[field] = value
+                with self.assertRaises(ValueError): notices.render(inventory=inventory)
 
     def test_rejects_changed_sources_and_invalid_extractions(self):
         for change in ['source digest', 'range', 'excerpt digest', 'escape', 'duplicate']:

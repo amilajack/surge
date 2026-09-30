@@ -1,8 +1,25 @@
 # Distribution notice audit
 
-`inventory.json` records original notice documents and their hashes. It is a
-partial audit, not a complete license bundle or a determination of license
-compatibility. It must not be used to mark the distribution gate complete.
+`inventory.json` records original notice documents and their hashes. Its status
+is `coverage-audited`: `web/scripts/license-coverage.py` maps every file compiled
+into `surge-xt-browser` to indexed notices, using the compiler dependency files
+of each linked object and the rules in `coverage.json`. It also maps the linked
+Emscripten runtime (musl, libc++, libc++abi, compiler-rt, FreeType, zlib) and
+every shipped font and factory asset. The check fails on any file without a
+rule, any rule naming an unindexed component, and any eurorack source without its
+own per-file notice. In the current build it covers 4,234 compiled dependencies
+and 5,766 assets.
+
+This is a mechanical coverage audit, not a legal determination of license
+compatibility; that review belongs to the distributor. The inventory's
+`limitations` list (printed at the top of the bundle) records the remaining
+judgement calls: FreeType's GPLv2-or-later option, the CMakeRC script vendored
+without its upstream notice, and the asset-tree licensing assumptions. Rerun the
+coverage check after any dependency or toolchain change.
+
+`package-static.py` renders the bundle into every package as
+`THIRD-PARTY-NOTICES.txt`, and a `--release` package requires the coverage
+check to pass.
 
 The first pass follows `surge-common` link dependencies, the browser application's
 link response file, and known header dependencies. All 182 indexed sources exist
@@ -42,13 +59,9 @@ python3 web/tests/license-notices.test.py
 
 The collector validates every document before atomically replacing its output.
 Three checks pass for verbatim retention, changed/range-invalid notice rejection,
-and preservation of an existing bundle when validation fails. This collector is
-not yet wired into release packaging, and its output explicitly lists audit gaps.
+and preservation of an existing bundle when validation fails. The static
+packager and the Vercel stage both include its output.
 
-The `remaining` list identifies embedded/per-file notices, JUCE and toolchain
-runtime dependencies, factory assets and final dependency-to-bundle
-coverage. Existing static packaging includes Surge, Lua and BitOp only. Integration
-of the completed notice set is still required before release.
 
 The additional PFFFT convolution MIT notices, ChowDSP omega MIT notice,
 Vintage Ladder BSD notice and pink-noise attribution are retained as exact source
