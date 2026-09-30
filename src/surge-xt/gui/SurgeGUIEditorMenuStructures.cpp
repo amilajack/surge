@@ -1606,6 +1606,8 @@ juce::PopupMenu SurgeGUIEditor::makeSkinMenu(const juce::Point<int> &where)
 
     skinSubMenu.addSeparator();
 
+#if !SURGE_WEB
+    // Browsers have no file manager to reveal the folder; they keep the installer.
     if (useDevMenu)
     {
         skinSubMenu.addItem(Surge::GUI::toOSCase("Open Current Skin Folder..."), [this]() {
@@ -1614,6 +1616,7 @@ juce::PopupMenu SurgeGUIEditor::makeSkinMenu(const juce::Point<int> &where)
         });
     }
     else
+#endif
     {
         skinSubMenu.addItem(Surge::GUI::toOSCase("Install a New Skin..."), [this]() {
 #if SURGE_WEB

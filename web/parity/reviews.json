@@ -23,14 +23,14 @@
   },
   "src/surge-xt/gui/SurgeGUIEditorMenuStructures.cpp:menu-call:034adf88b438140c": {
     "status": "platform-limitation",
-    "sourceDigest": "ee87122d3348bff25f4ae15db0c231c51f7c83b7b54afeb5954f14b185e3f0eb",
+    "sourceDigest": "8223b05efa3d149d486750eeb059c254c8f9de11a2b17c110c74da81dc6a2ad8",
     "reason": "OS file-manager launch/reveal is a desktop shell integration and is hidden in SURGE_WEB builds.",
     "portableAlternative": "Patch browsing, browser file/directory import and export, and IndexedDB-backed user content remain available.",
     "capability": "os-shell"
   },
   "src/surge-xt/gui/SurgeGUIEditorMenuStructures.cpp:menu-call:75646f1f4b2a1ba3": {
     "status": "platform-limitation",
-    "sourceDigest": "ee87122d3348bff25f4ae15db0c231c51f7c83b7b54afeb5954f14b185e3f0eb",
+    "sourceDigest": "8223b05efa3d149d486750eeb059c254c8f9de11a2b17c110c74da81dc6a2ad8",
     "reason": "OS file-manager launch/reveal is a desktop shell integration and is hidden in SURGE_WEB builds.",
     "portableAlternative": "Patch browsing, browser file/directory import and export, and IndexedDB-backed user content remain available.",
     "capability": "os-shell"
@@ -72,7 +72,7 @@
   },
   "src/surge-xt/gui/SurgeGUIEditorMenuStructures.cpp:menu-call:3578de3712e83acd": {
     "status": "verified",
-    "sourceDigest": "ee87122d3348bff25f4ae15db0c231c51f7c83b7b54afeb5954f14b185e3f0eb",
+    "sourceDigest": "8223b05efa3d149d486750eeb059c254c8f9de11a2b17c110c74da81dc6a2ad8",
     "browserEquivalent": "Original JUCE Export Patch as Text (All Parameters) opens a sandboxed browser report and downloads its generated HTML. Verified Init Saw patch name, oscillator type and polyphony; other report families remain unreviewed.",
     "evidence": [
       "web/tests/reports.spec.js"
@@ -80,7 +80,7 @@
   },
   "src/surge-xt/gui/SurgeGUIEditorMenuStructures.cpp:menu-call:ee8838b41d5d2625": {
     "status": "verified",
-    "sourceDigest": "ee87122d3348bff25f4ae15db0c231c51f7c83b7b54afeb5954f14b185e3f0eb",
+    "sourceDigest": "8223b05efa3d149d486750eeb059c254c8f9de11a2b17c110c74da81dc6a2ad8",
     "browserEquivalent": "Original Factory Tuning Library command opens a searchable browser catalog with all 200 tuning resources. Each scale or mapping can be loaded directly: the verified file is installed under /factory/tuning_library and applied through the Tuning menu's own .scl/.kbm loaders (SurgeGUIEditor::loadSCLFile/loadKBMFile), so the tuning editor shows it. On-demand downloads retain exact SCL, KBM, and documentation bytes and filenames; failed downloads can be retried. This review covers library browsing, loading and download, not every tuning editor operation.",
     "evidence": [
       "web/tests/tuning-library.spec.js",
@@ -89,7 +89,7 @@
   },
   "src/surge-xt/gui/SurgeGUIEditorMenuStructures.cpp:menu-call:d056fa39925b289f": {
     "status": "verified",
-    "sourceDigest": "ee87122d3348bff25f4ae15db0c231c51f7c83b7b54afeb5954f14b185e3f0eb",
+    "sourceDigest": "8223b05efa3d149d486750eeb059c254c8f9de11a2b17c110c74da81dc6a2ad8",
     "browserEquivalent": "Original JUCE skin selection menu, including all 11 shipped factory skins and imported user skins. Factory bundles download on demand with checksum verification, cached restoration, retry, write-failure preservation and superseded-selection protection. User selection persists after folder and ZIP import. This review covers selection and delivery; complete native/browser rendering parity at every zoom and display scale remains separate work.",
     "evidence": [
       "web/tests/factory-skins.spec.js",
@@ -518,7 +518,7 @@
   },
   "src/surge-xt/gui/SurgeGUIEditorMenuStructures.cpp:menu-call:3d5762e09d01e906": {
     "status": "verified",
-    "sourceDigest": "ee87122d3348bff25f4ae15db0c231c51f7c83b7b54afeb5954f14b185e3f0eb",
+    "sourceDigest": "8223b05efa3d149d486750eeb059c254c8f9de11a2b17c110c74da81dc6a2ad8",
     "browserEquivalent": "Original Patch Settings > Tempo on Patch Load choice persists after reload and recalls fractional saved tempo through the live worklet at 44.1/48 kHz. Legacy revision-22 patches preserve tempo; revision-23 patches missing tempoOnSave retain the native 120 BPM default.",
     "evidence": [
       "web/tests/tempo-recall.spec.js",
@@ -527,7 +527,7 @@
   },
   "src/surge-xt/gui/SurgeGUIEditorMenuStructures.cpp:menu-call:a148168e3abfc17f": {
     "status": "verified",
-    "sourceDigest": "ee87122d3348bff25f4ae15db0c231c51f7c83b7b54afeb5954f14b185e3f0eb",
+    "sourceDigest": "8223b05efa3d149d486750eeb059c254c8f9de11a2b17c110c74da81dc6a2ad8",
     "browserEquivalent": "Original submenu exposes both tempo-recall policies with the correct checked state before and after browser storage reload. Both choices are exercised against live imported patches at 44.1/48 kHz.",
     "evidence": [
       "web/tests/tempo-recall.spec.js",
@@ -536,7 +536,7 @@
   },
   "src/surge-xt/gui/SurgeGUIEditorMenuStructures.cpp:menu-call:c972046a068f88e8": {
     "status": "verified",
-    "sourceDigest": "ee87122d3348bff25f4ae15db0c231c51f7c83b7b54afeb5954f14b185e3f0eb",
+    "sourceDigest": "8223b05efa3d149d486750eeb059c254c8f9de11a2b17c110c74da81dc6a2ad8",
     "browserEquivalent": "Original Patch Settings > Tempo on Patch Load choice persists after reload and preserves the current fractional tempo during live patch import, including saved-tempo, legacy and missing-tempo patches, at 44.1/48 kHz.",
     "evidence": [
       "web/tests/tempo-recall.spec.js",
@@ -545,7 +545,7 @@
   },
   "src/surge-xt/gui/SurgeGUIEditorMenuStructures.cpp:menu-call:147f10e5b2cd4067": {
     "status": "verified",
-    "sourceDigest": "ee87122d3348bff25f4ae15db0c231c51f7c83b7b54afeb5954f14b185e3f0eb",
+    "sourceDigest": "8223b05efa3d149d486750eeb059c254c8f9de11a2b17c110c74da81dc6a2ad8",
     "browserEquivalent": "Original Patch Settings > Tuning on Patch Load submenu. Both keep/override actions for scale and mapping are exercised independently in all four combinations, persisted through browser reload, and checked in the original tuning editor and real worklet pitch at 44.1/48 kHz. Patches without embedded tuning retain the active scale and mapping.",
     "evidence": [
       "web/tests/tuning-recall.spec.js",
@@ -554,7 +554,7 @@
   },
   "src/surge-xt/gui/SurgeGUIEditorMenuStructures.cpp:menu-call:43cdf9b17a608ca2": {
     "status": "verified",
-    "sourceDigest": "ee87122d3348bff25f4ae15db0c231c51f7c83b7b54afeb5954f14b185e3f0eb",
+    "sourceDigest": "8223b05efa3d149d486750eeb059c254c8f9de11a2b17c110c74da81dc6a2ad8",
     "browserEquivalent": "Original Patch Settings > Tuning on Patch Load submenu. Both keep/override actions for scale and mapping are exercised independently in all four combinations, persisted through browser reload, and checked in the original tuning editor and real worklet pitch at 44.1/48 kHz. Patches without embedded tuning retain the active scale and mapping.",
     "evidence": [
       "web/tests/tuning-recall.spec.js",
@@ -563,7 +563,7 @@
   },
   "src/surge-xt/gui/SurgeGUIEditorMenuStructures.cpp:menu-call:567eac81f4751824": {
     "status": "verified",
-    "sourceDigest": "ee87122d3348bff25f4ae15db0c231c51f7c83b7b54afeb5954f14b185e3f0eb",
+    "sourceDigest": "8223b05efa3d149d486750eeb059c254c8f9de11a2b17c110c74da81dc6a2ad8",
     "browserEquivalent": "Original Patch Settings > Tuning on Patch Load submenu. Both keep/override actions for scale and mapping are exercised independently in all four combinations, persisted through browser reload, and checked in the original tuning editor and real worklet pitch at 44.1/48 kHz. Patches without embedded tuning retain the active scale and mapping.",
     "evidence": [
       "web/tests/tuning-recall.spec.js",
@@ -572,7 +572,7 @@
   },
   "src/surge-xt/gui/SurgeGUIEditorMenuStructures.cpp:menu-call:c1c692f9e0474c52": {
     "status": "verified",
-    "sourceDigest": "ee87122d3348bff25f4ae15db0c231c51f7c83b7b54afeb5954f14b185e3f0eb",
+    "sourceDigest": "8223b05efa3d149d486750eeb059c254c8f9de11a2b17c110c74da81dc6a2ad8",
     "browserEquivalent": "Original Patch Settings > Tuning on Patch Load submenu. Both keep/override actions for scale and mapping are exercised independently in all four combinations, persisted through browser reload, and checked in the original tuning editor and real worklet pitch at 44.1/48 kHz. Patches without embedded tuning retain the active scale and mapping.",
     "evidence": [
       "web/tests/tuning-recall.spec.js",
@@ -581,7 +581,7 @@
   },
   "src/surge-xt/gui/SurgeGUIEditorMenuStructures.cpp:menu-call:d6d4d8e9fcb66835": {
     "status": "verified",
-    "sourceDigest": "ee87122d3348bff25f4ae15db0c231c51f7c83b7b54afeb5954f14b185e3f0eb",
+    "sourceDigest": "8223b05efa3d149d486750eeb059c254c8f9de11a2b17c110c74da81dc6a2ad8",
     "browserEquivalent": "Original Patch Settings > Tuning on Patch Load submenu. Both keep/override actions for scale and mapping are exercised independently in all four combinations, persisted through browser reload, and checked in the original tuning editor and real worklet pitch at 44.1/48 kHz. Patches without embedded tuning retain the active scale and mapping.",
     "evidence": [
       "web/tests/tuning-recall.spec.js",
@@ -590,7 +590,7 @@
   },
   "src/surge-xt/gui/SurgeGUIEditorMenuStructures.cpp:menu-call:79b5ec5b179a680b": {
     "status": "verified",
-    "sourceDigest": "ee87122d3348bff25f4ae15db0c231c51f7c83b7b54afeb5954f14b185e3f0eb",
+    "sourceDigest": "8223b05efa3d149d486750eeb059c254c8f9de11a2b17c110c74da81dc6a2ad8",
     "browserEquivalent": "Original menu toggle is exercised on/off/on with persistence after each reload. Save appends the source author only when enabled, retains the original license, and writes the expected author/comment/license metadata. Canceling Save does not alter these defaults or source metadata.",
     "evidence": [
       "web/tests/patch-metadata.spec.js"
@@ -598,7 +598,7 @@
   },
   "src/surge-xt/gui/SurgeGUIEditorMenuStructures.cpp:menu-call:d7ad582f077fb31a": {
     "status": "verified",
-    "sourceDigest": "ee87122d3348bff25f4ae15db0c231c51f7c83b7b54afeb5954f14b185e3f0eb",
+    "sourceDigest": "8223b05efa3d149d486750eeb059c254c8f9de11a2b17c110c74da81dc6a2ad8",
     "browserEquivalent": "Original mini-edit dialog persists a Unicode default comment across reload, discards canceled edits, and supports clearing the default. Save applies it to a patch with an empty comment, preserves optional original-author attribution, and serializes the displayed value.",
     "evidence": [
       "web/tests/patch-metadata.spec.js"
@@ -606,7 +606,7 @@
   },
   "src/surge-xt/gui/SurgeGUIEditorMenuStructures.cpp:menu-call:f5c9bbd63f1c97f9": {
     "status": "verified",
-    "sourceDigest": "ee87122d3348bff25f4ae15db0c231c51f7c83b7b54afeb5954f14b185e3f0eb",
+    "sourceDigest": "8223b05efa3d149d486750eeb059c254c8f9de11a2b17c110c74da81dc6a2ad8",
     "browserEquivalent": "Original mini-edit dialog persists a Unicode default author across reload, discards canceled edits, and supports clearing the default. The Save dialog applies the default author and the serialized FXP retains it; clearing restores the original patch author.",
     "evidence": [
       "web/tests/patch-metadata.spec.js"
@@ -614,7 +614,7 @@
   },
   "src/surge-xt/gui/SurgeGUIEditorMenuStructures.cpp:menu-call:b9920c6c8e71cad0": {
     "status": "verified",
-    "sourceDigest": "ee87122d3348bff25f4ae15db0c231c51f7c83b7b54afeb5954f14b185e3f0eb",
+    "sourceDigest": "8223b05efa3d149d486750eeb059c254c8f9de11a2b17c110c74da81dc6a2ad8",
     "browserEquivalent": "Original Patch Settings command selects factory and saved user startup patches and persists through reload. A same-named user patch in the same category retains its edited oscillator pitch, distinguishing it from the factory patch. Switching back to the factory choice and restoring Init Saw are also verified.",
     "evidence": [
       "web/tests/default-patch.spec.js"

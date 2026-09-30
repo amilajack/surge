@@ -1666,11 +1666,15 @@ void SurgeSynthProcessor::tryLazyOscStartupFromStreamedState()
         return;
     }
 
+#if !SURGE_WEB
+    // Browsers cannot open UDP sockets; OSC settings restored from desktop state
+    // are kept (and saved again) but never started.
     if ((!oscHandler.listening && surge->storage.oscStartIn && surge->storage.oscPortIn > 0) ||
         (!oscHandler.sendingOSC && surge->storage.oscStartOut && surge->storage.oscPortOut > 0))
     {
         oscHandler.tryOSCStartup();
     }
+#endif
     oscCheckStartup = false;
 }
 
