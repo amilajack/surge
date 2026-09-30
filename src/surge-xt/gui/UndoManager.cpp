@@ -102,6 +102,9 @@ struct UndoManagerImpl
         int scene;
         int type;
         OscillatorStorage::ExtraConfigurationData extraConfig;
+        // Captured only for oscillator types that use wavetable data.
+        bool capturedTable{false};
+        int wavetableId{-1};
         std::shared_ptr<Wavetable> wavetable;
         std::array<std::shared_ptr<Wavetable>, n_wt_snapshots> snapshots;
         std::string wavetableName, wavetableScript;
@@ -114,6 +117,7 @@ struct UndoManagerImpl
         int oscNum;
         int scene;
 
+        int wavetableId{-1};
         std::shared_ptr<Wavetable> wt;
         std::array<std::shared_ptr<Wavetable>, n_wt_snapshots> snapshots;
 
@@ -639,6 +643,56 @@ struct UndoManagerImpl
             pushRedo(r);
     }
 
+    // Records an oscillator's table: an unmodified factory table by id on desktop (reloaded
+    // through the audio thread's wavetable queue, as before), otherwise a copy of the data.
+    // The browser loads factory tables on demand and has no such queue, so it always copies.
+    void captureWavetable(int scene, int oscnum, int &id, std::shared_ptr<Wavetable> &table)
+    {
+        auto &storage = synth->storage;
+        auto os = &(storage.getPatch().scene[scene].osc[oscnum]);
+        id = -1;
+        table.reset();
+#if !SURGE_WEB
+        const auto current = os->wt.current_id;
+        if (current >= 0 && current < (int)storage.wt_list.size() &&
+            storage.wt_list[current].path.extension() != ".wtscript")
+        {
+            id = current;
+            return;
+        }
+#endif
+        table = std::make_shared<Wavetable>();
+        storage.copyOscillatorWavetable(scene, oscnum, *table);
+    }
+
+    void restoreWavetable(int scene, int oscnum, int id, const std::shared_ptr<Wavetable> &table)
+    {
+        auto &storage = synth->storage;
+        if (table)
+        {
+            storage.replaceOscillatorWavetable(scene, oscnum, *table);
+            return;
+        }
+        if (id < 0)
+            return;
+        // Invalidate any in-progress script job, then let the audio thread reload the table.
+        std::lock_guard<std::mutex> lk(storage.waveTableDataMutex);
+        storage.wtGenPublishToken[scene * n_oscs + oscnum]++;
+        storage.getPatch().scene[scene].osc[oscnum].wt.queue_id = id;
+    }
+
+    void copySnapshots(const OscillatorStorage *os,
+                       std::array<std::shared_ptr<Wavetable>, n_wt_snapshots> &snapshots)
+    {
+        const std::lock_guard<std::mutex> lock(synth->storage.wtSnapshotMutex);
+        for (int i = 0; i < n_wt_snapshots; ++i)
+            if (os->wtSnapshots[i])
+            {
+                snapshots[i] = std::make_shared<Wavetable>();
+                snapshots[i]->Copy(os->wtSnapshots[i].get());
+            }
+    }
+
     void pushOscillator(int scene, int oscnum, UndoManager::Target to = UndoManager::UNDO)
     {
         auto os = &(synth->storage.getPatch().scene[scene].osc[oscnum]);
@@ -648,20 +702,17 @@ struct UndoManagerImpl
         r.type = os->type.val.i;
         r.extraConfig = os->extraConfig.read();
 
-        r.wavetable = std::make_shared<Wavetable>();
-        synth->storage.copyOscillatorWavetable(scene, oscnum, *r.wavetable);
-        r.wavetableName = os->wavetable_display_name;
-        r.wavetableScript = os->wavetable_script;
-        r.scriptResolution = os->wavetable_script_res_base;
-        r.scriptFrames = os->wavetable_script_nframes;
+        // Other types neither play nor change the table, so a type change away from them
+        // leaves nothing to restore; copying it would only exhaust the undo memory budget.
+        if (uses_wavetabledata(r.type))
         {
-            const std::lock_guard<std::mutex> lock(synth->storage.wtSnapshotMutex);
-            for (int i = 0; i < n_wt_snapshots; ++i)
-                if (os->wtSnapshots[i])
-                {
-                    r.snapshots[i] = std::make_shared<Wavetable>();
-                    r.snapshots[i]->Copy(os->wtSnapshots[i].get());
-                }
+            r.capturedTable = true;
+            captureWavetable(scene, oscnum, r.wavetableId, r.wavetable);
+            r.wavetableName = os->wavetable_display_name;
+            r.wavetableScript = os->wavetable_script;
+            r.scriptResolution = os->wavetable_script_res_base;
+            r.scriptFrames = os->wavetable_script_nframes;
+            copySnapshots(os, r.snapshots);
         }
 
         Parameter *p = &(os->type);
@@ -708,22 +759,13 @@ struct UndoManagerImpl
         auto os = &(synth->storage.getPatch().scene[scene].osc[oscnum]);
         auto r = UndoWavetable();
 
-        // Preserve the exact table, including user reslices and generated data.
-        // Undo must not depend on reloading a factory file or recompiling Lua.
-        r.wt = std::make_shared<Wavetable>();
-        synth->storage.copyOscillatorWavetable(scene, oscnum, *r.wt);
+        // Preserve the exact table, including user reslices and generated data; undo must
+        // not depend on recompiling Lua. Unmodified desktop factory tables are kept by id.
+        captureWavetable(scene, oscnum, r.wavetableId, r.wt);
         r.wavetable_script = os->wavetable_script;
         r.wavetable_script_res_base = os->wavetable_script_res_base;
         r.wavetable_script_nframes = os->wavetable_script_nframes;
-        {
-            std::lock_guard<std::mutex> lock(synth->storage.wtSnapshotMutex);
-            for (int i = 0; i < n_wt_snapshots; ++i)
-                if (os->wtSnapshots[i])
-                {
-                    r.snapshots[i] = std::make_shared<Wavetable>();
-                    r.snapshots[i]->Copy(os->wtSnapshots[i].get());
-                }
-        }
+        copySnapshots(os, r.snapshots);
 
         r.scene = scene;
         r.oscNum = oscnum;
@@ -1072,13 +1114,13 @@ struct UndoManagerImpl
             // Type initialization resets Alias partials. Restore the captured
             // non-parameter state together with the oscillator parameters.
             os->extraConfig = p->extraConfig;
-            if (p->wavetable)
-                synth->storage.replaceOscillatorWavetable(p->scene, p->oscNum, *p->wavetable);
-            os->wavetable_display_name = p->wavetableName;
-            os->wavetable_script = p->wavetableScript;
-            os->wavetable_script_res_base = p->scriptResolution;
-            os->wavetable_script_nframes = p->scriptFrames;
+            if (p->capturedTable)
             {
+                restoreWavetable(p->scene, p->oscNum, p->wavetableId, p->wavetable);
+                os->wavetable_display_name = p->wavetableName;
+                os->wavetable_script = p->wavetableScript;
+                os->wavetable_script_res_base = p->scriptResolution;
+                os->wavetable_script_nframes = p->scriptFrames;
                 const std::lock_guard<std::mutex> lock(synth->storage.wtSnapshotMutex);
                 for (int i = 0; i < n_wt_snapshots; ++i)
                 {
@@ -1127,7 +1169,7 @@ struct UndoManagerImpl
             auto g = SelfPushGuard(this);
             auto os = &(synth->storage.getPatch().scene[p->scene].osc[p->oscNum]);
 
-            synth->storage.replaceOscillatorWavetable(p->scene, p->oscNum, *p->wt);
+            restoreWavetable(p->scene, p->oscNum, p->wavetableId, p->wt);
             os->wavetable_display_name = p->displayName;
             os->wavetable_script = p->wavetable_script;
             os->wavetable_script_res_base = p->wavetable_script_res_base;
