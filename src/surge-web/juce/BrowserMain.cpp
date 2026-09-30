@@ -102,6 +102,27 @@ extern "C" EMSCRIPTEN_KEEPALIVE const char *surge_browser_skin_controls()
     result = gui ? gui->browserSkinControls() : "[]";
     return result.c_str();
 }
+// Diagnostic: titles of every item in open popup menus, including disabled
+// informational items that JUCE hides from assistive technology.
+extern "C" EMSCRIPTEN_KEEPALIVE const char *surge_browser_open_menu_texts()
+{
+    static std::string result;
+    juce::StringArray titles;
+    std::function<void(juce::Component &)> walk = [&](juce::Component &component) {
+        if (auto *handler = component.getAccessibilityHandler())
+            if (auto title = handler->getTitle(); title.isNotEmpty())
+                titles.add(title);
+        for (auto *child : component.getChildren())
+            walk(*child);
+    };
+    auto &desktop = juce::Desktop::getInstance();
+    for (int i = 0; i < desktop.getNumComponents(); ++i)
+        if (auto *component = desktop.getComponent(i); component && component->getAccessibilityHandler() &&
+            component->getAccessibilityHandler()->getRole() == juce::AccessibilityRole::popupMenu)
+            walk(*component);
+    result = juce::JSON::toString(juce::var(titles), true).toStdString();
+    return result.c_str();
+}
 // Loads a factory tuning file through the Tuning menu's own loaders.
 extern "C" EMSCRIPTEN_KEEPALIVE int surge_browser_load_tuning(const char *path)
 {

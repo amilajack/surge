@@ -3247,5 +3247,1258 @@
     "evidence": [
       "web/tests/skin-connectors.spec.js"
     ]
+  },
+  "src/surge-xt/gui/SurgeGUIEditorMenuStructures.cpp:menu-call:026ce5fff12ac43d": {
+    "status": "verified",
+    "sourceDigest": "8223b05efa3d149d486750eeb059c254c8f9de11a2b17c110c74da81dc6a2ad8",
+    "browserEquivalent": "Original smoothing choices for MPE Pitch Bend Smoothing and Controller Smoothing, each selected and persisted.",
+    "runtimeExpansion": [
+      "Legacy",
+      "Slow Exponential",
+      "Fast Exponential",
+      "Fast Linear",
+      "No Smoothing"
+    ],
+    "evidence": [
+      "web/tests/main-menu.spec.js"
+    ]
+  },
+  "src/surge-xt/gui/SurgeGUIEditorMenuStructures.cpp:menu-call:08c510f0dd6f0912": {
+    "status": "verified",
+    "sourceDigest": "8223b05efa3d149d486750eeb059c254c8f9de11a2b17c110c74da81dc6a2ad8",
+    "browserEquivalent": "Original prompt; entering 24 changes the current range and the relabelled item shows the new value.",
+    "runtimeExpansion": [
+      "Change MPE Pitch Bend Range (Current: 48 Semitones)",
+      "Change MPE Pitch Bend Range (Current: 24 Semitones)"
+    ],
+    "evidence": [
+      "web/tests/main-menu.spec.js"
+    ]
+  },
+  "src/surge-xt/gui/SurgeGUIEditorMenuStructures.cpp:menu-call:08c510f0dd6f0912:2": {
+    "status": "verified",
+    "sourceDigest": "8223b05efa3d149d486750eeb059c254c8f9de11a2b17c110c74da81dc6a2ad8",
+    "browserEquivalent": "Original prompt; entering 36 updates the default range label.",
+    "runtimeExpansion": [
+      "Change Default MPE Pitch Bend Range (Current: 48 Semitones)",
+      "Change Default MPE Pitch Bend Range (Current: 36 Semitones)"
+    ],
+    "evidence": [
+      "web/tests/main-menu.spec.js"
+    ]
+  },
+  "src/surge-xt/gui/SurgeGUIEditorMenuStructures.cpp:menu-call:09a963e891b82951": {
+    "status": "verified",
+    "sourceDigest": "8223b05efa3d149d486750eeb059c254c8f9de11a2b17c110c74da81dc6a2ad8",
+    "browserEquivalent": "Original HTML patch report shown in the browser report viewer; lists only changed parameters, shorter than the all-parameters export.",
+    "evidence": [
+      "web/tests/main-menu.spec.js"
+    ]
+  },
+  "src/surge-xt/gui/SurgeGUIEditorMenuStructures.cpp:menu-call:0dd4ddb424a235d1": {
+    "status": "verified",
+    "sourceDigest": "8223b05efa3d149d486750eeb059c254c8f9de11a2b17c110c74da81dc6a2ad8",
+    "browserEquivalent": "Not part of this configuration on desktop either: compiled only with the opt-in SURGE_INCLUDE_MELATONIN_INSPECTOR build option (default OFF); the spec asserts the developer menu matches the default desktop build.",
+    "evidence": [
+      "web/tests/main-menu.spec.js"
+    ]
+  },
+  "src/surge-xt/gui/SurgeGUIEditorMenuStructures.cpp:menu-call:18708ea26e5d9f38": {
+    "status": "verified",
+    "sourceDigest": "8223b05efa3d149d486750eeb059c254c8f9de11a2b17c110c74da81dc6a2ad8",
+    "browserEquivalent": "Not part of this configuration on desktop either: compiled only with the opt-in SURGE_INCLUDE_MELATONIN_INSPECTOR build option (default OFF); the spec asserts the developer menu matches the default desktop build.",
+    "evidence": [
+      "web/tests/main-menu.spec.js"
+    ]
+  },
+  "src/surge-xt/gui/SurgeGUIEditorMenuStructures.cpp:menu-call:135aaceb717b8b65": {
+    "status": "verified",
+    "sourceDigest": "8223b05efa3d149d486750eeb059c254c8f9de11a2b17c110c74da81dc6a2ad8",
+    "browserEquivalent": "Not part of this configuration on desktop either: compiled only when INSTRUMENT_UI is defined by hand for profiling; the spec asserts the developer menu matches the default desktop build.",
+    "evidence": [
+      "web/tests/main-menu.spec.js"
+    ]
+  },
+  "src/surge-xt/gui/SurgeGUIEditorMenuStructures.cpp:menu-call:0f8d70e86ab685aa": {
+    "status": "verified",
+    "sourceDigest": "8223b05efa3d149d486750eeb059c254c8f9de11a2b17c110c74da81dc6a2ad8",
+    "browserEquivalent": "Original modulator preset menu; factory and user presets load with undo/redo and survive save and reload.",
+    "runtimeExpansion": [
+      "Delayed Vibrato",
+      "1 Bar Fade In",
+      "1 Major",
+      "Major Arpeggio",
+      "DAHDSR Envelope",
+      "Browser roundtrip (user)",
+      "Outside Menu (user, after Refresh Presets)"
+    ],
+    "evidence": [
+      "web/tests/factory-presets.spec.js",
+      "web/tests/main-menu.spec.js"
+    ]
+  },
+  "src/surge-xt/gui/SurgeGUIEditorMenuStructures.cpp:menu-call:4e12601d511d8a72": {
+    "status": "verified",
+    "sourceDigest": "8223b05efa3d149d486750eeb059c254c8f9de11a2b17c110c74da81dc6a2ad8",
+    "browserEquivalent": "Original preset subcategory submenus.",
+    "runtimeExpansion": [
+      "1 Chords",
+      "Melodic",
+      "Generator"
+    ],
+    "evidence": [
+      "web/tests/factory-presets.spec.js"
+    ]
+  },
+  "src/surge-xt/gui/SurgeGUIEditorMenuStructures.cpp:menu-call:fec22fa2b867813e": {
+    "status": "verified",
+    "sourceDigest": "8223b05efa3d149d486750eeb059c254c8f9de11a2b17c110c74da81dc6a2ad8",
+    "browserEquivalent": "Original top-level preset categories for factory and user presets.",
+    "runtimeExpansion": [
+      "Envelope",
+      "Formula",
+      "LFO",
+      "MSEG",
+      "Step Seq"
+    ],
+    "evidence": [
+      "web/tests/factory-presets.spec.js",
+      "web/tests/main-menu.spec.js"
+    ]
+  },
+  "src/surge-xt/gui/SurgeGUIEditorMenuStructures.cpp:menu-call:74c57f5fb07180d0": {
+    "status": "verified",
+    "sourceDigest": "8223b05efa3d149d486750eeb059c254c8f9de11a2b17c110c74da81dc6a2ad8",
+    "browserEquivalent": "Original prompt saves the preset to the persisted user folder; it reloads and applies after a page reload.",
+    "runtimeExpansion": [
+      "Save Envelope Preset As...",
+      "Save MSEG Preset As...",
+      "Save Step Seq Preset As...",
+      "Save Formula Preset As..."
+    ],
+    "evidence": [
+      "web/tests/factory-presets.spec.js",
+      "web/tests/mseg-workflows.spec.js"
+    ]
+  },
+  "src/surge-xt/gui/SurgeGUIEditorMenuStructures.cpp:menu-call:b96f5bf201aee466": {
+    "status": "verified",
+    "sourceDigest": "8223b05efa3d149d486750eeb059c254c8f9de11a2b17c110c74da81dc6a2ad8",
+    "browserEquivalent": "Original rescan; a preset written to the user folder appears in the menu after Refresh Presets.",
+    "evidence": [
+      "web/tests/main-menu.spec.js"
+    ]
+  },
+  "src/surge-xt/gui/SurgeGUIEditorMenuStructures.cpp:menu-call:1031543b28f040b6": {
+    "status": "verified",
+    "sourceDigest": "8223b05efa3d149d486750eeb059c254c8f9de11a2b17c110c74da81dc6a2ad8",
+    "browserEquivalent": "Original rescan of factory and user data after the custom folder changes.",
+    "evidence": [
+      "web/tests/data-folder.spec.js"
+    ]
+  },
+  "src/surge-xt/gui/SurgeGUIEditorMenuStructures.cpp:menu-call:ef1c3c3f657951d5": {
+    "status": "verified",
+    "sourceDigest": "8223b05efa3d149d486750eeb059c254c8f9de11a2b17c110c74da81dc6a2ad8",
+    "browserEquivalent": "Original chooser through the browser directory picker; patches in the chosen folder appear, and the choice persists across reloads.",
+    "evidence": [
+      "web/tests/data-folder.spec.js"
+    ]
+  },
+  "src/surge-xt/gui/SurgeGUIEditorMenuStructures.cpp:menu-call:13933934c6b86aec": {
+    "status": "verified",
+    "sourceDigest": "8223b05efa3d149d486750eeb059c254c8f9de11a2b17c110c74da81dc6a2ad8",
+    "browserEquivalent": "Removes a CC assigned through the parameter menu; the mapping report no longer lists it.",
+    "evidence": [
+      "web/tests/main-menu.spec.js"
+    ]
+  },
+  "src/surge-xt/gui/SurgeGUIEditorMenuStructures.cpp:menu-call:9294567dfd498552": {
+    "status": "verified",
+    "sourceDigest": "8223b05efa3d149d486750eeb059c254c8f9de11a2b17c110c74da81dc6a2ad8",
+    "browserEquivalent": "Original prompt writes the current mapping, including the assigned CC, to the persisted user folder.",
+    "evidence": [
+      "web/tests/main-menu.spec.js"
+    ]
+  },
+  "src/surge-xt/gui/SurgeGUIEditorMenuStructures.cpp:menu-call:a79d1f74fa02bf29": {
+    "status": "verified",
+    "sourceDigest": "8223b05efa3d149d486750eeb059c254c8f9de11a2b17c110c74da81dc6a2ad8",
+    "browserEquivalent": "Stores the current mapping as the default; the assigned CC is restored after reload.",
+    "evidence": [
+      "web/tests/main-menu.spec.js"
+    ]
+  },
+  "src/surge-xt/gui/SurgeGUIEditorMenuStructures.cpp:menu-call:d56c9fd9df8f01bd": {
+    "status": "verified",
+    "sourceDigest": "8223b05efa3d149d486750eeb059c254c8f9de11a2b17c110c74da81dc6a2ad8",
+    "browserEquivalent": "Original HTML mapping report in the browser report viewer; lists the assigned CC and parameter.",
+    "evidence": [
+      "web/tests/main-menu.spec.js"
+    ]
+  },
+  "src/surge-xt/gui/SurgeGUIEditorMenuStructures.cpp:menu-call:b4dfe884fe4f4697": {
+    "status": "verified",
+    "sourceDigest": "8223b05efa3d149d486750eeb059c254c8f9de11a2b17c110c74da81dc6a2ad8",
+    "browserEquivalent": "Saved mappings are listed under USER MIDI MAPPINGS; loading one by name restores its assigned CC.",
+    "runtimeExpansion": [
+      "Browser Mapping",
+      "Menu Mapping"
+    ],
+    "evidence": [
+      "web/tests/main-menu.spec.js"
+    ]
+  },
+  "src/surge-xt/gui/SurgeGUIEditorMenuStructures.cpp:menu-call:16251d6188034fe7": {
+    "status": "verified",
+    "sourceDigest": "8223b05efa3d149d486750eeb059c254c8f9de11a2b17c110c74da81dc6a2ad8",
+    "browserEquivalent": "Shown once a default zoom exists and differs from the current zoom; returns to the default.",
+    "runtimeExpansion": [
+      "Zoom to Default (125%)",
+      "Zoom to Default (150%)"
+    ],
+    "evidence": [
+      "web/tests/main-menu.spec.js"
+    ]
+  },
+  "src/surge-xt/gui/SurgeGUIEditorMenuStructures.cpp:menu-call:59c3a335b4c9d1cf": {
+    "status": "verified",
+    "sourceDigest": "8223b05efa3d149d486750eeb059c254c8f9de11a2b17c110c74da81dc6a2ad8",
+    "browserEquivalent": "Stores the current zoom as the default; it is applied after reload.",
+    "runtimeExpansion": [
+      "Set Current Zoom Level (150%) as Default"
+    ],
+    "evidence": [
+      "web/tests/main-menu.spec.js"
+    ]
+  },
+  "src/surge-xt/gui/SurgeGUIEditorMenuStructures.cpp:menu-call:4bf0441f84ff7ecf": {
+    "status": "verified",
+    "sourceDigest": "8223b05efa3d149d486750eeb059c254c8f9de11a2b17c110c74da81dc6a2ad8",
+    "browserEquivalent": "Original prompt; the entered zoom is applied after reload.",
+    "evidence": [
+      "web/tests/main-menu.spec.js"
+    ]
+  },
+  "src/surge-xt/gui/SurgeGUIEditorMenuStructures.cpp:menu-call:73503639451dcd92": {
+    "status": "verified",
+    "sourceDigest": "8223b05efa3d149d486750eeb059c254c8f9de11a2b17c110c74da81dc6a2ad8",
+    "browserEquivalent": "Grows the editor to the largest zoom that fits the browser viewport.",
+    "evidence": [
+      "web/tests/main-menu.spec.js"
+    ]
+  },
+  "src/surge-xt/gui/SurgeGUIEditorMenuStructures.cpp:menu-call:7430fc96469687c5": {
+    "status": "verified",
+    "sourceDigest": "8223b05efa3d149d486750eeb059c254c8f9de11a2b17c110c74da81dc6a2ad8",
+    "browserEquivalent": "Shrinks the editor to the original minimum zoom.",
+    "evidence": [
+      "web/tests/main-menu.spec.js"
+    ]
+  },
+  "src/surge-xt/gui/SurgeGUIEditorMenuStructures.cpp:menu-call:b03d5da2ac039272": {
+    "status": "verified",
+    "sourceDigest": "8223b05efa3d149d486750eeb059c254c8f9de11a2b17c110c74da81dc6a2ad8",
+    "browserEquivalent": "Original zoom steps with their shortcuts.",
+    "runtimeExpansion": [
+      "Grow by 10%",
+      "Grow by 25%",
+      "Shrink by 10%",
+      "Shrink by 25%"
+    ],
+    "evidence": [
+      "web/tests/main-menu.spec.js"
+    ]
+  },
+  "src/surge-xt/gui/SurgeGUIEditorMenuStructures.cpp:menu-call:b6e075ae7e13df28": {
+    "status": "verified",
+    "sourceDigest": "8223b05efa3d149d486750eeb059c254c8f9de11a2b17c110c74da81dc6a2ad8",
+    "browserEquivalent": "Not present in the desktop build either: the fullscreen items are inside #if 0 in the original source; the spec asserts no fullscreen items appear.",
+    "evidence": [
+      "web/tests/main-menu.spec.js"
+    ],
+    "runtimeExpansion": [
+      "None in either build: the Enter/Exit Fullscreen Mode items are inside #if 0"
+    ]
+  },
+  "src/surge-xt/gui/SurgeGUIEditorMenuStructures.cpp:menu-call:947fca8789a6554b": {
+    "status": "verified",
+    "sourceDigest": "8223b05efa3d149d486750eeb059c254c8f9de11a2b17c110c74da81dc6a2ad8",
+    "browserEquivalent": "Not present in the desktop build either: the fullscreen items are inside #if 0 in the original source; the spec asserts no fullscreen items appear.",
+    "evidence": [
+      "web/tests/main-menu.spec.js"
+    ],
+    "runtimeExpansion": [
+      "None in either build: the Enter/Exit Fullscreen Mode items are inside #if 0"
+    ]
+  },
+  "src/surge-xt/gui/SurgeGUIEditorMenuStructures.cpp:menu-call:62ecf3b7e42aab1e": {
+    "status": "verified",
+    "sourceDigest": "8223b05efa3d149d486750eeb059c254c8f9de11a2b17c110c74da81dc6a2ad8",
+    "browserEquivalent": "Opens the original keyboard shortcut editor overlay.",
+    "runtimeExpansion": [
+      "Edit Keyboard Shortcuts..."
+    ],
+    "evidence": [
+      "web/tests/main-menu.spec.js",
+      "web/tests/keyboard-shortcuts.spec.js"
+    ]
+  },
+  "src/surge-xt/gui/SurgeGUIEditorMenuStructures.cpp:menu-call:9433650cd5aad344": {
+    "status": "verified",
+    "sourceDigest": "8223b05efa3d149d486750eeb059c254c8f9de11a2b17c110c74da81dc6a2ad8",
+    "browserEquivalent": "Original focus-follow submenu; both options select and persist.",
+    "runtimeExpansion": [
+      "Shift + F10 and Edit Parameter Value Shortcuts"
+    ],
+    "evidence": [
+      "web/tests/main-menu.spec.js"
+    ]
+  },
+  "src/surge-xt/gui/SurgeGUIEditorMenuStructures.cpp:menu-call:3467b9be5a8ce9b2": {
+    "status": "verified",
+    "sourceDigest": "8223b05efa3d149d486750eeb059c254c8f9de11a2b17c110c74da81dc6a2ad8",
+    "browserEquivalent": "Shows and hides the original virtual keyboard below the editor.",
+    "runtimeExpansion": [
+      "Virtual Keyboard"
+    ],
+    "evidence": [
+      "web/tests/main-menu.spec.js"
+    ]
+  },
+  "src/surge-xt/gui/SurgeGUIEditorMenuStructures.cpp:menu-call:b896d9719e160ff8": {
+    "status": "verified",
+    "sourceDigest": "8223b05efa3d149d486750eeb059c254c8f9de11a2b17c110c74da81dc6a2ad8",
+    "browserEquivalent": "Original JUCE main-menu toggle; the spec flips it, checks the checkmark, reloads to confirm the user preference persisted, and restores it.",
+    "runtimeExpansion": [
+      "Focus Modulator Editor on \"Add Modulation From\" Actions"
+    ],
+    "evidence": [
+      "web/tests/main-menu.spec.js"
+    ]
+  },
+  "src/surge-xt/gui/SurgeGUIEditorMenuStructures.cpp:menu-call:414ed7cc87a67265": {
+    "status": "verified",
+    "sourceDigest": "8223b05efa3d149d486750eeb059c254c8f9de11a2b17c110c74da81dc6a2ad8",
+    "browserEquivalent": "Toggles MPE; the MPE status control follows.",
+    "runtimeExpansion": [
+      "Enable MPE",
+      "Disable MPE"
+    ],
+    "evidence": [
+      "web/tests/main-menu.spec.js"
+    ]
+  },
+  "src/surge-xt/gui/SurgeGUIEditorMenuStructures.cpp:menu-call:48a1ffc3fc8bf92a": {
+    "status": "verified",
+    "sourceDigest": "8223b05efa3d149d486750eeb059c254c8f9de11a2b17c110c74da81dc6a2ad8",
+    "browserEquivalent": "Original prompt remaps A4 to 432 Hz; the mapping label and Set to Standard Mapping appear.",
+    "runtimeExpansion": [
+      "Remap A4 (MIDI Note 69) Directly to..."
+    ],
+    "evidence": [
+      "web/tests/main-menu.spec.js"
+    ]
+  },
+  "src/surge-xt/gui/SurgeGUIEditorMenuStructures.cpp:menu-call:7fcbc3115154b6f5": {
+    "status": "verified",
+    "sourceDigest": "8223b05efa3d149d486750eeb059c254c8f9de11a2b17c110c74da81dc6a2ad8",
+    "browserEquivalent": "Current scale label for loaded and patch-embedded tunings.",
+    "runtimeExpansion": [
+      "Current Tuning: Five",
+      "Current Tuning: Embedded Seven"
+    ],
+    "evidence": [
+      "web/tests/main-menu.spec.js"
+    ]
+  },
+  "src/surge-xt/gui/SurgeGUIEditorMenuStructures.cpp:menu-call:e621dcde676c9abf": {
+    "status": "verified",
+    "sourceDigest": "8223b05efa3d149d486750eeb059c254c8f9de11a2b17c110c74da81dc6a2ad8",
+    "browserEquivalent": "Current mapping label after a remap.",
+    "runtimeExpansion": [
+      "Current Keyboard Mapping: Note 69 Retuned 440 to 432"
+    ],
+    "evidence": [
+      "web/tests/main-menu.spec.js"
+    ]
+  },
+  "src/surge-xt/gui/SurgeGUIEditorMenuStructures.cpp:menu-call:34a901b4c6d4635c": {
+    "status": "verified",
+    "sourceDigest": "8223b05efa3d149d486750eeb059c254c8f9de11a2b17c110c74da81dc6a2ad8",
+    "browserEquivalent": "Opens and closes the original tuning editor; the label follows its state.",
+    "runtimeExpansion": [
+      "Open Tuning Editor...",
+      "Close Tuning Editor..."
+    ],
+    "evidence": [
+      "web/tests/main-menu.spec.js"
+    ]
+  },
+  "src/surge-xt/gui/SurgeGUIEditorMenuStructures.cpp:menu-call:67470e68ca4aa1d3": {
+    "status": "verified",
+    "sourceDigest": "8223b05efa3d149d486750eeb059c254c8f9de11a2b17c110c74da81dc6a2ad8",
+    "browserEquivalent": "Returns scale and mapping to standard; the current-tuning label disappears.",
+    "evidence": [
+      "web/tests/main-menu.spec.js"
+    ]
+  },
+  "src/surge-xt/gui/SurgeGUIEditorMenuStructures.cpp:menu-call:9d6dc70006a9ae16": {
+    "status": "verified",
+    "sourceDigest": "8223b05efa3d149d486750eeb059c254c8f9de11a2b17c110c74da81dc6a2ad8",
+    "browserEquivalent": "Resets the mapping; the item is disabled afterwards, as on desktop.",
+    "evidence": [
+      "web/tests/main-menu.spec.js"
+    ]
+  },
+  "src/surge-xt/gui/SurgeGUIEditorMenuStructures.cpp:menu-call:ecbd52b24da44ce6": {
+    "status": "verified",
+    "sourceDigest": "8223b05efa3d149d486750eeb059c254c8f9de11a2b17c110c74da81dc6a2ad8",
+    "browserEquivalent": "Resets the scale; the item is disabled afterwards, as on desktop.",
+    "evidence": [
+      "web/tests/main-menu.spec.js"
+    ]
+  },
+  "src/surge-xt/gui/SurgeGUIEditorMenuStructures.cpp:menu-call:f9207e42bfc458db": {
+    "status": "verified",
+    "sourceDigest": "8223b05efa3d149d486750eeb059c254c8f9de11a2b17c110c74da81dc6a2ad8",
+    "browserEquivalent": "Original chooser through the browser file picker; the scale is applied and labelled.",
+    "evidence": [
+      "web/tests/main-menu.spec.js",
+      "web/tests/tuning-import.spec.js",
+      "web/tests/user-files.spec.js"
+    ]
+  },
+  "src/surge-xt/gui/SurgeGUIEditorMenuStructures.cpp:menu-call:aee34f3d0f7eca27": {
+    "status": "verified",
+    "sourceDigest": "8223b05efa3d149d486750eeb059c254c8f9de11a2b17c110c74da81dc6a2ad8",
+    "browserEquivalent": "Original chooser through the browser file picker; the mapping is applied.",
+    "evidence": [
+      "web/tests/tuning-import.spec.js",
+      "web/tests/user-files.spec.js",
+      "web/tests/tuning-recall.spec.js"
+    ]
+  },
+  "src/surge-xt/gui/SurgeGUIEditorMenuStructures.cpp:menu-call:85b75342531c40b4": {
+    "status": "verified",
+    "sourceDigest": "8223b05efa3d149d486750eeb059c254c8f9de11a2b17c110c74da81dc6a2ad8",
+    "browserEquivalent": "Offered when the loaded patch stores a tuning that was not applied; applies it.",
+    "evidence": [
+      "web/tests/main-menu.spec.js"
+    ]
+  },
+  "src/surge-xt/gui/SurgeGUIEditorMenuStructures.cpp:menu-call:9807d5bc16d25d4b": {
+    "status": "verified",
+    "sourceDigest": "8223b05efa3d149d486750eeb059c254c8f9de11a2b17c110c74da81dc6a2ad8",
+    "browserEquivalent": "Original action stores the current transpose setting as the default.",
+    "evidence": [
+      "web/tests/main-menu.spec.js"
+    ]
+  },
+  "src/surge-xt/gui/SurgeGUIEditorMenuStructures.cpp:menu-call:5b47647ffee41e68": {
+    "status": "verified",
+    "sourceDigest": "8223b05efa3d149d486750eeb059c254c8f9de11a2b17c110c74da81dc6a2ad8",
+    "browserEquivalent": "Original skin category submenus.",
+    "runtimeExpansion": [
+      "Tutorials"
+    ],
+    "evidence": [
+      "web/tests/main-menu.spec.js"
+    ]
+  },
+  "src/surge-xt/gui/SurgeGUIEditorMenuStructures.cpp:menu-call:f1635cf5cda41630": {
+    "status": "verified",
+    "sourceDigest": "8223b05efa3d149d486750eeb059c254c8f9de11a2b17c110c74da81dc6a2ad8",
+    "browserEquivalent": "Developer skin menu item shows the About screen layout grid at the stored resolution.",
+    "runtimeExpansion": [
+      "Show Layout Grid (20 px)",
+      "Show Layout Grid (30 px)"
+    ],
+    "evidence": [
+      "web/tests/main-menu.spec.js"
+    ]
+  },
+  "src/surge-xt/gui/SurgeGUIEditorMenuStructures.cpp:menu-call:954e9d8d48a369a2": {
+    "status": "verified",
+    "sourceDigest": "8223b05efa3d149d486750eeb059c254c8f9de11a2b17c110c74da81dc6a2ad8",
+    "browserEquivalent": "Original prompt changes the layout grid resolution shown in the menu.",
+    "evidence": [
+      "web/tests/main-menu.spec.js"
+    ]
+  },
+  "src/surge-xt/gui/SurgeGUIEditorMenuStructures.cpp:menu-call:82559663336a71f9": {
+    "status": "verified",
+    "sourceDigest": "8223b05efa3d149d486750eeb059c254c8f9de11a2b17c110c74da81dc6a2ad8",
+    "browserEquivalent": "Reloads the current skin; the editor is rebuilt and stays usable.",
+    "runtimeExpansion": [
+      "Reload Current Skin"
+    ],
+    "evidence": [
+      "web/tests/main-menu.spec.js"
+    ]
+  },
+  "src/surge-xt/gui/SurgeGUIEditorMenuStructures.cpp:menu-call:1e0426856124c794": {
+    "status": "verified",
+    "sourceDigest": "8223b05efa3d149d486750eeb059c254c8f9de11a2b17c110c74da81dc6a2ad8",
+    "browserEquivalent": "Rescans skins; the editor stays usable.",
+    "evidence": [
+      "web/tests/main-menu.spec.js"
+    ]
+  },
+  "src/surge-xt/gui/SurgeGUIEditorMenuStructures.cpp:menu-call:9126bb5ab508c873": {
+    "status": "verified",
+    "sourceDigest": "8223b05efa3d149d486750eeb059c254c8f9de11a2b17c110c74da81dc6a2ad8",
+    "browserEquivalent": "Browser directory picker for a .surge-skin folder replaces the desktop folder reveal; the imported skin is selectable and persists.",
+    "evidence": [
+      "web/tests/skin-import.spec.js",
+      "web/tests/platform-exclusions.spec.js"
+    ]
+  },
+  "src/surge-xt/gui/SurgeGUIEditorMenuStructures.cpp:menu-call:7d5ea693aaa30646": {
+    "status": "verified",
+    "sourceDigest": "8223b05efa3d149d486750eeb059c254c8f9de11a2b17c110c74da81dc6a2ad8",
+    "browserEquivalent": "Original HTML skin inspector shown in the browser report viewer.",
+    "evidence": [
+      "web/tests/main-menu.spec.js"
+    ]
+  },
+  "src/surge-xt/gui/SurgeGUIEditorMenuStructures.cpp:menu-call:c57e702e7b7c7df3": {
+    "status": "verified",
+    "sourceDigest": "8223b05efa3d149d486750eeb059c254c8f9de11a2b17c110c74da81dc6a2ad8",
+    "browserEquivalent": "Selects the menu colour mode; the checkmark moves to the chosen mode.",
+    "evidence": [
+      "web/tests/main-menu.spec.js"
+    ]
+  },
+  "src/surge-xt/gui/SurgeGUIEditorMenuStructures.cpp:menu-call:db42cab3f8b2c8c9": {
+    "status": "verified",
+    "sourceDigest": "8223b05efa3d149d486750eeb059c254c8f9de11a2b17c110c74da81dc6a2ad8",
+    "browserEquivalent": "Selects the menu colour mode; the checkmark moves to the chosen mode.",
+    "evidence": [
+      "web/tests/main-menu.spec.js"
+    ]
+  },
+  "src/surge-xt/gui/SurgeGUIEditorMenuStructures.cpp:menu-call:1ab5fd8719d19b90": {
+    "status": "verified",
+    "sourceDigest": "8223b05efa3d149d486750eeb059c254c8f9de11a2b17c110c74da81dc6a2ad8",
+    "browserEquivalent": "Original menu item; opens the same URL through the browser window.open bridge, asserted by the spec.",
+    "evidence": [
+      "web/tests/main-menu.spec.js"
+    ]
+  },
+  "src/surge-xt/gui/SurgeGUIEditorMenuStructures.cpp:menu-call:2fc5dd5a8fd535e6": {
+    "status": "verified",
+    "sourceDigest": "8223b05efa3d149d486750eeb059c254c8f9de11a2b17c110c74da81dc6a2ad8",
+    "browserEquivalent": "Original menu item; opens the same URL through the browser window.open bridge, asserted by the spec.",
+    "evidence": [
+      "web/tests/main-menu.spec.js"
+    ]
+  },
+  "src/surge-xt/gui/SurgeGUIEditorMenuStructures.cpp:menu-call:654b1bab77b2b96b": {
+    "status": "verified",
+    "sourceDigest": "8223b05efa3d149d486750eeb059c254c8f9de11a2b17c110c74da81dc6a2ad8",
+    "browserEquivalent": "Original menu item; opens the same URL through the browser window.open bridge, asserted by the spec.",
+    "evidence": [
+      "web/tests/main-menu.spec.js"
+    ]
+  },
+  "src/surge-xt/gui/SurgeGUIEditorMenuStructures.cpp:menu-call:6cb408e6fdf98ce6": {
+    "status": "verified",
+    "sourceDigest": "8223b05efa3d149d486750eeb059c254c8f9de11a2b17c110c74da81dc6a2ad8",
+    "browserEquivalent": "Original menu item; opens the same URL through the browser window.open bridge, asserted by the spec.",
+    "evidence": [
+      "web/tests/main-menu.spec.js"
+    ]
+  },
+  "src/surge-xt/gui/SurgeGUIEditorMenuStructures.cpp:menu-call:ad0d4df3735f119f": {
+    "status": "verified",
+    "sourceDigest": "8223b05efa3d149d486750eeb059c254c8f9de11a2b17c110c74da81dc6a2ad8",
+    "browserEquivalent": "Original menu item; opens the same URL through the browser window.open bridge, asserted by the spec.",
+    "evidence": [
+      "web/tests/main-menu.spec.js"
+    ]
+  },
+  "src/surge-xt/gui/SurgeGUIEditorMenuStructures.cpp:menu-call:a9cc45532ac3a2ff": {
+    "status": "verified",
+    "sourceDigest": "8223b05efa3d149d486750eeb059c254c8f9de11a2b17c110c74da81dc6a2ad8",
+    "browserEquivalent": "Original menu item; opens the same URL through the browser window.open bridge, asserted by the spec.",
+    "evidence": [
+      "web/tests/main-menu.spec.js"
+    ]
+  },
+  "src/surge-xt/gui/SurgeGUIEditorMenuStructures.cpp:menu-call:49bd36c07c39358d": {
+    "status": "verified",
+    "sourceDigest": "8223b05efa3d149d486750eeb059c254c8f9de11a2b17c110c74da81dc6a2ad8",
+    "browserEquivalent": "Original menu item; opens the same URL through the browser window.open bridge, asserted by the spec.",
+    "runtimeExpansion": [
+      "Surge XT Manual..."
+    ],
+    "evidence": [
+      "web/tests/main-menu.spec.js"
+    ]
+  },
+  "src/surge-xt/gui/SurgeGUIEditorMenuStructures.cpp:menu-call:c1b0e9a44d90dca6": {
+    "status": "verified",
+    "sourceDigest": "8223b05efa3d149d486750eeb059c254c8f9de11a2b17c110c74da81dc6a2ad8",
+    "browserEquivalent": "Opens the original About screen.",
+    "runtimeExpansion": [
+      "About Surge XT"
+    ],
+    "evidence": [
+      "web/tests/main-menu.spec.js"
+    ]
+  },
+  "src/surge-xt/gui/SurgeGUIEditorMenuStructures.cpp:menu-call:9e351e36d3a63540": {
+    "status": "verified",
+    "sourceDigest": "8223b05efa3d149d486750eeb059c254c8f9de11a2b17c110c74da81dc6a2ad8",
+    "browserEquivalent": "Developer toggle; checked state follows and it turns off again.",
+    "evidence": [
+      "web/tests/main-menu.spec.js"
+    ]
+  },
+  "src/surge-xt/gui/SurgeGUIEditorMenuStructures.cpp:menu-call:582487027c721d06": {
+    "status": "verified",
+    "sourceDigest": "8223b05efa3d149d486750eeb059c254c8f9de11a2b17c110c74da81dc6a2ad8",
+    "browserEquivalent": "Writes the undo/redo stack to standard output, which the browser shows in the console.",
+    "evidence": [
+      "web/tests/main-menu.spec.js"
+    ]
+  },
+  "src/surge-xt/gui/SurgeGUIEditorMenuStructures.cpp:menu-call:4b9125772d10d0e6": {
+    "status": "verified",
+    "sourceDigest": "8223b05efa3d149d486750eeb059c254c8f9de11a2b17c110c74da81dc6a2ad8",
+    "browserEquivalent": "Right-clicking the main menu button adds the developer submenu, as on desktop.",
+    "evidence": [
+      "web/tests/main-menu.spec.js",
+      "web/tests/platform-exclusions.spec.js"
+    ]
+  },
+  "src/surge-xt/gui/SurgeGUIEditorMenuStructures.cpp:menu-call:8f8b0fd4c684ae31": {
+    "status": "verified",
+    "sourceDigest": "8223b05efa3d149d486750eeb059c254c8f9de11a2b17c110c74da81dc6a2ad8",
+    "browserEquivalent": "Original JUCE main-menu choice; the spec selects every option, checks the single checkmark, reloads to confirm persistence, and restores the default.",
+    "runtimeExpansion": [
+      "Channel 1",
+      "Channel 2",
+      "Channel 3",
+      "Channel 4",
+      "Channel 5",
+      "Channel 6",
+      "Channel 7",
+      "Channel 8",
+      "Channel 9",
+      "Channel 10",
+      "Channel 11",
+      "Channel 12",
+      "Channel 13",
+      "Channel 14",
+      "Channel 15",
+      "Channel 16"
+    ],
+    "evidence": [
+      "web/tests/main-menu.spec.js"
+    ]
+  },
+  "src/surge-xt/gui/SurgeGUIEditorMenuStructures.cpp:menu-call:52f02209a8f2451e": {
+    "status": "verified",
+    "sourceDigest": "8223b05efa3d149d486750eeb059c254c8f9de11a2b17c110c74da81dc6a2ad8",
+    "browserEquivalent": "Every fixed zoom level applies exactly and becomes the checked item.",
+    "runtimeExpansion": [
+      "Zoom to 100%",
+      "Zoom to 125%",
+      "Zoom to 150%",
+      "Zoom to 175%",
+      "Zoom to 200%",
+      "Zoom to 300%",
+      "Zoom to 400%"
+    ],
+    "evidence": [
+      "web/tests/main-menu.spec.js"
+    ]
+  },
+  "src/surge-xt/gui/SurgeGUIEditorMenuStructures.cpp:menu-call:bcbd5a33ec82f02a": {
+    "status": "platform-limitation",
+    "sourceDigest": "8223b05efa3d149d486750eeb059c254c8f9de11a2b17c110c74da81dc6a2ad8",
+    "capability": "native-driver",
+    "reason": "Chooses between the Windows Direct2D and software graphics renderers; compiled only on Windows. Browsers draw through the canvas and choose their own GPU path.",
+    "portableAlternative": "The browser renders the original JUCE editor through a 2D canvas; no renderer choice is needed."
+  },
+  "src/surge-xt/gui/SurgeGUIEditorMenuStructures.cpp:menu-call:39ed531992faf9c4": {
+    "status": "platform-limitation",
+    "sourceDigest": "8223b05efa3d149d486750eeb059c254c8f9de11a2b17c110c74da81dc6a2ad8",
+    "capability": "os-shell",
+    "reason": "Opens a Windows console window for debug output; compiled only on Windows.",
+    "portableAlternative": "Debug output goes to the browser developer console."
+  },
+  "src/surge-xt/gui/SurgeGUIEditorMenuStructures.cpp:menu-call:d5e08ba4532e8566": {
+    "status": "platform-limitation",
+    "sourceDigest": "8223b05efa3d149d486750eeb059c254c8f9de11a2b17c110c74da81dc6a2ad8",
+    "capability": "os-shell",
+    "reason": "Reveals the skin folder in the OS file manager; excluded in SURGE_WEB builds.",
+    "portableAlternative": "Install a New Skin... imports a .surge-skin folder through the browser directory picker."
+  },
+  "src/surge-xt/gui/SurgeGUIEditorMenuStructures.cpp:menu-call:83e37d0baeb365a9": {
+    "status": "verified",
+    "sourceDigest": "8223b05efa3d149d486750eeb059c254c8f9de11a2b17c110c74da81dc6a2ad8",
+    "browserEquivalent": "Not present on macOS or Linux desktop builds either: this Windows-only Narrator workaround announces patch typeahead entries. The browser, like macOS and Linux, omits it (asserted absent).",
+    "evidence": [
+      "web/tests/main-menu.spec.js"
+    ]
+  },
+  "src/surge-xt/gui/SurgeGUIEditorMenuStructures.cpp:menu-call:e07aeb32628f6899": {
+    "status": "platform-limitation",
+    "sourceDigest": "8223b05efa3d149d486750eeb059c254c8f9de11a2b17c110c74da81dc6a2ad8",
+    "capability": "mts-esp",
+    "reason": "MTS-ESP tuning sharing uses a shared library and interprocess communication with other plugins on the same machine; the browser build is compiled with SURGE_SKIP_ODDSOUND_MTS and the spec asserts the entries are absent.",
+    "portableAlternative": "Scala .scl/.kbm import, the factory tuning library, patch-embedded tuning and the tuning editor remain available."
+  },
+  "src/surge-xt/gui/SurgeGUIEditorMenuStructures.cpp:menu-call:91cdbde799344ccc": {
+    "status": "platform-limitation",
+    "sourceDigest": "8223b05efa3d149d486750eeb059c254c8f9de11a2b17c110c74da81dc6a2ad8",
+    "capability": "mts-esp",
+    "reason": "MTS-ESP tuning sharing uses a shared library and interprocess communication with other plugins on the same machine; the browser build is compiled with SURGE_SKIP_ODDSOUND_MTS and the spec asserts the entries are absent.",
+    "portableAlternative": "Scala .scl/.kbm import, the factory tuning library, patch-embedded tuning and the tuning editor remain available."
+  },
+  "src/surge-xt/gui/SurgeGUIEditorMenuStructures.cpp:menu-call:576f89aab719c6a9": {
+    "status": "platform-limitation",
+    "sourceDigest": "8223b05efa3d149d486750eeb059c254c8f9de11a2b17c110c74da81dc6a2ad8",
+    "capability": "mts-esp",
+    "reason": "MTS-ESP tuning sharing uses a shared library and interprocess communication with other plugins on the same machine; the browser build is compiled with SURGE_SKIP_ODDSOUND_MTS and the spec asserts the entries are absent.",
+    "portableAlternative": "Scala .scl/.kbm import, the factory tuning library, patch-embedded tuning and the tuning editor remain available."
+  },
+  "src/surge-xt/gui/SurgeGUIEditorMenuStructures.cpp:menu-call:5b22dfc12c9c73e4": {
+    "status": "platform-limitation",
+    "sourceDigest": "8223b05efa3d149d486750eeb059c254c8f9de11a2b17c110c74da81dc6a2ad8",
+    "capability": "mts-esp",
+    "reason": "MTS-ESP tuning sharing uses a shared library and interprocess communication with other plugins on the same machine; the browser build is compiled with SURGE_SKIP_ODDSOUND_MTS and the spec asserts the entries are absent.",
+    "portableAlternative": "Scala .scl/.kbm import, the factory tuning library, patch-embedded tuning and the tuning editor remain available."
+  },
+  "src/surge-xt/gui/SurgeGUIEditorMenuStructures.cpp:menu-call:627f4cf01cbb5af9": {
+    "status": "platform-limitation",
+    "sourceDigest": "8223b05efa3d149d486750eeb059c254c8f9de11a2b17c110c74da81dc6a2ad8",
+    "capability": "mts-esp",
+    "reason": "MTS-ESP tuning sharing uses a shared library and interprocess communication with other plugins on the same machine; the browser build is compiled with SURGE_SKIP_ODDSOUND_MTS and the spec asserts the entries are absent.",
+    "portableAlternative": "Scala .scl/.kbm import, the factory tuning library, patch-embedded tuning and the tuning editor remain available."
+  },
+  "src/surge-xt/gui/SurgeGUIEditorMenuStructures.cpp:menu-call:18bfcad99e051a3b": {
+    "status": "platform-limitation",
+    "sourceDigest": "8223b05efa3d149d486750eeb059c254c8f9de11a2b17c110c74da81dc6a2ad8",
+    "capability": "mts-esp",
+    "reason": "MTS-ESP tuning sharing uses a shared library and interprocess communication with other plugins on the same machine; the browser build is compiled with SURGE_SKIP_ODDSOUND_MTS and the spec asserts the entries are absent.",
+    "portableAlternative": "Scala .scl/.kbm import, the factory tuning library, patch-embedded tuning and the tuning editor remain available."
+  },
+  "src/surge-xt/gui/SurgeGUIEditorMenuStructures.cpp:menu-call:3030304f5f01a863": {
+    "status": "platform-limitation",
+    "sourceDigest": "8223b05efa3d149d486750eeb059c254c8f9de11a2b17c110c74da81dc6a2ad8",
+    "capability": "mts-esp",
+    "reason": "MTS-ESP tuning sharing uses a shared library and interprocess communication with other plugins on the same machine; the browser build is compiled with SURGE_SKIP_ODDSOUND_MTS and the spec asserts the entries are absent.",
+    "portableAlternative": "Scala .scl/.kbm import, the factory tuning library, patch-embedded tuning and the tuning editor remain available."
+  },
+  "src/surge-xt/gui/SurgeGUIEditorMenuStructures.cpp:menu-call:4c19675a8a6669ca": {
+    "status": "platform-limitation",
+    "sourceDigest": "8223b05efa3d149d486750eeb059c254c8f9de11a2b17c110c74da81dc6a2ad8",
+    "capability": "mts-esp",
+    "reason": "MTS-ESP tuning sharing uses a shared library and interprocess communication with other plugins on the same machine; the browser build is compiled with SURGE_SKIP_ODDSOUND_MTS and the spec asserts the entries are absent.",
+    "portableAlternative": "Scala .scl/.kbm import, the factory tuning library, patch-embedded tuning and the tuning editor remain available."
+  },
+  "src/surge-xt/gui/SurgeGUIEditorMenuStructures.cpp:menu-call:598cff5ef7b2015c": {
+    "status": "platform-limitation",
+    "sourceDigest": "8223b05efa3d149d486750eeb059c254c8f9de11a2b17c110c74da81dc6a2ad8",
+    "capability": "udp-osc",
+    "reason": "Open Sound Control uses direct UDP sockets, which browsers do not expose; the OSC Settings submenu is excluded in SURGE_WEB builds (asserted absent by platform-exclusions.spec.js).",
+    "portableAlternative": "Parameter control through Web MIDI learn and the MIDI mapping menu remains available."
+  },
+  "src/surge-xt/gui/SurgeGUIEditorMenuStructures.cpp:menu-call:6e1d15fff3e4c0ea": {
+    "status": "platform-limitation",
+    "sourceDigest": "8223b05efa3d149d486750eeb059c254c8f9de11a2b17c110c74da81dc6a2ad8",
+    "capability": "udp-osc",
+    "reason": "Open Sound Control uses direct UDP sockets, which browsers do not expose; the OSC Settings submenu is excluded in SURGE_WEB builds (asserted absent by platform-exclusions.spec.js).",
+    "portableAlternative": "Parameter control through Web MIDI learn and the MIDI mapping menu remains available."
+  },
+  "src/surge-xt/gui/SurgeGUIEditorMenuStructures.cpp:menu-call:9df57645055a14e4": {
+    "status": "platform-limitation",
+    "sourceDigest": "8223b05efa3d149d486750eeb059c254c8f9de11a2b17c110c74da81dc6a2ad8",
+    "capability": "udp-osc",
+    "reason": "Open Sound Control uses direct UDP sockets, which browsers do not expose; the OSC Settings submenu is excluded in SURGE_WEB builds (asserted absent by platform-exclusions.spec.js).",
+    "portableAlternative": "Parameter control through Web MIDI learn and the MIDI mapping menu remains available."
+  },
+  "src/surge-xt/gui/SurgeGUIEditorMenuStructures.cpp:menu-call:a4018e0cd9ac9fdb": {
+    "status": "platform-limitation",
+    "sourceDigest": "8223b05efa3d149d486750eeb059c254c8f9de11a2b17c110c74da81dc6a2ad8",
+    "capability": "udp-osc",
+    "reason": "Open Sound Control uses direct UDP sockets, which browsers do not expose; the OSC Settings submenu is excluded in SURGE_WEB builds (asserted absent by platform-exclusions.spec.js).",
+    "portableAlternative": "Parameter control through Web MIDI learn and the MIDI mapping menu remains available."
+  },
+  "src/surge-xt/gui/SurgeGUIEditorMenuStructures.cpp:menu-call:104e32b58e20f009": {
+    "status": "verified",
+    "sourceDigest": "8223b05efa3d149d486750eeb059c254c8f9de11a2b17c110c74da81dc6a2ad8",
+    "browserEquivalent": "Original main-menu submenu; the spec opens it and drives its items.",
+    "evidence": [
+      "web/tests/main-menu.spec.js"
+    ]
+  },
+  "src/surge-xt/gui/SurgeGUIEditorMenuStructures.cpp:menu-call:21428fd6b8fa563a": {
+    "status": "verified",
+    "sourceDigest": "8223b05efa3d149d486750eeb059c254c8f9de11a2b17c110c74da81dc6a2ad8",
+    "browserEquivalent": "Original main-menu submenu; the spec opens it and drives its items.",
+    "evidence": [
+      "web/tests/main-menu.spec.js"
+    ]
+  },
+  "src/surge-xt/gui/SurgeGUIEditorMenuStructures.cpp:menu-call:23f0ec207cd0180d": {
+    "status": "verified",
+    "sourceDigest": "8223b05efa3d149d486750eeb059c254c8f9de11a2b17c110c74da81dc6a2ad8",
+    "browserEquivalent": "Original main-menu submenu; the spec opens it and drives its items.",
+    "evidence": [
+      "web/tests/main-menu.spec.js"
+    ]
+  },
+  "src/surge-xt/gui/SurgeGUIEditorMenuStructures.cpp:menu-call:395c62d62f34baa7": {
+    "status": "verified",
+    "sourceDigest": "8223b05efa3d149d486750eeb059c254c8f9de11a2b17c110c74da81dc6a2ad8",
+    "browserEquivalent": "Original main-menu submenu; the spec opens it and drives its items.",
+    "evidence": [
+      "web/tests/main-menu.spec.js"
+    ]
+  },
+  "src/surge-xt/gui/SurgeGUIEditorMenuStructures.cpp:menu-call:4bf4c482702ddfbe": {
+    "status": "verified",
+    "sourceDigest": "8223b05efa3d149d486750eeb059c254c8f9de11a2b17c110c74da81dc6a2ad8",
+    "browserEquivalent": "Original main-menu submenu; the spec opens it and drives its items.",
+    "evidence": [
+      "web/tests/main-menu.spec.js"
+    ]
+  },
+  "src/surge-xt/gui/SurgeGUIEditorMenuStructures.cpp:menu-call:4c87171a6cf528de": {
+    "status": "verified",
+    "sourceDigest": "8223b05efa3d149d486750eeb059c254c8f9de11a2b17c110c74da81dc6a2ad8",
+    "browserEquivalent": "Original main-menu submenu; the spec opens it and drives its items.",
+    "evidence": [
+      "web/tests/main-menu.spec.js"
+    ]
+  },
+  "src/surge-xt/gui/SurgeGUIEditorMenuStructures.cpp:menu-call:537ecedcf70068fa": {
+    "status": "verified",
+    "sourceDigest": "8223b05efa3d149d486750eeb059c254c8f9de11a2b17c110c74da81dc6a2ad8",
+    "browserEquivalent": "Original main-menu submenu; the spec opens it and drives its items.",
+    "evidence": [
+      "web/tests/main-menu.spec.js"
+    ]
+  },
+  "src/surge-xt/gui/SurgeGUIEditorMenuStructures.cpp:menu-call:659009e609da0ed3": {
+    "status": "verified",
+    "sourceDigest": "8223b05efa3d149d486750eeb059c254c8f9de11a2b17c110c74da81dc6a2ad8",
+    "browserEquivalent": "Original main-menu submenu; the spec opens it and drives its items.",
+    "evidence": [
+      "web/tests/main-menu.spec.js"
+    ]
+  },
+  "src/surge-xt/gui/SurgeGUIEditorMenuStructures.cpp:menu-call:6d78caac03cd5e42": {
+    "status": "verified",
+    "sourceDigest": "8223b05efa3d149d486750eeb059c254c8f9de11a2b17c110c74da81dc6a2ad8",
+    "browserEquivalent": "Original main-menu submenu; the spec opens it and drives its items.",
+    "evidence": [
+      "web/tests/main-menu.spec.js"
+    ]
+  },
+  "src/surge-xt/gui/SurgeGUIEditorMenuStructures.cpp:menu-call:9c6e880d0805a17f": {
+    "status": "verified",
+    "sourceDigest": "8223b05efa3d149d486750eeb059c254c8f9de11a2b17c110c74da81dc6a2ad8",
+    "browserEquivalent": "Original main-menu submenu; the spec opens it and drives its items.",
+    "evidence": [
+      "web/tests/main-menu.spec.js"
+    ]
+  },
+  "src/surge-xt/gui/SurgeGUIEditorMenuStructures.cpp:menu-call:e54a4a2941ffc970": {
+    "status": "verified",
+    "sourceDigest": "8223b05efa3d149d486750eeb059c254c8f9de11a2b17c110c74da81dc6a2ad8",
+    "browserEquivalent": "Original main-menu submenu; the spec opens it and drives its items.",
+    "evidence": [
+      "web/tests/main-menu.spec.js"
+    ]
+  },
+  "src/surge-xt/gui/SurgeGUIEditorMenuStructures.cpp:menu-call:12eb0a7e9433247a": {
+    "status": "verified",
+    "sourceDigest": "8223b05efa3d149d486750eeb059c254c8f9de11a2b17c110c74da81dc6a2ad8",
+    "browserEquivalent": "Middle C choice; changes note labels on the editor (C3/C4 checked on Keytrack Root Key) and persists.",
+    "evidence": [
+      "web/tests/main-menu.spec.js"
+    ]
+  },
+  "src/surge-xt/gui/SurgeGUIEditorMenuStructures.cpp:menu-call:13b9670a5f9ae09a": {
+    "status": "verified",
+    "sourceDigest": "8223b05efa3d149d486750eeb059c254c8f9de11a2b17c110c74da81dc6a2ad8",
+    "browserEquivalent": "Middle C choice; changes note labels on the editor (C3/C4 checked on Keytrack Root Key) and persists.",
+    "evidence": [
+      "web/tests/main-menu.spec.js"
+    ]
+  },
+  "src/surge-xt/gui/SurgeGUIEditorMenuStructures.cpp:menu-call:87a1a588666cddcb": {
+    "status": "verified",
+    "sourceDigest": "8223b05efa3d149d486750eeb059c254c8f9de11a2b17c110c74da81dc6a2ad8",
+    "browserEquivalent": "Middle C choice; changes note labels on the editor (C3/C4 checked on Keytrack Root Key) and persists.",
+    "evidence": [
+      "web/tests/main-menu.spec.js"
+    ]
+  },
+  "src/surge-xt/gui/SurgeGUIEditorMenuStructures.cpp:menu-call:35fd5911ef04de72": {
+    "status": "verified",
+    "sourceDigest": "8223b05efa3d149d486750eeb059c254c8f9de11a2b17c110c74da81dc6a2ad8",
+    "browserEquivalent": "Middle C choice; changes note labels on the editor (C3/C4 checked on Keytrack Root Key) and persists.",
+    "evidence": [
+      "web/tests/main-menu.spec.js"
+    ]
+  },
+  "src/surge-xt/gui/SurgeGUIEditorMenuStructures.cpp:menu-call:5f3fec020e0bde6c": {
+    "status": "verified",
+    "sourceDigest": "8223b05efa3d149d486750eeb059c254c8f9de11a2b17c110c74da81dc6a2ad8",
+    "browserEquivalent": "Original JUCE main-menu choice; the spec selects every option, checks the single checkmark, reloads to confirm persistence, and restores the default.",
+    "runtimeExpansion": [
+      "Legacy",
+      "Slow",
+      "Medium",
+      "Exact"
+    ],
+    "evidence": [
+      "web/tests/main-menu.spec.js"
+    ]
+  },
+  "src/surge-xt/gui/SurgeGUIEditorMenuStructures.cpp:menu-call:177cd1bcfeda02c2": {
+    "status": "verified",
+    "sourceDigest": "8223b05efa3d149d486750eeb059c254c8f9de11a2b17c110c74da81dc6a2ad8",
+    "browserEquivalent": "Original JUCE main-menu choice; the spec selects every option, checks the single checkmark, reloads to confirm persistence, and restores the default.",
+    "runtimeExpansion": [
+      "Legacy",
+      "Slow",
+      "Medium",
+      "Exact"
+    ],
+    "evidence": [
+      "web/tests/main-menu.spec.js"
+    ]
+  },
+  "src/surge-xt/gui/SurgeGUIEditorMenuStructures.cpp:menu-call:f078ce1e11e8b7b9": {
+    "status": "verified",
+    "sourceDigest": "8223b05efa3d149d486750eeb059c254c8f9de11a2b17c110c74da81dc6a2ad8",
+    "browserEquivalent": "Original JUCE main-menu choice; the spec selects every option, checks the single checkmark, reloads to confirm persistence, and restores the default.",
+    "runtimeExpansion": [
+      "Legacy",
+      "Slow",
+      "Medium",
+      "Exact"
+    ],
+    "evidence": [
+      "web/tests/main-menu.spec.js"
+    ]
+  },
+  "src/surge-xt/gui/SurgeGUIEditorMenuStructures.cpp:menu-call:5b2be93fd94fe165": {
+    "status": "verified",
+    "sourceDigest": "8223b05efa3d149d486750eeb059c254c8f9de11a2b17c110c74da81dc6a2ad8",
+    "browserEquivalent": "Original JUCE main-menu choice; the spec selects every option, checks the single checkmark, reloads to confirm persistence, and restores the default.",
+    "runtimeExpansion": [
+      "Legacy",
+      "Slow",
+      "Medium",
+      "Exact"
+    ],
+    "evidence": [
+      "web/tests/main-menu.spec.js"
+    ]
+  },
+  "src/surge-xt/gui/SurgeGUIEditorMenuStructures.cpp:menu-call:3f507067a4fbc605": {
+    "status": "verified",
+    "sourceDigest": "8223b05efa3d149d486750eeb059c254c8f9de11a2b17c110c74da81dc6a2ad8",
+    "browserEquivalent": "Original JUCE main-menu choice; the spec selects every option, checks the single checkmark, reloads to confirm persistence, and restores the default.",
+    "evidence": [
+      "web/tests/main-menu.spec.js"
+    ]
+  },
+  "src/surge-xt/gui/SurgeGUIEditorMenuStructures.cpp:menu-call:bc335b3e74f4b2fc": {
+    "status": "verified",
+    "sourceDigest": "8223b05efa3d149d486750eeb059c254c8f9de11a2b17c110c74da81dc6a2ad8",
+    "browserEquivalent": "Original JUCE main-menu choice; the spec selects every option, checks the single checkmark, reloads to confirm persistence, and restores the default.",
+    "evidence": [
+      "web/tests/main-menu.spec.js"
+    ]
+  },
+  "src/surge-xt/gui/SurgeGUIEditorMenuStructures.cpp:menu-call:a40d6bcac4b079d7": {
+    "status": "verified",
+    "sourceDigest": "8223b05efa3d149d486750eeb059c254c8f9de11a2b17c110c74da81dc6a2ad8",
+    "browserEquivalent": "Original JUCE main-menu choice; the spec selects every option, checks the single checkmark, reloads to confirm persistence, and restores the default.",
+    "evidence": [
+      "web/tests/main-menu.spec.js"
+    ]
+  },
+  "src/surge-xt/gui/SurgeGUIEditorMenuStructures.cpp:menu-call:a3f46d6924185346": {
+    "status": "verified",
+    "sourceDigest": "8223b05efa3d149d486750eeb059c254c8f9de11a2b17c110c74da81dc6a2ad8",
+    "browserEquivalent": "Original JUCE main-menu choice; the spec selects every option, checks the single checkmark, reloads to confirm persistence, and restores the default.",
+    "evidence": [
+      "web/tests/main-menu.spec.js"
+    ]
+  },
+  "src/surge-xt/gui/SurgeGUIEditorMenuStructures.cpp:menu-call:13fc0c4634291228": {
+    "status": "verified",
+    "sourceDigest": "8223b05efa3d149d486750eeb059c254c8f9de11a2b17c110c74da81dc6a2ad8",
+    "browserEquivalent": "Original JUCE main-menu choice; the spec selects every option, checks the single checkmark, reloads to confirm persistence, and restores the default.",
+    "evidence": [
+      "web/tests/main-menu.spec.js"
+    ]
+  },
+  "src/surge-xt/gui/SurgeGUIEditorMenuStructures.cpp:menu-call:a84a2558c9617187": {
+    "status": "verified",
+    "sourceDigest": "8223b05efa3d149d486750eeb059c254c8f9de11a2b17c110c74da81dc6a2ad8",
+    "browserEquivalent": "Original JUCE main-menu choice; the spec selects every option, checks the single checkmark, reloads to confirm persistence, and restores the default.",
+    "evidence": [
+      "web/tests/main-menu.spec.js"
+    ]
+  },
+  "src/surge-xt/gui/SurgeGUIEditorMenuStructures.cpp:menu-call:ea19b20ac788ff23": {
+    "status": "verified",
+    "sourceDigest": "8223b05efa3d149d486750eeb059c254c8f9de11a2b17c110c74da81dc6a2ad8",
+    "browserEquivalent": "Original JUCE main-menu choice; the spec selects every option, checks the single checkmark, reloads to confirm persistence, and restores the default.",
+    "evidence": [
+      "web/tests/main-menu.spec.js"
+    ]
+  },
+  "src/surge-xt/gui/SurgeGUIEditorMenuStructures.cpp:menu-call:e07385e43d0fb0e8": {
+    "status": "verified",
+    "sourceDigest": "8223b05efa3d149d486750eeb059c254c8f9de11a2b17c110c74da81dc6a2ad8",
+    "browserEquivalent": "Original JUCE main-menu choice; the spec selects every option, checks the single checkmark, reloads to confirm persistence, and restores the default.",
+    "evidence": [
+      "web/tests/main-menu.spec.js"
+    ]
+  },
+  "src/surge-xt/gui/SurgeGUIEditorMenuStructures.cpp:menu-call:776dc4c053a9200a": {
+    "status": "verified",
+    "sourceDigest": "8223b05efa3d149d486750eeb059c254c8f9de11a2b17c110c74da81dc6a2ad8",
+    "browserEquivalent": "Original JUCE main-menu choice; the spec selects every option, checks the single checkmark, reloads to confirm persistence, and restores the default.",
+    "evidence": [
+      "web/tests/main-menu.spec.js"
+    ]
+  },
+  "src/surge-xt/gui/SurgeGUIEditorMenuStructures.cpp:menu-call:d364f729fd86d818": {
+    "status": "verified",
+    "sourceDigest": "8223b05efa3d149d486750eeb059c254c8f9de11a2b17c110c74da81dc6a2ad8",
+    "browserEquivalent": "Original JUCE main-menu choice; the spec selects every option, checks the single checkmark, reloads to confirm persistence, and restores the default.",
+    "evidence": [
+      "web/tests/main-menu.spec.js"
+    ]
+  },
+  "src/surge-xt/gui/SurgeGUIEditorMenuStructures.cpp:menu-call:29871805a0cae590": {
+    "status": "verified",
+    "sourceDigest": "8223b05efa3d149d486750eeb059c254c8f9de11a2b17c110c74da81dc6a2ad8",
+    "browserEquivalent": "Original JUCE main-menu choice; the spec selects every option, checks the single checkmark, reloads to confirm persistence, and restores the default.",
+    "evidence": [
+      "web/tests/main-menu.spec.js"
+    ]
+  },
+  "src/surge-xt/gui/SurgeGUIEditorMenuStructures.cpp:menu-call:85d489f3c408f8d2": {
+    "status": "verified",
+    "sourceDigest": "8223b05efa3d149d486750eeb059c254c8f9de11a2b17c110c74da81dc6a2ad8",
+    "browserEquivalent": "Original JUCE main-menu choice; the spec selects every option, checks the single checkmark, reloads to confirm persistence, and restores the default.",
+    "evidence": [
+      "web/tests/main-menu.spec.js"
+    ]
+  },
+  "src/surge-xt/gui/SurgeGUIEditorMenuStructures.cpp:menu-call:8a4c93a60e6939c5": {
+    "status": "verified",
+    "sourceDigest": "8223b05efa3d149d486750eeb059c254c8f9de11a2b17c110c74da81dc6a2ad8",
+    "browserEquivalent": "Original JUCE main-menu toggle; the spec flips it, checks the checkmark, reloads to confirm the user preference persisted, and restores it.",
+    "evidence": [
+      "web/tests/main-menu.spec.js"
+    ]
+  },
+  "src/surge-xt/gui/SurgeGUIEditorMenuStructures.cpp:menu-call:596e6f2efd21dbb4": {
+    "status": "verified",
+    "sourceDigest": "8223b05efa3d149d486750eeb059c254c8f9de11a2b17c110c74da81dc6a2ad8",
+    "browserEquivalent": "Original JUCE main-menu toggle; the spec flips it, checks the checkmark, reloads to confirm the user preference persisted, and restores it.",
+    "evidence": [
+      "web/tests/main-menu.spec.js"
+    ]
+  },
+  "src/surge-xt/gui/SurgeGUIEditorMenuStructures.cpp:menu-call:c7e806c80ace8740": {
+    "status": "verified",
+    "sourceDigest": "8223b05efa3d149d486750eeb059c254c8f9de11a2b17c110c74da81dc6a2ad8",
+    "browserEquivalent": "Original tuning application choice; both options select with a single checkmark. Like desktop, it is synth session state, not a user preference.",
+    "evidence": [
+      "web/tests/main-menu.spec.js"
+    ]
+  },
+  "src/surge-xt/gui/SurgeGUIEditorMenuStructures.cpp:menu-call:eaf66474b7bc1e4a": {
+    "status": "verified",
+    "sourceDigest": "8223b05efa3d149d486750eeb059c254c8f9de11a2b17c110c74da81dc6a2ad8",
+    "browserEquivalent": "Original tuning application choice; both options select with a single checkmark. Like desktop, it is synth session state, not a user preference.",
+    "evidence": [
+      "web/tests/main-menu.spec.js"
+    ]
+  },
+  "src/surge-xt/gui/SurgeGUIEditorMenuStructures.cpp:menu-call:3f507067a4fbc605:2": {
+    "status": "verified",
+    "sourceDigest": "8223b05efa3d149d486750eeb059c254c8f9de11a2b17c110c74da81dc6a2ad8",
+    "browserEquivalent": "MPE Timbre context menu on the Timbre modulator (MPE on) sets the same value range as the MPE Settings submenu.",
+    "evidence": [
+      "web/tests/main-menu.spec.js"
+    ]
+  },
+  "src/surge-xt/gui/SurgeGUIEditorMenuStructures.cpp:menu-call:bc335b3e74f4b2fc:2": {
+    "status": "verified",
+    "sourceDigest": "8223b05efa3d149d486750eeb059c254c8f9de11a2b17c110c74da81dc6a2ad8",
+    "browserEquivalent": "MPE Timbre context menu on the Timbre modulator (MPE on) sets the same value range as the MPE Settings submenu.",
+    "evidence": [
+      "web/tests/main-menu.spec.js"
+    ]
+  },
+  "src/surge-xt/gui/SurgeGUIEditorMenuStructures.cpp:menu-call:912d208b643ac325": {
+    "status": "verified",
+    "sourceDigest": "8223b05efa3d149d486750eeb059c254c8f9de11a2b17c110c74da81dc6a2ad8",
+    "browserEquivalent": "Original JUCE main-menu toggle; the spec flips it, checks the checkmark, reloads to confirm the user preference persisted, and restores it.",
+    "evidence": [
+      "web/tests/main-menu.spec.js"
+    ]
+  },
+  "src/surge-xt/gui/SurgeGUIEditorMenuStructures.cpp:menu-call:45e4732ac0137006": {
+    "status": "verified",
+    "sourceDigest": "8223b05efa3d149d486750eeb059c254c8f9de11a2b17c110c74da81dc6a2ad8",
+    "browserEquivalent": "Original JUCE main-menu toggle; the spec flips it, checks the checkmark, reloads to confirm the user preference persisted, and restores it.",
+    "evidence": [
+      "web/tests/main-menu.spec.js"
+    ]
+  },
+  "src/surge-xt/gui/SurgeGUIEditorMenuStructures.cpp:menu-call:b4f750219a12408e": {
+    "status": "verified",
+    "sourceDigest": "8223b05efa3d149d486750eeb059c254c8f9de11a2b17c110c74da81dc6a2ad8",
+    "browserEquivalent": "Original JUCE main-menu toggle; the spec flips it, checks the checkmark, reloads to confirm the user preference persisted, and restores it.",
+    "evidence": [
+      "web/tests/main-menu.spec.js"
+    ]
+  },
+  "src/surge-xt/gui/SurgeGUIEditorMenuStructures.cpp:menu-call:6569c1e3b391a75a": {
+    "status": "verified",
+    "sourceDigest": "8223b05efa3d149d486750eeb059c254c8f9de11a2b17c110c74da81dc6a2ad8",
+    "browserEquivalent": "Original JUCE main-menu toggle; the spec flips it, checks the checkmark, reloads to confirm the user preference persisted, and restores it.",
+    "evidence": [
+      "web/tests/main-menu.spec.js"
+    ]
+  },
+  "src/surge-xt/gui/SurgeGUIEditorMenuStructures.cpp:menu-call:b17c4dc6e65922e8": {
+    "status": "verified",
+    "sourceDigest": "8223b05efa3d149d486750eeb059c254c8f9de11a2b17c110c74da81dc6a2ad8",
+    "browserEquivalent": "Original JUCE main-menu toggle; the spec flips it, checks the checkmark, reloads to confirm the user preference persisted, and restores it.",
+    "evidence": [
+      "web/tests/main-menu.spec.js"
+    ]
+  },
+  "src/surge-xt/gui/SurgeGUIEditorMenuStructures.cpp:menu-call:f4e3cd68e0b8ef7f": {
+    "status": "verified",
+    "sourceDigest": "8223b05efa3d149d486750eeb059c254c8f9de11a2b17c110c74da81dc6a2ad8",
+    "browserEquivalent": "Original JUCE main-menu toggle; the spec flips it, checks the checkmark, reloads to confirm the user preference persisted, and restores it.",
+    "evidence": [
+      "web/tests/main-menu.spec.js"
+    ]
+  },
+  "src/surge-xt/gui/SurgeGUIEditorMenuStructures.cpp:menu-call:4171578aa9ee551c": {
+    "status": "verified",
+    "sourceDigest": "8223b05efa3d149d486750eeb059c254c8f9de11a2b17c110c74da81dc6a2ad8",
+    "browserEquivalent": "Original JUCE main-menu toggle; the spec flips it, checks the checkmark, reloads to confirm the user preference persisted, and restores it.",
+    "evidence": [
+      "web/tests/main-menu.spec.js"
+    ]
+  },
+  "src/surge-xt/gui/SurgeGUIEditorMenuStructures.cpp:menu-call:387330fb5d30d841": {
+    "status": "verified",
+    "sourceDigest": "8223b05efa3d149d486750eeb059c254c8f9de11a2b17c110c74da81dc6a2ad8",
+    "browserEquivalent": "Original JUCE main-menu toggle; the spec flips it, checks the checkmark, reloads to confirm the user preference persisted, and restores it.",
+    "evidence": [
+      "web/tests/main-menu.spec.js"
+    ]
+  },
+  "src/surge-xt/gui/SurgeGUIEditorMenuStructures.cpp:menu-call:91629bee07e21292": {
+    "status": "verified",
+    "sourceDigest": "8223b05efa3d149d486750eeb059c254c8f9de11a2b17c110c74da81dc6a2ad8",
+    "browserEquivalent": "Original JUCE main-menu toggle; the spec flips it, checks the checkmark, reloads to confirm the user preference persisted, and restores it.",
+    "evidence": [
+      "web/tests/main-menu.spec.js"
+    ]
+  },
+  "src/surge-xt/gui/SurgeGUIEditorMenuStructures.cpp:menu-call:c7d773d938882868": {
+    "status": "verified",
+    "sourceDigest": "8223b05efa3d149d486750eeb059c254c8f9de11a2b17c110c74da81dc6a2ad8",
+    "browserEquivalent": "Original JUCE main-menu toggle; the spec flips it, checks the checkmark, reloads to confirm the user preference persisted, and restores it.",
+    "evidence": [
+      "web/tests/main-menu.spec.js"
+    ]
+  },
+  "src/surge-xt/gui/SurgeGUIEditorMenuStructures.cpp:menu-call:a673bb8f3b864bc7": {
+    "status": "verified",
+    "sourceDigest": "8223b05efa3d149d486750eeb059c254c8f9de11a2b17c110c74da81dc6a2ad8",
+    "browserEquivalent": "Original JUCE main-menu toggle; the spec flips it, checks the checkmark, reloads to confirm the user preference persisted, and restores it.",
+    "evidence": [
+      "web/tests/main-menu.spec.js"
+    ]
+  },
+  "src/surge-xt/gui/SurgeGUIEditorMenuStructures.cpp:menu-call:d2b0b6bf2a4a7ad3": {
+    "status": "verified",
+    "sourceDigest": "8223b05efa3d149d486750eeb059c254c8f9de11a2b17c110c74da81dc6a2ad8",
+    "browserEquivalent": "Original JUCE main-menu toggle; the spec flips it, checks the checkmark, reloads to confirm the user preference persisted, and restores it.",
+    "evidence": [
+      "web/tests/main-menu.spec.js"
+    ]
+  },
+  "src/surge-xt/gui/SurgeGUIEditorMenuStructures.cpp:menu-call:20b77f43fac1b79d": {
+    "status": "verified",
+    "sourceDigest": "8223b05efa3d149d486750eeb059c254c8f9de11a2b17c110c74da81dc6a2ad8",
+    "browserEquivalent": "Original JUCE main-menu toggle; the spec flips it, checks the checkmark, reloads to confirm the user preference persisted, and restores it.",
+    "evidence": [
+      "web/tests/main-menu.spec.js"
+    ]
+  },
+  "src/surge-xt/gui/SurgeGUIEditorMenuStructures.cpp:menu-call:8c455526973e382d": {
+    "status": "verified",
+    "sourceDigest": "8223b05efa3d149d486750eeb059c254c8f9de11a2b17c110c74da81dc6a2ad8",
+    "browserEquivalent": "Original JUCE main-menu toggle; the spec flips it, checks the checkmark, reloads to confirm the user preference persisted, and restores it.",
+    "evidence": [
+      "web/tests/main-menu.spec.js"
+    ]
+  },
+  "src/surge-xt/gui/SurgeGUIEditorMenuStructures.cpp:menu-call:cfe13ad9318e9345": {
+    "status": "verified",
+    "sourceDigest": "8223b05efa3d149d486750eeb059c254c8f9de11a2b17c110c74da81dc6a2ad8",
+    "browserEquivalent": "Original JUCE main-menu toggle; the spec flips it, checks the checkmark, reloads to confirm the user preference persisted, and restores it.",
+    "evidence": [
+      "web/tests/main-menu.spec.js"
+    ]
+  },
+  "src/surge-xt/gui/SurgeGUIEditorMenuStructures.cpp:menu-call:3b484c407a12d715": {
+    "status": "verified",
+    "sourceDigest": "8223b05efa3d149d486750eeb059c254c8f9de11a2b17c110c74da81dc6a2ad8",
+    "browserEquivalent": "Original JUCE main-menu toggle; the spec flips it, checks the checkmark, reloads to confirm the user preference persisted, and restores it.",
+    "evidence": [
+      "web/tests/main-menu.spec.js"
+    ]
+  },
+  "src/surge-xt/gui/SurgeGUIEditorMenuStructures.cpp:menu-call:b33c29c8f9d1948a": {
+    "status": "verified",
+    "sourceDigest": "8223b05efa3d149d486750eeb059c254c8f9de11a2b17c110c74da81dc6a2ad8",
+    "browserEquivalent": "Session toggle for the synth tuning state; flips and restores (its default is set separately, as on desktop).",
+    "evidence": [
+      "web/tests/main-menu.spec.js"
+    ]
+  },
+  "src/surge-xt/gui/SurgeGUIEditorMenuStructures.cpp:menu-call:5f997867a3e5cd7f": {
+    "status": "verified",
+    "sourceDigest": "8223b05efa3d149d486750eeb059c254c8f9de11a2b17c110c74da81dc6a2ad8",
+    "browserEquivalent": "Session toggle for the synth tuning state; flips and restores (its default is set separately, as on desktop).",
+    "evidence": [
+      "web/tests/main-menu.spec.js"
+    ]
+  },
+  "src/surge-xt/gui/SurgeGUIEditorMenuStructures.cpp:menu-call:ee35b8e2fa119ff0": {
+    "status": "verified",
+    "sourceDigest": "8223b05efa3d149d486750eeb059c254c8f9de11a2b17c110c74da81dc6a2ad8",
+    "browserEquivalent": "Turns on the recommended accessibility options; the checked items follow.",
+    "evidence": [
+      "web/tests/main-menu.spec.js"
+    ]
   }
 }
