@@ -4500,5 +4500,205 @@
     "evidence": [
       "web/tests/main-menu.spec.js"
     ]
+  },
+  "src/surge-xt/gui/widgets/PatchSelector.cpp:menu-call:421b7e889aec850f": {
+    "status": "verified",
+    "sourceDigest": "2e9f66efcbbafa348259bbf621b2f7104a11b3f02c7e8445bc32ab03bcd923de",
+    "browserEquivalent": "Loads the startup patch (Init Saw, or the patch set as default).",
+    "runtimeExpansion": [
+      "Initialize Patch"
+    ],
+    "evidence": [
+      "web/tests/patch-menu.spec.js",
+      "web/tests/keyboard-shortcuts.spec.js"
+    ]
+  },
+  "src/surge-xt/gui/widgets/PatchSelector.cpp:menu-call:b9920c6c8e71cad0": {
+    "status": "verified",
+    "sourceDigest": "2e9f66efcbbafa348259bbf621b2f7104a11b3f02c7e8445bc32ab03bcd923de",
+    "browserEquivalent": "Stores the current patch as the startup patch; it loads after reload and becomes the Initialize Patch target.",
+    "evidence": [
+      "web/tests/patch-menu.spec.js"
+    ]
+  },
+  "src/surge-xt/gui/widgets/PatchSelector.cpp:menu-call:8a7d89478da31002": {
+    "status": "verified",
+    "sourceDigest": "2e9f66efcbbafa348259bbf621b2f7104a11b3f02c7e8445bc32ab03bcd923de",
+    "browserEquivalent": "Opens the original save dialog.",
+    "runtimeExpansion": [
+      "Save Patch"
+    ],
+    "evidence": [
+      "web/tests/patch-menu.spec.js"
+    ]
+  },
+  "src/surge-xt/gui/widgets/PatchSelector.cpp:menu-call:c90b3b10c0bfb0a2": {
+    "status": "verified",
+    "sourceDigest": "2e9f66efcbbafa348259bbf621b2f7104a11b3f02c7e8445bc32ab03bcd923de",
+    "browserEquivalent": "Original chooser through the browser file picker; the chosen .fxp loads and the previous patch is kept for undo.",
+    "evidence": [
+      "web/tests/patch-menu.spec.js"
+    ]
+  },
+  "src/surge-xt/gui/widgets/PatchSelector.cpp:menu-call:5c6c1f6257fbd375": {
+    "status": "verified",
+    "sourceDigest": "2e9f66efcbbafa348259bbf621b2f7104a11b3f02c7e8445bc32ab03bcd923de",
+    "browserEquivalent": "User patches only: the original save dialog in rename mode; the file moves to the new name and the menu lists it.",
+    "evidence": [
+      "web/tests/patch-menu.spec.js"
+    ]
+  },
+  "src/surge-xt/gui/widgets/PatchSelector.cpp:menu-call:5dc278035353d163": {
+    "status": "verified",
+    "sourceDigest": "2e9f66efcbbafa348259bbf621b2f7104a11b3f02c7e8445bc32ab03bcd923de",
+    "browserEquivalent": "User patches only: the confirmation deletes the file and removes it from the menu.",
+    "evidence": [
+      "web/tests/patch-menu.spec.js"
+    ]
+  },
+  "src/surge-xt/gui/widgets/PatchSelector.cpp:menu-call:4cd5531f7868da8c": {
+    "status": "verified",
+    "sourceDigest": "2e9f66efcbbafa348259bbf621b2f7104a11b3f02c7e8445bc32ab03bcd923de",
+    "browserEquivalent": "Not present in the desktop build either: INCLUDE_PATCH_BROWSER is never defined, so the Patch Database item is compiled out; the spec asserts it is absent.",
+    "runtimeExpansion": [
+      "None in either build: compiled out by INCLUDE_PATCH_BROWSER"
+    ],
+    "evidence": [
+      "web/tests/patch-menu.spec.js"
+    ]
+  },
+  "src/surge-xt/gui/widgets/PatchSelector.cpp:menu-call:36b3ea10477f3a9c": {
+    "status": "verified",
+    "sourceDigest": "2e9f66efcbbafa348259bbf621b2f7104a11b3f02c7e8445bc32ab03bcd923de",
+    "browserEquivalent": "Rescans patch folders; a patch written outside the menu appears and loads.",
+    "evidence": [
+      "web/tests/patch-menu.spec.js"
+    ]
+  },
+  "src/surge-xt/gui/widgets/PatchSelector.cpp:menu-call:53aaf3431c11c42c": {
+    "status": "verified",
+    "sourceDigest": "2e9f66efcbbafa348259bbf621b2f7104a11b3f02c7e8445bc32ab03bcd923de",
+    "browserEquivalent": "Favorites submenu in the patch menu lists favorite factory and user patches and loads them.",
+    "runtimeExpansion": [
+      "Init FM2",
+      "Menu Favorite"
+    ],
+    "evidence": [
+      "web/tests/patch-menu.spec.js"
+    ]
+  },
+  "src/surge-xt/gui/widgets/PatchSelector.cpp:menu-call:ad6cc72d8c4ad05e": {
+    "status": "verified",
+    "sourceDigest": "2e9f66efcbbafa348259bbf621b2f7104a11b3f02c7e8445bc32ab03bcd923de",
+    "browserEquivalent": "Writes a .surgefav file through the browser save picker with the original FACTORY:/USER: lines.",
+    "evidence": [
+      "web/tests/patch-menu.spec.js"
+    ]
+  },
+  "src/surge-xt/gui/widgets/PatchSelector.cpp:menu-call:71fd9cd3f58d5cd5": {
+    "status": "verified",
+    "sourceDigest": "2e9f66efcbbafa348259bbf621b2f7104a11b3f02c7e8445bc32ab03bcd923de",
+    "browserEquivalent": "Reads a .surgefav file through the browser file picker and marks its patches as favorites.",
+    "evidence": [
+      "web/tests/patch-menu.spec.js"
+    ]
+  },
+  "src/surge-xt/gui/widgets/PatchSelector.cpp:menu-call:4c3c9ad7fb1d8112": {
+    "status": "verified",
+    "sourceDigest": "2e9f66efcbbafa348259bbf621b2f7104a11b3f02c7e8445bc32ab03bcd923de",
+    "browserEquivalent": "Favorites submenu beside the user patches.",
+    "evidence": [
+      "web/tests/patch-menu.spec.js"
+    ]
+  },
+  "src/surge-xt/gui/widgets/PatchSelector.cpp:menu-call:53aaf3431c11c42c:2": {
+    "status": "verified",
+    "sourceDigest": "2e9f66efcbbafa348259bbf621b2f7104a11b3f02c7e8445bc32ab03bcd923de",
+    "browserEquivalent": "Favorites button menu (Shift+F10 on the favorites button) lists favorites and loads them.",
+    "runtimeExpansion": [
+      "Init FM2",
+      "Menu Favorite"
+    ],
+    "evidence": [
+      "web/tests/patch-menu.spec.js"
+    ]
+  },
+  "src/surge-xt/gui/widgets/PatchSelector.cpp:menu-call:ad6cc72d8c4ad05e:2": {
+    "status": "verified",
+    "sourceDigest": "2e9f66efcbbafa348259bbf621b2f7104a11b3f02c7e8445bc32ab03bcd923de",
+    "browserEquivalent": "Same export from the favorites button menu; the file matches the patch menu export.",
+    "evidence": [
+      "web/tests/patch-menu.spec.js"
+    ]
+  },
+  "src/surge-xt/gui/widgets/PatchSelector.cpp:menu-call:71fd9cd3f58d5cd5:2": {
+    "status": "verified",
+    "sourceDigest": "2e9f66efcbbafa348259bbf621b2f7104a11b3f02c7e8445bc32ab03bcd923de",
+    "browserEquivalent": "Same import from the favorites button menu; imported favorites appear in both menus.",
+    "evidence": [
+      "web/tests/patch-menu.spec.js"
+    ]
+  },
+  "src/surge-xt/gui/widgets/PatchSelector.cpp:menu-call:4a33eacd5fa65f2b": {
+    "status": "verified",
+    "sourceDigest": "2e9f66efcbbafa348259bbf621b2f7104a11b3f02c7e8445bc32ab03bcd923de",
+    "browserEquivalent": "Patch items in each category submenu load the chosen patch; the current patch carries the checkmark.",
+    "runtimeExpansion": [
+      "Init FM2",
+      "Init Saw (Checked)",
+      "Init Sine",
+      "first Leads patch",
+      "first Kuniklo/Arps patch",
+      "01 A Simple Formula",
+      "Menu Renamed",
+      "Outside Patch"
+    ],
+    "evidence": [
+      "web/tests/patch-menu.spec.js",
+      "web/tests/patch-selection.spec.js"
+    ]
+  },
+  "src/surge-xt/gui/widgets/PatchSelector.cpp:menu-call:d440c09cfe92d1e1": {
+    "status": "verified",
+    "sourceDigest": "2e9f66efcbbafa348259bbf621b2f7104a11b3f02c7e8445bc32ab03bcd923de",
+    "browserEquivalent": "Category submenu containing the current patch, shown checked.",
+    "runtimeExpansion": [
+      "Templates (Checked)",
+      "Leads (Checked)"
+    ],
+    "evidence": [
+      "web/tests/patch-menu.spec.js"
+    ]
+  },
+  "src/surge-xt/gui/widgets/PatchSelector.cpp:menu-call:d440c09cfe92d1e1:2": {
+    "status": "verified",
+    "sourceDigest": "2e9f66efcbbafa348259bbf621b2f7104a11b3f02c7e8445bc32ab03bcd923de",
+    "browserEquivalent": "Category submenus for factory, third-party, tutorial and user folders, including nested subfolders.",
+    "runtimeExpansion": [
+      "Basses",
+      "Brass",
+      "Chords",
+      "FX",
+      "Keys",
+      "Leads",
+      "MPE",
+      "Pads",
+      "Percussion",
+      "Plucks",
+      "Polysynths",
+      "Sequences",
+      "Splits",
+      "Templates",
+      "Vocoder",
+      "Winds",
+      "Kuniklo (third party) and its Arps/Basses/FX/Leads/Organs/Pads/Sequences subfolders",
+      "Tutorials > Formula Modulator",
+      "user categories (Menu Tests, Outside)",
+      "Favorites"
+    ],
+    "evidence": [
+      "web/tests/patch-menu.spec.js",
+      "web/tests/patch-selection.spec.js"
+    ]
   }
 }
