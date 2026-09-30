@@ -95,6 +95,13 @@ extern "C" EMSCRIPTEN_KEEPALIVE void surge_browser_fonts_added()
 }
 // The standalone editor is created directly, so it is not the processor's active editor.
 static SurgeSynthEditor *browserEditor{};
+extern "C" EMSCRIPTEN_KEEPALIVE const char *surge_browser_skin_controls()
+{
+    static std::string result;
+    auto *gui = browserEditor ? browserEditor->browserGUIEditor() : nullptr;
+    result = gui ? gui->browserSkinControls() : "[]";
+    return result.c_str();
+}
 // Loads a factory tuning file through the Tuning menu's own loaders.
 extern "C" EMSCRIPTEN_KEEPALIVE int surge_browser_load_tuning(const char *path)
 {

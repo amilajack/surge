@@ -8066,3 +8066,56 @@ fs::path SurgeGUIEditor::juceStringToFSPath(const juce::String &fullPathName)
 #endif
     return fullPath;
 }
+
+#if SURGE_WEB
+std::string SurgeGUIEditor::browserSkinControls()
+{
+    auto quote = [](const std::string &text) {
+        std::string out = "\"";
+        for (auto c : text)
+        {
+            if (c == '"' || c == '\\')
+                out += '\\';
+            if (static_cast<unsigned char>(c) >= 0x20)
+                out += c;
+        }
+        return out + "\"";
+    };
+    std::ostringstream json;
+    json << "[";
+    bool first = true;
+    for (const auto &control : currentSkin->allControls())
+    {
+        if (control->type != Surge::GUI::Skin::Control::UIID)
+            continue;
+        juce::Component *component = nullptr;
+        if (auto owned = juceSkinComponents.find(control->sessionid); owned != juceSkinComponents.end())
+            component = owned->second.get();
+        else if (auto weak = juceSkinComponentsWeak.find(control->sessionid);
+                 weak != juceSkinComponentsWeak.end())
+            component = weak->second;
+        json << (first ? "" : ",") << "{\"id\":" << quote(control->ui_id) << ",\"skin\":["
+             << control->x << "," << control->y << "," << control->w << "," << control->h << "]";
+        first = false;
+        if (component)
+        {
+            const auto b = component->getBounds();
+            json << ",\"visible\":" << (component->isShowing() ? "true" : "false") << ",\"bounds\":["
+                 << b.getX() << "," << b.getY() << "," << b.getWidth() << "," << b.getHeight() << "]";
+            if (auto *handler = component->getAccessibilityHandler())
+                json << ",\"title\":" << quote(handler->getTitle().toStdString());
+            if (auto *tagged = dynamic_cast<Surge::GUI::IComponentTagValue *>(component))
+            {
+                const auto tag = tagged->getTag();
+                if (tag >= start_paramtags && tag - start_paramtags < n_total_params)
+                    if (auto *p = synth->storage.getPatch().param_ptr[tag - start_paramtags])
+                        json << ",\"parameter\":" << quote(p->get_storage_name())
+                             << ",\"parameterName\":" << quote(p->get_full_name());
+            }
+        }
+        json << "}";
+    }
+    json << "]";
+    return json.str();
+}
+#endif

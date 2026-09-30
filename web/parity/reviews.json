@@ -9,7 +9,7 @@
   },
   "src/surge-xt/gui/SurgeGUIEditor.h:overlay:OPEN_SOUND_CONTROL_SETTINGS": {
     "status": "platform-limitation",
-    "sourceDigest": "7bf3189ef2eb98843fe1eb67ac731a22e7d8d4d77ced953863ff6e7b47d92463",
+    "sourceDigest": "b03e2724516b1a5e8eb4fd17be4ee8e5773de07e2a6754fdc5de6304e6620de7",
     "reason": "Direct UDP OSC requires native sockets or an external bridge; the agreed static browser product has neither. The OSC settings entry is hidden.",
     "portableAlternative": "Web MIDI/MPE and the existing parameter/modulation controls provide portable performance control.",
     "capability": "udp-osc"
@@ -1385,7 +1385,7 @@
   "src/surge-xt/gui/SurgeGUIEditorKeyboardActions.h:shortcut:UNDO": {
     "status": "verified",
     "sourceDigest": "adf626136f917f8eaf48ac489a2f4e9191a9e6e93d931fcff5e467ece4903262",
-    "browserEquivalent": "Original JUCE Undo action on its default Control+Z binding (Command maps to Control in the browser) reverts a Global Volume edit made through the original slider.",
+    "browserEquivalent": "Original JUCE Undo action on its default Control+Z binding (Command maps to Control in the browser) reverts a Global Volume edit made through the slider's own key handling (JUCE focus on the slider, DOM focus on the canvas), as a desktop keyboard user makes it. Values set through the accessibility value interface do not create undo steps.",
     "evidence": [
       "web/tests/keyboard-shortcuts.spec.js"
     ]
@@ -1630,6 +1630,1622 @@
     "browserEquivalent": "Original Alt+0 announces the editor state through the accessibility live region once \"Send Additional Accessibility Announcements\" is enabled in the original Accessibility menu, as on desktop.",
     "evidence": [
       "web/tests/keyboard-shortcuts.spec.js"
+    ]
+  },
+  "src/common/SkinModel.cpp:skin-connector:aeg.attack": {
+    "status": "verified",
+    "sourceDigest": "506b383cb3ec48d4d9214cbe49bcbaf45debfbd3bc0c348e12ff113d40cea611",
+    "browserEquivalent": "Original Scene A Amp EG Attack control (a_env1_attack) is placed by this connector and editing it through its accessible node changes that parameter in the saved patch.",
+    "evidence": [
+      "web/tests/skin-connectors.spec.js"
+    ]
+  },
+  "src/common/SkinModel.cpp:skin-connector:aeg.attack_shape": {
+    "status": "verified",
+    "sourceDigest": "506b383cb3ec48d4d9214cbe49bcbaf45debfbd3bc0c348e12ff113d40cea611",
+    "browserEquivalent": "Original Scene A Amp EG Attack Shape control (a_env1_attack_shape) is placed by this connector and editing it through its accessible node changes that parameter in the saved patch.",
+    "evidence": [
+      "web/tests/skin-connectors.spec.js"
+    ]
+  },
+  "src/common/SkinModel.cpp:skin-connector:aeg.decay": {
+    "status": "verified",
+    "sourceDigest": "506b383cb3ec48d4d9214cbe49bcbaf45debfbd3bc0c348e12ff113d40cea611",
+    "browserEquivalent": "Original Scene A Amp EG Decay control (a_env1_decay) is placed by this connector and editing it through its accessible node changes that parameter in the saved patch.",
+    "evidence": [
+      "web/tests/skin-connectors.spec.js"
+    ]
+  },
+  "src/common/SkinModel.cpp:skin-connector:aeg.decay_shape": {
+    "status": "verified",
+    "sourceDigest": "506b383cb3ec48d4d9214cbe49bcbaf45debfbd3bc0c348e12ff113d40cea611",
+    "browserEquivalent": "Original Scene A Amp EG Decay Shape control (a_env1_decay_shape) is placed by this connector and editing it through its accessible node changes that parameter in the saved patch.",
+    "evidence": [
+      "web/tests/skin-connectors.spec.js"
+    ]
+  },
+  "src/common/SkinModel.cpp:skin-connector:aeg.mode": {
+    "status": "verified",
+    "sourceDigest": "506b383cb3ec48d4d9214cbe49bcbaf45debfbd3bc0c348e12ff113d40cea611",
+    "browserEquivalent": "Original Scene A Amp EG Envelope Mode control (a_env1_mode) is placed by this connector and editing it through its accessible node changes that parameter in the saved patch.",
+    "evidence": [
+      "web/tests/skin-connectors.spec.js"
+    ]
+  },
+  "src/common/SkinModel.cpp:skin-connector:aeg.panel": {
+    "status": "verified",
+    "sourceDigest": "506b383cb3ec48d4d9214cbe49bcbaf45debfbd3bc0c348e12ff113d40cea611",
+    "browserEquivalent": "Layout-only group connector: every placed child control sits at the position the unchanged skin engine resolved from this panel origin and its source offset.",
+    "evidence": [
+      "web/tests/skin-connectors.spec.js"
+    ]
+  },
+  "src/common/SkinModel.cpp:skin-connector:aeg.release": {
+    "status": "verified",
+    "sourceDigest": "506b383cb3ec48d4d9214cbe49bcbaf45debfbd3bc0c348e12ff113d40cea611",
+    "browserEquivalent": "Original Scene A Amp EG Release control (a_env1_release) is placed by this connector and editing it through its accessible node changes that parameter in the saved patch.",
+    "evidence": [
+      "web/tests/skin-connectors.spec.js"
+    ]
+  },
+  "src/common/SkinModel.cpp:skin-connector:aeg.release_shape": {
+    "status": "verified",
+    "sourceDigest": "506b383cb3ec48d4d9214cbe49bcbaf45debfbd3bc0c348e12ff113d40cea611",
+    "browserEquivalent": "Original Scene A Amp EG Release Shape control (a_env1_release_shape) is placed by this connector and editing it through its accessible node changes that parameter in the saved patch.",
+    "evidence": [
+      "web/tests/skin-connectors.spec.js"
+    ]
+  },
+  "src/common/SkinModel.cpp:skin-connector:aeg.sustain": {
+    "status": "verified",
+    "sourceDigest": "506b383cb3ec48d4d9214cbe49bcbaf45debfbd3bc0c348e12ff113d40cea611",
+    "browserEquivalent": "Original Scene A Amp EG Sustain control (a_env1_sustain) is placed by this connector and editing it through its accessible node changes that parameter in the saved patch.",
+    "evidence": [
+      "web/tests/skin-connectors.spec.js"
+    ]
+  },
+  "src/common/SkinModel.cpp:skin-connector:controls.action.redo": {
+    "status": "verified",
+    "sourceDigest": "506b383cb3ec48d4d9214cbe49bcbaf45debfbd3bc0c348e12ff113d40cea611",
+    "browserEquivalent": "Original Redo button reapplies the undone edit.",
+    "evidence": [
+      "web/tests/skin-connectors.spec.js"
+    ]
+  },
+  "src/common/SkinModel.cpp:skin-connector:controls.action.undo": {
+    "status": "verified",
+    "sourceDigest": "506b383cb3ec48d4d9214cbe49bcbaf45debfbd3bc0c348e12ff113d40cea611",
+    "browserEquivalent": "Original Undo button reverts an edit made through the slider's own key handling.",
+    "evidence": [
+      "web/tests/skin-connectors.spec.js"
+    ]
+  },
+  "src/common/SkinModel.cpp:skin-connector:controls.category.prevnext": {
+    "status": "verified",
+    "sourceDigest": "506b383cb3ec48d4d9214cbe49bcbaf45debfbd3bc0c348e12ff113d40cea611",
+    "browserEquivalent": "Original category jog: its right half loads the next category and its left half the previous one.",
+    "evidence": [
+      "web/tests/skin-connectors.spec.js"
+    ]
+  },
+  "src/common/SkinModel.cpp:skin-connector:controls.modulation.panel": {
+    "status": "verified",
+    "sourceDigest": "506b383cb3ec48d4d9214cbe49bcbaf45debfbd3bc0c348e12ff113d40cea611",
+    "browserEquivalent": "Layout-only group connector: every placed child control sits at the position the unchanged skin engine resolved from this panel origin and its source offset (FX parameters and modulation source buttons are laid out below the origin in code, as in the original).",
+    "evidence": [
+      "web/tests/skin-connectors.spec.js"
+    ]
+  },
+  "src/common/SkinModel.cpp:skin-connector:controls.patch.prevnext": {
+    "status": "verified",
+    "sourceDigest": "506b383cb3ec48d4d9214cbe49bcbaf45debfbd3bc0c348e12ff113d40cea611",
+    "browserEquivalent": "Original patch jog: its right half loads the next factory patch and its left half the previous one.",
+    "evidence": [
+      "web/tests/skin-connectors.spec.js"
+    ]
+  },
+  "src/common/SkinModel.cpp:skin-connector:controls.patch.save": {
+    "status": "verified",
+    "sourceDigest": "506b383cb3ec48d4d9214cbe49bcbaf45debfbd3bc0c348e12ff113d40cea611",
+    "browserEquivalent": "Original Save Patch button opens the original save dialog.",
+    "evidence": [
+      "web/tests/skin-connectors.spec.js"
+    ]
+  },
+  "src/common/SkinModel.cpp:skin-connector:controls.patch.save.window": {
+    "status": "verified",
+    "sourceDigest": "506b383cb3ec48d4d9214cbe49bcbaf45debfbd3bc0c348e12ff113d40cea611",
+    "browserEquivalent": "Original save dialog takes its 390x300 size from this connector and is centred by the original overlay code; its content area measures the size minus border and title bar.",
+    "evidence": [
+      "web/tests/skin-connectors.spec.js"
+    ]
+  },
+  "src/common/SkinModel.cpp:skin-connector:controls.patch_browser": {
+    "status": "verified",
+    "sourceDigest": "506b383cb3ec48d4d9214cbe49bcbaf45debfbd3bc0c348e12ff113d40cea611",
+    "browserEquivalent": "Original patch selector opens its patch menu.",
+    "evidence": [
+      "web/tests/skin-connectors.spec.js"
+    ]
+  },
+  "src/common/SkinModel.cpp:skin-connector:controls.status.mpe": {
+    "status": "verified",
+    "sourceDigest": "506b383cb3ec48d4d9214cbe49bcbaf45debfbd3bc0c348e12ff113d40cea611",
+    "browserEquivalent": "Original MPE status toggle turns MPE on and off (aria-checked follows).",
+    "evidence": [
+      "web/tests/skin-connectors.spec.js"
+    ]
+  },
+  "src/common/SkinModel.cpp:skin-connector:controls.status.panel": {
+    "status": "verified",
+    "sourceDigest": "506b383cb3ec48d4d9214cbe49bcbaf45debfbd3bc0c348e12ff113d40cea611",
+    "browserEquivalent": "Layout-only group connector: every placed child control sits at the position the unchanged skin engine resolved from this panel origin and its source offset.",
+    "evidence": [
+      "web/tests/skin-connectors.spec.js"
+    ]
+  },
+  "src/common/SkinModel.cpp:skin-connector:controls.status.tune": {
+    "status": "verified",
+    "sourceDigest": "506b383cb3ec48d4d9214cbe49bcbaf45debfbd3bc0c348e12ff113d40cea611",
+    "browserEquivalent": "Original Tune status opens the Tuning menu while tuning is standard (it toggles tuning otherwise), as in the original handler.",
+    "evidence": [
+      "web/tests/skin-connectors.spec.js"
+    ]
+  },
+  "src/common/SkinModel.cpp:skin-connector:controls.status.zoom": {
+    "status": "verified",
+    "sourceDigest": "506b383cb3ec48d4d9214cbe49bcbaf45debfbd3bc0c348e12ff113d40cea611",
+    "browserEquivalent": "Original Zoom status opens the zoom menu with the current 100% zoom checked.",
+    "evidence": [
+      "web/tests/skin-connectors.spec.js"
+    ]
+  },
+  "src/common/SkinModel.cpp:skin-connector:controls.surge_menu": {
+    "status": "verified",
+    "sourceDigest": "506b383cb3ec48d4d9214cbe49bcbaf45debfbd3bc0c348e12ff113d40cea611",
+    "browserEquivalent": "Original Main Menu button opens the original settings menu.",
+    "evidence": [
+      "web/tests/skin-connectors.spec.js"
+    ]
+  },
+  "src/common/SkinModel.cpp:skin-connector:controls.vu_meter": {
+    "status": "verified",
+    "sourceDigest": "506b383cb3ec48d4d9214cbe49bcbaf45debfbd3bc0c348e12ff113d40cea611",
+    "browserEquivalent": "Original level meter is visible at its skin position and opens its context menu (Oscilloscope, Show CPU Usage).",
+    "evidence": [
+      "web/tests/skin-connectors.spec.js"
+    ]
+  },
+  "src/common/SkinModel.cpp:skin-connector:feg.attack": {
+    "status": "verified",
+    "sourceDigest": "506b383cb3ec48d4d9214cbe49bcbaf45debfbd3bc0c348e12ff113d40cea611",
+    "browserEquivalent": "Original Scene A Filter EG Attack control (a_env2_attack) is placed by this connector and editing it through its accessible node changes that parameter in the saved patch.",
+    "evidence": [
+      "web/tests/skin-connectors.spec.js"
+    ]
+  },
+  "src/common/SkinModel.cpp:skin-connector:feg.attack_shape": {
+    "status": "verified",
+    "sourceDigest": "506b383cb3ec48d4d9214cbe49bcbaf45debfbd3bc0c348e12ff113d40cea611",
+    "browserEquivalent": "Original Scene A Filter EG Attack Shape control (a_env2_attack_shape) is placed by this connector and editing it through its accessible node changes that parameter in the saved patch.",
+    "evidence": [
+      "web/tests/skin-connectors.spec.js"
+    ]
+  },
+  "src/common/SkinModel.cpp:skin-connector:feg.decay": {
+    "status": "verified",
+    "sourceDigest": "506b383cb3ec48d4d9214cbe49bcbaf45debfbd3bc0c348e12ff113d40cea611",
+    "browserEquivalent": "Original Scene A Filter EG Decay control (a_env2_decay) is placed by this connector and editing it through its accessible node changes that parameter in the saved patch.",
+    "evidence": [
+      "web/tests/skin-connectors.spec.js"
+    ]
+  },
+  "src/common/SkinModel.cpp:skin-connector:feg.decay_shape": {
+    "status": "verified",
+    "sourceDigest": "506b383cb3ec48d4d9214cbe49bcbaf45debfbd3bc0c348e12ff113d40cea611",
+    "browserEquivalent": "Original Scene A Filter EG Decay Shape control (a_env2_decay_shape) is placed by this connector and editing it through its accessible node changes that parameter in the saved patch.",
+    "evidence": [
+      "web/tests/skin-connectors.spec.js"
+    ]
+  },
+  "src/common/SkinModel.cpp:skin-connector:feg.mode": {
+    "status": "verified",
+    "sourceDigest": "506b383cb3ec48d4d9214cbe49bcbaf45debfbd3bc0c348e12ff113d40cea611",
+    "browserEquivalent": "Original Scene A Filter EG Envelope Mode control (a_env2_mode) is placed by this connector and editing it through its accessible node changes that parameter in the saved patch.",
+    "evidence": [
+      "web/tests/skin-connectors.spec.js"
+    ]
+  },
+  "src/common/SkinModel.cpp:skin-connector:feg.panel": {
+    "status": "verified",
+    "sourceDigest": "506b383cb3ec48d4d9214cbe49bcbaf45debfbd3bc0c348e12ff113d40cea611",
+    "browserEquivalent": "Layout-only group connector: every placed child control sits at the position the unchanged skin engine resolved from this panel origin and its source offset.",
+    "evidence": [
+      "web/tests/skin-connectors.spec.js"
+    ]
+  },
+  "src/common/SkinModel.cpp:skin-connector:feg.release": {
+    "status": "verified",
+    "sourceDigest": "506b383cb3ec48d4d9214cbe49bcbaf45debfbd3bc0c348e12ff113d40cea611",
+    "browserEquivalent": "Original Scene A Filter EG Release control (a_env2_release) is placed by this connector and editing it through its accessible node changes that parameter in the saved patch.",
+    "evidence": [
+      "web/tests/skin-connectors.spec.js"
+    ]
+  },
+  "src/common/SkinModel.cpp:skin-connector:feg.release_shape": {
+    "status": "verified",
+    "sourceDigest": "506b383cb3ec48d4d9214cbe49bcbaf45debfbd3bc0c348e12ff113d40cea611",
+    "browserEquivalent": "Original Scene A Filter EG Release Shape control (a_env2_release_shape) is placed by this connector and editing it through its accessible node changes that parameter in the saved patch.",
+    "evidence": [
+      "web/tests/skin-connectors.spec.js"
+    ]
+  },
+  "src/common/SkinModel.cpp:skin-connector:feg.sustain": {
+    "status": "verified",
+    "sourceDigest": "506b383cb3ec48d4d9214cbe49bcbaf45debfbd3bc0c348e12ff113d40cea611",
+    "browserEquivalent": "Original Scene A Filter EG Sustain control (a_env2_sustain) is placed by this connector and editing it through its accessible node changes that parameter in the saved patch.",
+    "evidence": [
+      "web/tests/skin-connectors.spec.js"
+    ]
+  },
+  "src/common/SkinModel.cpp:skin-connector:filter.balance": {
+    "status": "verified",
+    "sourceDigest": "506b383cb3ec48d4d9214cbe49bcbaf45debfbd3bc0c348e12ff113d40cea611",
+    "browserEquivalent": "Original Scene A Filter Balance control (a_f_balance) is placed by this connector and editing it through its accessible node changes that parameter in the saved patch.",
+    "evidence": [
+      "web/tests/skin-connectors.spec.js"
+    ]
+  },
+  "src/common/SkinModel.cpp:skin-connector:filter.config": {
+    "status": "verified",
+    "sourceDigest": "506b383cb3ec48d4d9214cbe49bcbaf45debfbd3bc0c348e12ff113d40cea611",
+    "browserEquivalent": "Original Scene A Filter Configuration control (a_fb_config) is placed by this connector and editing it through its accessible node changes that parameter in the saved patch.",
+    "evidence": [
+      "web/tests/skin-connectors.spec.js"
+    ]
+  },
+  "src/common/SkinModel.cpp:skin-connector:filter.cutoff_1": {
+    "status": "verified",
+    "sourceDigest": "506b383cb3ec48d4d9214cbe49bcbaf45debfbd3bc0c348e12ff113d40cea611",
+    "browserEquivalent": "Original Scene A Filter 1 Cutoff control (a_filter1_cutoff) is placed by this connector and editing it through its accessible node changes that parameter in the saved patch.",
+    "evidence": [
+      "web/tests/skin-connectors.spec.js"
+    ]
+  },
+  "src/common/SkinModel.cpp:skin-connector:filter.cutoff_2": {
+    "status": "verified",
+    "sourceDigest": "506b383cb3ec48d4d9214cbe49bcbaf45debfbd3bc0c348e12ff113d40cea611",
+    "browserEquivalent": "Original Scene A Filter 2 Cutoff control (a_filter2_cutoff) is placed by this connector and editing it through its accessible node changes that parameter in the saved patch.",
+    "evidence": [
+      "web/tests/skin-connectors.spec.js"
+    ]
+  },
+  "src/common/SkinModel.cpp:skin-connector:filter.envmod_1": {
+    "status": "verified",
+    "sourceDigest": "506b383cb3ec48d4d9214cbe49bcbaf45debfbd3bc0c348e12ff113d40cea611",
+    "browserEquivalent": "Original Scene A Filter 1 FEG Mod Amount control (a_filter1_envmod) is placed by this connector and editing it through its accessible node changes that parameter in the saved patch.",
+    "evidence": [
+      "web/tests/skin-connectors.spec.js"
+    ]
+  },
+  "src/common/SkinModel.cpp:skin-connector:filter.envmod_2": {
+    "status": "verified",
+    "sourceDigest": "506b383cb3ec48d4d9214cbe49bcbaf45debfbd3bc0c348e12ff113d40cea611",
+    "browserEquivalent": "Original Scene A Filter 2 FEG Mod Amount control (a_filter2_envmod) is placed by this connector and editing it through its accessible node changes that parameter in the saved patch.",
+    "evidence": [
+      "web/tests/skin-connectors.spec.js"
+    ]
+  },
+  "src/common/SkinModel.cpp:skin-connector:filter.f2_link_resonance": {
+    "status": "verified",
+    "sourceDigest": "506b383cb3ec48d4d9214cbe49bcbaf45debfbd3bc0c348e12ff113d40cea611",
+    "browserEquivalent": "Original Scene A Link Resonance control (a_f2_link_resonance) is placed by this connector and editing it through its accessible node changes that parameter in the saved patch.",
+    "evidence": [
+      "web/tests/skin-connectors.spec.js"
+    ]
+  },
+  "src/common/SkinModel.cpp:skin-connector:filter.f2_offset_mode": {
+    "status": "verified",
+    "sourceDigest": "506b383cb3ec48d4d9214cbe49bcbaf45debfbd3bc0c348e12ff113d40cea611",
+    "browserEquivalent": "Original Scene A Filter 2 Offset Mode control (a_f2_cf_is_offset) is placed by this connector and editing it through its accessible node changes that parameter in the saved patch.",
+    "evidence": [
+      "web/tests/skin-connectors.spec.js"
+    ]
+  },
+  "src/common/SkinModel.cpp:skin-connector:filter.feedback": {
+    "status": "verified",
+    "sourceDigest": "506b383cb3ec48d4d9214cbe49bcbaf45debfbd3bc0c348e12ff113d40cea611",
+    "browserEquivalent": "Original Scene A Feedback control (a_feedback) is placed by this connector and editing it through its accessible node changes that parameter in the saved patch.",
+    "evidence": [
+      "web/tests/skin-connectors.spec.js"
+    ]
+  },
+  "src/common/SkinModel.cpp:skin-connector:filter.filter_analysis.window": {
+    "status": "verified",
+    "sourceDigest": "506b383cb3ec48d4d9214cbe49bcbaf45debfbd3bc0c348e12ff113d40cea611",
+    "browserEquivalent": "Original Filter Analysis opens at exactly this connector's skin rectangle [300, 263, 450, 212].",
+    "evidence": [
+      "web/tests/skin-connectors.spec.js"
+    ]
+  },
+  "src/common/SkinModel.cpp:skin-connector:filter.filter_preview": {
+    "status": "verified",
+    "sourceDigest": "506b383cb3ec48d4d9214cbe49bcbaf45debfbd3bc0c348e12ff113d40cea611",
+    "browserEquivalent": "Original filter preview button opens the Filter Analysis window at its skin rectangle.",
+    "evidence": [
+      "web/tests/skin-connectors.spec.js"
+    ]
+  },
+  "src/common/SkinModel.cpp:skin-connector:filter.highpass": {
+    "status": "verified",
+    "sourceDigest": "506b383cb3ec48d4d9214cbe49bcbaf45debfbd3bc0c348e12ff113d40cea611",
+    "browserEquivalent": "Original Scene A Highpass control (a_lowcut) is placed by this connector and editing it through its accessible node changes that parameter in the saved patch.",
+    "evidence": [
+      "web/tests/skin-connectors.spec.js"
+    ]
+  },
+  "src/common/SkinModel.cpp:skin-connector:filter.keytrack_1": {
+    "status": "verified",
+    "sourceDigest": "506b383cb3ec48d4d9214cbe49bcbaf45debfbd3bc0c348e12ff113d40cea611",
+    "browserEquivalent": "Original Scene A Filter 1 Keytrack control (a_filter1_keytrack) is placed by this connector and editing it through its accessible node changes that parameter in the saved patch.",
+    "evidence": [
+      "web/tests/skin-connectors.spec.js"
+    ]
+  },
+  "src/common/SkinModel.cpp:skin-connector:filter.keytrack_2": {
+    "status": "verified",
+    "sourceDigest": "506b383cb3ec48d4d9214cbe49bcbaf45debfbd3bc0c348e12ff113d40cea611",
+    "browserEquivalent": "Original Scene A Filter 2 Keytrack control (a_filter2_keytrack) is placed by this connector and editing it through its accessible node changes that parameter in the saved patch.",
+    "evidence": [
+      "web/tests/skin-connectors.spec.js"
+    ]
+  },
+  "src/common/SkinModel.cpp:skin-connector:filter.resonance_1": {
+    "status": "verified",
+    "sourceDigest": "506b383cb3ec48d4d9214cbe49bcbaf45debfbd3bc0c348e12ff113d40cea611",
+    "browserEquivalent": "Original Scene A Filter 1 Resonance control (a_filter1_resonance) is placed by this connector and editing it through its accessible node changes that parameter in the saved patch.",
+    "evidence": [
+      "web/tests/skin-connectors.spec.js"
+    ]
+  },
+  "src/common/SkinModel.cpp:skin-connector:filter.resonance_2": {
+    "status": "verified",
+    "sourceDigest": "506b383cb3ec48d4d9214cbe49bcbaf45debfbd3bc0c348e12ff113d40cea611",
+    "browserEquivalent": "Original Scene A Filter 2 Resonance control (a_filter2_resonance) is placed by this connector and editing it through its accessible node changes that parameter in the saved patch.",
+    "evidence": [
+      "web/tests/skin-connectors.spec.js"
+    ]
+  },
+  "src/common/SkinModel.cpp:skin-connector:filter.subtype_1": {
+    "status": "verified",
+    "sourceDigest": "506b383cb3ec48d4d9214cbe49bcbaf45debfbd3bc0c348e12ff113d40cea611",
+    "browserEquivalent": "Original Scene A Filter 1 Subtype control (a_filter1_subtype) is placed by this connector and editing it through its accessible node changes that parameter in the saved patch.",
+    "evidence": [
+      "web/tests/skin-connectors.spec.js"
+    ]
+  },
+  "src/common/SkinModel.cpp:skin-connector:filter.subtype_2": {
+    "status": "verified",
+    "sourceDigest": "506b383cb3ec48d4d9214cbe49bcbaf45debfbd3bc0c348e12ff113d40cea611",
+    "browserEquivalent": "Original Scene A Filter 2 Subtype control (a_filter2_subtype) is placed by this connector and editing it through its accessible node changes that parameter in the saved patch.",
+    "evidence": [
+      "web/tests/skin-connectors.spec.js"
+    ]
+  },
+  "src/common/SkinModel.cpp:skin-connector:filter.type_1": {
+    "status": "verified",
+    "sourceDigest": "506b383cb3ec48d4d9214cbe49bcbaf45debfbd3bc0c348e12ff113d40cea611",
+    "browserEquivalent": "Original Scene A Filter 1 Type control (a_filter1_type) is placed by this connector and editing it through its accessible node changes that parameter in the saved patch.",
+    "evidence": [
+      "web/tests/skin-connectors.spec.js"
+    ]
+  },
+  "src/common/SkinModel.cpp:skin-connector:filter.type_2": {
+    "status": "verified",
+    "sourceDigest": "506b383cb3ec48d4d9214cbe49bcbaf45debfbd3bc0c348e12ff113d40cea611",
+    "browserEquivalent": "Original Scene A Filter 2 Type control (a_filter2_type) is placed by this connector and editing it through its accessible node changes that parameter in the saved patch.",
+    "evidence": [
+      "web/tests/skin-connectors.spec.js"
+    ]
+  },
+  "src/common/SkinModel.cpp:skin-connector:filter.waveshaper_analysis.window": {
+    "status": "verified",
+    "sourceDigest": "506b383cb3ec48d4d9214cbe49bcbaf45debfbd3bc0c348e12ff113d40cea611",
+    "browserEquivalent": "Original Waveshaper Analysis opens at exactly this connector's skin rectangle [450, 237, 300, 160].",
+    "evidence": [
+      "web/tests/skin-connectors.spec.js"
+    ]
+  },
+  "src/common/SkinModel.cpp:skin-connector:filter.waveshaper_drive": {
+    "status": "verified",
+    "sourceDigest": "506b383cb3ec48d4d9214cbe49bcbaf45debfbd3bc0c348e12ff113d40cea611",
+    "browserEquivalent": "Original Scene A Waveshaper Drive control (a_ws_drive) is placed by this connector and editing it through its accessible node changes that parameter in the saved patch.",
+    "evidence": [
+      "web/tests/skin-connectors.spec.js"
+    ]
+  },
+  "src/common/SkinModel.cpp:skin-connector:filter.waveshaper_preview": {
+    "status": "verified",
+    "sourceDigest": "506b383cb3ec48d4d9214cbe49bcbaf45debfbd3bc0c348e12ff113d40cea611",
+    "browserEquivalent": "Original waveshaper preview button opens the Waveshaper Analysis window at its skin rectangle.",
+    "evidence": [
+      "web/tests/skin-connectors.spec.js"
+    ]
+  },
+  "src/common/SkinModel.cpp:skin-connector:filter.waveshaper_prevnext": {
+    "status": "verified",
+    "sourceDigest": "506b383cb3ec48d4d9214cbe49bcbaf45debfbd3bc0c348e12ff113d40cea611",
+    "browserEquivalent": "Original waveshaper jog: its right half steps the waveshaper type forward and its left half back again.",
+    "evidence": [
+      "web/tests/skin-connectors.spec.js"
+    ]
+  },
+  "src/common/SkinModel.cpp:skin-connector:filter.waveshaper_type": {
+    "status": "verified",
+    "sourceDigest": "506b383cb3ec48d4d9214cbe49bcbaf45debfbd3bc0c348e12ff113d40cea611",
+    "browserEquivalent": "Original waveshaper type selector is present with its current type as its value text.",
+    "evidence": [
+      "web/tests/skin-connectors.spec.js"
+    ]
+  },
+  "src/common/SkinModel.cpp:skin-connector:formulaeditor.window": {
+    "status": "verified",
+    "sourceDigest": "506b383cb3ec48d4d9214cbe49bcbaf45debfbd3bc0c348e12ff113d40cea611",
+    "browserEquivalent": "Original Formula editor opens at exactly this connector's skin rectangle [0, 57, 750, 366].",
+    "evidence": [
+      "web/tests/skin-connectors.spec.js"
+    ]
+  },
+  "src/common/SkinModel.cpp:skin-connector:fx.param.panel": {
+    "status": "verified",
+    "sourceDigest": "506b383cb3ec48d4d9214cbe49bcbaf45debfbd3bc0c348e12ff113d40cea611",
+    "browserEquivalent": "Layout-only group connector: every placed child control sits at the position the unchanged skin engine resolved from this panel origin and its source offset (FX parameters and modulation source buttons are laid out below the origin in code, as in the original).",
+    "evidence": [
+      "web/tests/skin-connectors.spec.js"
+    ]
+  },
+  "src/common/SkinModel.cpp:skin-connector:fx.param_1": {
+    "status": "verified",
+    "sourceDigest": "506b383cb3ec48d4d9214cbe49bcbaf45debfbd3bc0c348e12ff113d40cea611",
+    "browserEquivalent": "Original FX parameter slot: across Delay, Reverb 2, Phaser, Nimbus and Rotary Speaker it binds the effect parameters (fx1_pN and others), each edited through its accessible control.",
+    "evidence": [
+      "web/tests/skin-connectors.spec.js"
+    ]
+  },
+  "src/common/SkinModel.cpp:skin-connector:fx.param_10": {
+    "status": "verified",
+    "sourceDigest": "506b383cb3ec48d4d9214cbe49bcbaf45debfbd3bc0c348e12ff113d40cea611",
+    "browserEquivalent": "Original FX parameter slot: across Delay, Reverb 2, Phaser, Nimbus and Rotary Speaker it binds the effect parameters (fx1_pN and others), each edited through its accessible control.",
+    "evidence": [
+      "web/tests/skin-connectors.spec.js"
+    ]
+  },
+  "src/common/SkinModel.cpp:skin-connector:fx.param_11": {
+    "status": "verified",
+    "sourceDigest": "506b383cb3ec48d4d9214cbe49bcbaf45debfbd3bc0c348e12ff113d40cea611",
+    "browserEquivalent": "Original FX parameter slot: across Delay, Reverb 2, Phaser, Nimbus and Rotary Speaker it binds the effect parameters (fx1_pN and others), each edited through its accessible control.",
+    "evidence": [
+      "web/tests/skin-connectors.spec.js"
+    ]
+  },
+  "src/common/SkinModel.cpp:skin-connector:fx.param_12": {
+    "status": "verified",
+    "sourceDigest": "506b383cb3ec48d4d9214cbe49bcbaf45debfbd3bc0c348e12ff113d40cea611",
+    "browserEquivalent": "Original FX parameter slot: across Delay, Reverb 2, Phaser, Nimbus and Rotary Speaker it binds the effect parameters (fx1_pN and others), each edited through its accessible control.",
+    "evidence": [
+      "web/tests/skin-connectors.spec.js"
+    ]
+  },
+  "src/common/SkinModel.cpp:skin-connector:fx.param_2": {
+    "status": "verified",
+    "sourceDigest": "506b383cb3ec48d4d9214cbe49bcbaf45debfbd3bc0c348e12ff113d40cea611",
+    "browserEquivalent": "Original FX parameter slot: across Delay, Reverb 2, Phaser, Nimbus and Rotary Speaker it binds the effect parameters (fx1_pN and others), each edited through its accessible control.",
+    "evidence": [
+      "web/tests/skin-connectors.spec.js"
+    ]
+  },
+  "src/common/SkinModel.cpp:skin-connector:fx.param_3": {
+    "status": "verified",
+    "sourceDigest": "506b383cb3ec48d4d9214cbe49bcbaf45debfbd3bc0c348e12ff113d40cea611",
+    "browserEquivalent": "Original FX parameter slot: across Delay, Reverb 2, Phaser, Nimbus and Rotary Speaker it binds the effect parameters (fx1_pN and others), each edited through its accessible control.",
+    "evidence": [
+      "web/tests/skin-connectors.spec.js"
+    ]
+  },
+  "src/common/SkinModel.cpp:skin-connector:fx.param_4": {
+    "status": "verified",
+    "sourceDigest": "506b383cb3ec48d4d9214cbe49bcbaf45debfbd3bc0c348e12ff113d40cea611",
+    "browserEquivalent": "Original FX parameter slot: across Delay, Reverb 2, Phaser, Nimbus and Rotary Speaker it binds the effect parameters (fx1_pN and others), each edited through its accessible control.",
+    "evidence": [
+      "web/tests/skin-connectors.spec.js"
+    ]
+  },
+  "src/common/SkinModel.cpp:skin-connector:fx.param_5": {
+    "status": "verified",
+    "sourceDigest": "506b383cb3ec48d4d9214cbe49bcbaf45debfbd3bc0c348e12ff113d40cea611",
+    "browserEquivalent": "Original FX parameter slot: across Delay, Reverb 2, Phaser, Nimbus and Rotary Speaker it binds the effect parameters (fx1_pN and others), each edited through its accessible control.",
+    "evidence": [
+      "web/tests/skin-connectors.spec.js"
+    ]
+  },
+  "src/common/SkinModel.cpp:skin-connector:fx.param_6": {
+    "status": "verified",
+    "sourceDigest": "506b383cb3ec48d4d9214cbe49bcbaf45debfbd3bc0c348e12ff113d40cea611",
+    "browserEquivalent": "Original FX parameter slot: across Delay, Reverb 2, Phaser, Nimbus and Rotary Speaker it binds the effect parameters (fx1_pN and others), each edited through its accessible control.",
+    "evidence": [
+      "web/tests/skin-connectors.spec.js"
+    ]
+  },
+  "src/common/SkinModel.cpp:skin-connector:fx.param_7": {
+    "status": "verified",
+    "sourceDigest": "506b383cb3ec48d4d9214cbe49bcbaf45debfbd3bc0c348e12ff113d40cea611",
+    "browserEquivalent": "Original FX parameter slot: across Delay, Reverb 2, Phaser, Nimbus and Rotary Speaker it binds the effect parameters (fx1_pN and others), each edited through its accessible control.",
+    "evidence": [
+      "web/tests/skin-connectors.spec.js"
+    ]
+  },
+  "src/common/SkinModel.cpp:skin-connector:fx.param_8": {
+    "status": "verified",
+    "sourceDigest": "506b383cb3ec48d4d9214cbe49bcbaf45debfbd3bc0c348e12ff113d40cea611",
+    "browserEquivalent": "Original FX parameter slot: across Delay, Reverb 2, Phaser, Nimbus and Rotary Speaker it binds the effect parameters (fx1_pN and others), each edited through its accessible control.",
+    "evidence": [
+      "web/tests/skin-connectors.spec.js"
+    ]
+  },
+  "src/common/SkinModel.cpp:skin-connector:fx.param_9": {
+    "status": "verified",
+    "sourceDigest": "506b383cb3ec48d4d9214cbe49bcbaf45debfbd3bc0c348e12ff113d40cea611",
+    "browserEquivalent": "Original FX parameter slot: across Delay, Reverb 2, Phaser, Nimbus and Rotary Speaker it binds the effect parameters (fx1_pN and others), each edited through its accessible control.",
+    "evidence": [
+      "web/tests/skin-connectors.spec.js"
+    ]
+  },
+  "src/common/SkinModel.cpp:skin-connector:fx.preset.name": {
+    "status": "verified",
+    "sourceDigest": "506b383cb3ec48d4d9214cbe49bcbaf45debfbd3bc0c348e12ff113d40cea611",
+    "browserEquivalent": "Original FX preset label shows the loaded preset name (Basic 1/4) and follows the preset jog.",
+    "evidence": [
+      "web/tests/skin-connectors.spec.js"
+    ]
+  },
+  "src/common/SkinModel.cpp:skin-connector:fx.preset.prevnext": {
+    "status": "verified",
+    "sourceDigest": "506b383cb3ec48d4d9214cbe49bcbaf45debfbd3bc0c348e12ff113d40cea611",
+    "browserEquivalent": "Original FX preset jog steps the Delay preset forward from Basic 1/4 and back again; the preset label follows.",
+    "evidence": [
+      "web/tests/skin-connectors.spec.js"
+    ]
+  },
+  "src/common/SkinModel.cpp:skin-connector:fx.selector": {
+    "status": "verified",
+    "sourceDigest": "506b383cb3ec48d4d9214cbe49bcbaf45debfbd3bc0c348e12ff113d40cea611",
+    "browserEquivalent": "Original FX slot selector: selecting a send FX 3/4 slot swaps in the stacked send and return controls, and each insert slot receives its own effect.",
+    "evidence": [
+      "web/tests/skin-connectors.spec.js"
+    ]
+  },
+  "src/common/SkinModel.cpp:skin-connector:fx.type": {
+    "status": "verified",
+    "sourceDigest": "506b383cb3ec48d4d9214cbe49bcbaf45debfbd3bc0c348e12ff113d40cea611",
+    "browserEquivalent": "Original FX Type button opens the effect type menu; effects chosen there load into the selected slot.",
+    "evidence": [
+      "web/tests/skin-connectors.spec.js"
+    ]
+  },
+  "src/common/SkinModel.cpp:skin-connector:global.character": {
+    "status": "verified",
+    "sourceDigest": "506b383cb3ec48d4d9214cbe49bcbaf45debfbd3bc0c348e12ff113d40cea611",
+    "browserEquivalent": "Original Character control (character) is placed by this connector and editing it through its accessible node changes that parameter in the saved patch.",
+    "evidence": [
+      "web/tests/skin-connectors.spec.js"
+    ]
+  },
+  "src/common/SkinModel.cpp:skin-connector:global.fx1_return": {
+    "status": "verified",
+    "sourceDigest": "506b383cb3ec48d4d9214cbe49bcbaf45debfbd3bc0c348e12ff113d40cea611",
+    "browserEquivalent": "Original Send FX 1 Return control (volume_FX1) is placed by this connector and editing it through its accessible node changes that parameter in the saved patch.",
+    "evidence": [
+      "web/tests/skin-connectors.spec.js"
+    ]
+  },
+  "src/common/SkinModel.cpp:skin-connector:global.fx2_return": {
+    "status": "verified",
+    "sourceDigest": "506b383cb3ec48d4d9214cbe49bcbaf45debfbd3bc0c348e12ff113d40cea611",
+    "browserEquivalent": "Original Send FX 2 Return control (volume_FX2) is placed by this connector and editing it through its accessible node changes that parameter in the saved patch.",
+    "evidence": [
+      "web/tests/skin-connectors.spec.js"
+    ]
+  },
+  "src/common/SkinModel.cpp:skin-connector:global.fx3_return": {
+    "status": "verified",
+    "sourceDigest": "506b383cb3ec48d4d9214cbe49bcbaf45debfbd3bc0c348e12ff113d40cea611",
+    "browserEquivalent": "Stacked with Send FX 1 Return: shown while a send FX 3/4 slot is selected, as in the original.",
+    "evidence": [
+      "web/tests/skin-connectors.spec.js"
+    ]
+  },
+  "src/common/SkinModel.cpp:skin-connector:global.fx4_return": {
+    "status": "verified",
+    "sourceDigest": "506b383cb3ec48d4d9214cbe49bcbaf45debfbd3bc0c348e12ff113d40cea611",
+    "browserEquivalent": "Stacked with Send FX 2 Return: shown while a send FX 3/4 slot is selected, as in the original.",
+    "evidence": [
+      "web/tests/skin-connectors.spec.js"
+    ]
+  },
+  "src/common/SkinModel.cpp:skin-connector:global.fx_bypass": {
+    "status": "verified",
+    "sourceDigest": "506b383cb3ec48d4d9214cbe49bcbaf45debfbd3bc0c348e12ff113d40cea611",
+    "browserEquivalent": "Original FX Chain Bypass control (fx_bypass) is placed by this connector and editing it through its accessible node changes that parameter in the saved patch.",
+    "evidence": [
+      "web/tests/skin-connectors.spec.js"
+    ]
+  },
+  "src/common/SkinModel.cpp:skin-connector:global.fx_disable": {
+    "status": "verified",
+    "sourceDigest": "506b383cb3ec48d4d9214cbe49bcbaf45debfbd3bc0c348e12ff113d40cea611",
+    "browserEquivalent": "Hidden parameter (no control, as in the original skin): Deactivate Current FX Slot changes fx_disable in the saved patch.",
+    "evidence": [
+      "web/tests/skin-connectors.spec.js"
+    ]
+  },
+  "src/common/SkinModel.cpp:skin-connector:global.scene_mode": {
+    "status": "verified",
+    "sourceDigest": "506b383cb3ec48d4d9214cbe49bcbaf45debfbd3bc0c348e12ff113d40cea611",
+    "browserEquivalent": "Original Scene Mode control (scenemode) is placed by this connector and editing it through its accessible node changes that parameter in the saved patch.",
+    "evidence": [
+      "web/tests/skin-connectors.spec.js"
+    ]
+  },
+  "src/common/SkinModel.cpp:skin-connector:global.volume": {
+    "status": "verified",
+    "sourceDigest": "506b383cb3ec48d4d9214cbe49bcbaf45debfbd3bc0c348e12ff113d40cea611",
+    "browserEquivalent": "Original Global Volume control (volume) is placed by this connector and editing it through its accessible node changes that parameter in the saved patch.",
+    "evidence": [
+      "web/tests/skin-connectors.spec.js"
+    ]
+  },
+  "src/common/SkinModel.cpp:skin-connector:lfo.amplitude": {
+    "status": "verified",
+    "sourceDigest": "506b383cb3ec48d4d9214cbe49bcbaf45debfbd3bc0c348e12ff113d40cea611",
+    "browserEquivalent": "Original Scene A LFO 1 Amplitude control (a_lfo0_magnitude) is placed by this connector and editing it through its accessible node changes that parameter in the saved patch.",
+    "evidence": [
+      "web/tests/skin-connectors.spec.js"
+    ]
+  },
+  "src/common/SkinModel.cpp:skin-connector:lfo.attack": {
+    "status": "verified",
+    "sourceDigest": "506b383cb3ec48d4d9214cbe49bcbaf45debfbd3bc0c348e12ff113d40cea611",
+    "browserEquivalent": "Original Scene A LFO 1 Attack control (a_lfo0_attack) is placed by this connector and editing it through its accessible node changes that parameter in the saved patch.",
+    "evidence": [
+      "web/tests/skin-connectors.spec.js"
+    ]
+  },
+  "src/common/SkinModel.cpp:skin-connector:lfo.decay": {
+    "status": "verified",
+    "sourceDigest": "506b383cb3ec48d4d9214cbe49bcbaf45debfbd3bc0c348e12ff113d40cea611",
+    "browserEquivalent": "Original Scene A LFO 1 Decay control (a_lfo0_decay) is placed by this connector and editing it through its accessible node changes that parameter in the saved patch.",
+    "evidence": [
+      "web/tests/skin-connectors.spec.js"
+    ]
+  },
+  "src/common/SkinModel.cpp:skin-connector:lfo.deform": {
+    "status": "verified",
+    "sourceDigest": "506b383cb3ec48d4d9214cbe49bcbaf45debfbd3bc0c348e12ff113d40cea611",
+    "browserEquivalent": "Original Scene A LFO 1 Deform control (a_lfo0_deform) is placed by this connector and editing it through its accessible node changes that parameter in the saved patch.",
+    "evidence": [
+      "web/tests/skin-connectors.spec.js"
+    ]
+  },
+  "src/common/SkinModel.cpp:skin-connector:lfo.delay": {
+    "status": "verified",
+    "sourceDigest": "506b383cb3ec48d4d9214cbe49bcbaf45debfbd3bc0c348e12ff113d40cea611",
+    "browserEquivalent": "Original Scene A LFO 1 Delay control (a_lfo0_delay) is placed by this connector and editing it through its accessible node changes that parameter in the saved patch.",
+    "evidence": [
+      "web/tests/skin-connectors.spec.js"
+    ]
+  },
+  "src/common/SkinModel.cpp:skin-connector:lfo.envelope.panel": {
+    "status": "verified",
+    "sourceDigest": "506b383cb3ec48d4d9214cbe49bcbaf45debfbd3bc0c348e12ff113d40cea611",
+    "browserEquivalent": "Layout-only group connector: every placed child control sits at the position the unchanged skin engine resolved from this panel origin and its source offset.",
+    "evidence": [
+      "web/tests/skin-connectors.spec.js"
+    ]
+  },
+  "src/common/SkinModel.cpp:skin-connector:lfo.hold": {
+    "status": "verified",
+    "sourceDigest": "506b383cb3ec48d4d9214cbe49bcbaf45debfbd3bc0c348e12ff113d40cea611",
+    "browserEquivalent": "Original Scene A LFO 1 Hold control (a_lfo0_hold) is placed by this connector and editing it through its accessible node changes that parameter in the saved patch.",
+    "evidence": [
+      "web/tests/skin-connectors.spec.js"
+    ]
+  },
+  "src/common/SkinModel.cpp:skin-connector:lfo.main.panel": {
+    "status": "verified",
+    "sourceDigest": "506b383cb3ec48d4d9214cbe49bcbaf45debfbd3bc0c348e12ff113d40cea611",
+    "browserEquivalent": "Layout-only group connector: every placed child control sits at the position the unchanged skin engine resolved from this panel origin and its source offset.",
+    "evidence": [
+      "web/tests/skin-connectors.spec.js"
+    ]
+  },
+  "src/common/SkinModel.cpp:skin-connector:lfo.mseg_editor": {
+    "status": "verified",
+    "sourceDigest": "506b383cb3ec48d4d9214cbe49bcbaf45debfbd3bc0c348e12ff113d40cea611",
+    "browserEquivalent": "Original MSEG editor button is hidden for other LFO shapes, appears for an MSEG LFO and opens its MSEG editor.",
+    "evidence": [
+      "web/tests/skin-connectors.spec.js"
+    ]
+  },
+  "src/common/SkinModel.cpp:skin-connector:lfo.phase": {
+    "status": "verified",
+    "sourceDigest": "506b383cb3ec48d4d9214cbe49bcbaf45debfbd3bc0c348e12ff113d40cea611",
+    "browserEquivalent": "Original Scene A LFO 1 Phase control (a_lfo0_phase) is placed by this connector and editing it through its accessible node changes that parameter in the saved patch.",
+    "evidence": [
+      "web/tests/skin-connectors.spec.js"
+    ]
+  },
+  "src/common/SkinModel.cpp:skin-connector:lfo.presets": {
+    "status": "verified",
+    "sourceDigest": "506b383cb3ec48d4d9214cbe49bcbaf45debfbd3bc0c348e12ff113d40cea611",
+    "browserEquivalent": "Original LFO Menu button opens the modulator preset menu.",
+    "evidence": [
+      "web/tests/skin-connectors.spec.js"
+    ]
+  },
+  "src/common/SkinModel.cpp:skin-connector:lfo.rate": {
+    "status": "verified",
+    "sourceDigest": "506b383cb3ec48d4d9214cbe49bcbaf45debfbd3bc0c348e12ff113d40cea611",
+    "browserEquivalent": "Original Scene A LFO 1 Rate control (a_lfo0_rate) is placed by this connector and editing it through its accessible node changes that parameter in the saved patch.",
+    "evidence": [
+      "web/tests/skin-connectors.spec.js"
+    ]
+  },
+  "src/common/SkinModel.cpp:skin-connector:lfo.release": {
+    "status": "verified",
+    "sourceDigest": "506b383cb3ec48d4d9214cbe49bcbaf45debfbd3bc0c348e12ff113d40cea611",
+    "browserEquivalent": "Original Scene A LFO 1 Release control (a_lfo0_release) is placed by this connector and editing it through its accessible node changes that parameter in the saved patch.",
+    "evidence": [
+      "web/tests/skin-connectors.spec.js"
+    ]
+  },
+  "src/common/SkinModel.cpp:skin-connector:lfo.shape": {
+    "status": "verified",
+    "sourceDigest": "506b383cb3ec48d4d9214cbe49bcbaf45debfbd3bc0c348e12ff113d40cea611",
+    "browserEquivalent": "Original LFO type selector (LFO Type group with MSEG and other shape radios) switches the LFO to MSEG.",
+    "evidence": [
+      "web/tests/skin-connectors.spec.js"
+    ]
+  },
+  "src/common/SkinModel.cpp:skin-connector:lfo.sustain": {
+    "status": "verified",
+    "sourceDigest": "506b383cb3ec48d4d9214cbe49bcbaf45debfbd3bc0c348e12ff113d40cea611",
+    "browserEquivalent": "Original Scene A LFO 1 Sustain control (a_lfo0_sustain) is placed by this connector and editing it through its accessible node changes that parameter in the saved patch.",
+    "evidence": [
+      "web/tests/skin-connectors.spec.js"
+    ]
+  },
+  "src/common/SkinModel.cpp:skin-connector:lfo.title": {
+    "status": "verified",
+    "sourceDigest": "506b383cb3ec48d4d9214cbe49bcbaf45debfbd3bc0c348e12ff113d40cea611",
+    "browserEquivalent": "Original vertical LFO title is visible and changes when LFO 2 is selected.",
+    "evidence": [
+      "web/tests/skin-connectors.spec.js"
+    ]
+  },
+  "src/common/SkinModel.cpp:skin-connector:lfo.trigger_mode": {
+    "status": "verified",
+    "sourceDigest": "506b383cb3ec48d4d9214cbe49bcbaf45debfbd3bc0c348e12ff113d40cea611",
+    "browserEquivalent": "Original Scene A LFO 1 Trigger Mode control (a_lfo0_trigmode) is placed by this connector and editing it through its accessible node changes that parameter in the saved patch.",
+    "evidence": [
+      "web/tests/skin-connectors.spec.js"
+    ]
+  },
+  "src/common/SkinModel.cpp:skin-connector:lfo.unipolar": {
+    "status": "verified",
+    "sourceDigest": "506b383cb3ec48d4d9214cbe49bcbaf45debfbd3bc0c348e12ff113d40cea611",
+    "browserEquivalent": "Original Scene A LFO 1 Unipolar control (a_lfo0_unipolar) is placed by this connector and editing it through its accessible node changes that parameter in the saved patch.",
+    "evidence": [
+      "web/tests/skin-connectors.spec.js"
+    ]
+  },
+  "src/common/SkinModel.cpp:skin-connector:mixer.level_noise": {
+    "status": "verified",
+    "sourceDigest": "506b383cb3ec48d4d9214cbe49bcbaf45debfbd3bc0c348e12ff113d40cea611",
+    "browserEquivalent": "Original Scene A Noise Volume control (a_level_noise) is placed by this connector and editing it through its accessible node changes that parameter in the saved patch.",
+    "evidence": [
+      "web/tests/skin-connectors.spec.js"
+    ]
+  },
+  "src/common/SkinModel.cpp:skin-connector:mixer.level_o1": {
+    "status": "verified",
+    "sourceDigest": "506b383cb3ec48d4d9214cbe49bcbaf45debfbd3bc0c348e12ff113d40cea611",
+    "browserEquivalent": "Original Scene A Osc 1 Volume control (a_level_o1) is placed by this connector and editing it through its accessible node changes that parameter in the saved patch.",
+    "evidence": [
+      "web/tests/skin-connectors.spec.js"
+    ]
+  },
+  "src/common/SkinModel.cpp:skin-connector:mixer.level_o2": {
+    "status": "verified",
+    "sourceDigest": "506b383cb3ec48d4d9214cbe49bcbaf45debfbd3bc0c348e12ff113d40cea611",
+    "browserEquivalent": "Original Scene A Osc 2 Volume control (a_level_o2) is placed by this connector and editing it through its accessible node changes that parameter in the saved patch.",
+    "evidence": [
+      "web/tests/skin-connectors.spec.js"
+    ]
+  },
+  "src/common/SkinModel.cpp:skin-connector:mixer.level_o3": {
+    "status": "verified",
+    "sourceDigest": "506b383cb3ec48d4d9214cbe49bcbaf45debfbd3bc0c348e12ff113d40cea611",
+    "browserEquivalent": "Original Scene A Osc 3 Volume control (a_level_o3) is placed by this connector and editing it through its accessible node changes that parameter in the saved patch.",
+    "evidence": [
+      "web/tests/skin-connectors.spec.js"
+    ]
+  },
+  "src/common/SkinModel.cpp:skin-connector:mixer.level_prefiltergain": {
+    "status": "verified",
+    "sourceDigest": "506b383cb3ec48d4d9214cbe49bcbaf45debfbd3bc0c348e12ff113d40cea611",
+    "browserEquivalent": "Original Scene A Pre-Filter Gain control (a_level_pfg) is placed by this connector and editing it through its accessible node changes that parameter in the saved patch.",
+    "evidence": [
+      "web/tests/skin-connectors.spec.js"
+    ]
+  },
+  "src/common/SkinModel.cpp:skin-connector:mixer.level_ring12": {
+    "status": "verified",
+    "sourceDigest": "506b383cb3ec48d4d9214cbe49bcbaf45debfbd3bc0c348e12ff113d40cea611",
+    "browserEquivalent": "Original Scene A Ring Modulation 1x2 Volume control (a_level_ring12) is placed by this connector and editing it through its accessible node changes that parameter in the saved patch.",
+    "evidence": [
+      "web/tests/skin-connectors.spec.js"
+    ]
+  },
+  "src/common/SkinModel.cpp:skin-connector:mixer.level_ring23": {
+    "status": "verified",
+    "sourceDigest": "506b383cb3ec48d4d9214cbe49bcbaf45debfbd3bc0c348e12ff113d40cea611",
+    "browserEquivalent": "Original Scene A Ring Modulation 2x3 Volume control (a_level_ring23) is placed by this connector and editing it through its accessible node changes that parameter in the saved patch.",
+    "evidence": [
+      "web/tests/skin-connectors.spec.js"
+    ]
+  },
+  "src/common/SkinModel.cpp:skin-connector:mixer.mute_noise": {
+    "status": "verified",
+    "sourceDigest": "506b383cb3ec48d4d9214cbe49bcbaf45debfbd3bc0c348e12ff113d40cea611",
+    "browserEquivalent": "Original Scene A Noise Mute control (a_mute_noise) is placed by this connector and editing it through its accessible node changes that parameter in the saved patch.",
+    "evidence": [
+      "web/tests/skin-connectors.spec.js"
+    ]
+  },
+  "src/common/SkinModel.cpp:skin-connector:mixer.mute_o1": {
+    "status": "verified",
+    "sourceDigest": "506b383cb3ec48d4d9214cbe49bcbaf45debfbd3bc0c348e12ff113d40cea611",
+    "browserEquivalent": "Original Scene A Osc 1 Mute control (a_mute_o1) is placed by this connector and editing it through its accessible node changes that parameter in the saved patch.",
+    "evidence": [
+      "web/tests/skin-connectors.spec.js"
+    ]
+  },
+  "src/common/SkinModel.cpp:skin-connector:mixer.mute_o2": {
+    "status": "verified",
+    "sourceDigest": "506b383cb3ec48d4d9214cbe49bcbaf45debfbd3bc0c348e12ff113d40cea611",
+    "browserEquivalent": "Original Scene A Osc 2 Mute control (a_mute_o2) is placed by this connector and editing it through its accessible node changes that parameter in the saved patch.",
+    "evidence": [
+      "web/tests/skin-connectors.spec.js"
+    ]
+  },
+  "src/common/SkinModel.cpp:skin-connector:mixer.mute_o3": {
+    "status": "verified",
+    "sourceDigest": "506b383cb3ec48d4d9214cbe49bcbaf45debfbd3bc0c348e12ff113d40cea611",
+    "browserEquivalent": "Original Scene A Osc 3 Mute control (a_mute_o3) is placed by this connector and editing it through its accessible node changes that parameter in the saved patch.",
+    "evidence": [
+      "web/tests/skin-connectors.spec.js"
+    ]
+  },
+  "src/common/SkinModel.cpp:skin-connector:mixer.mute_ring12": {
+    "status": "verified",
+    "sourceDigest": "506b383cb3ec48d4d9214cbe49bcbaf45debfbd3bc0c348e12ff113d40cea611",
+    "browserEquivalent": "Original Scene A Ring Modulation 1x2 Mute control (a_mute_ring12) is placed by this connector and editing it through its accessible node changes that parameter in the saved patch.",
+    "evidence": [
+      "web/tests/skin-connectors.spec.js"
+    ]
+  },
+  "src/common/SkinModel.cpp:skin-connector:mixer.mute_ring23": {
+    "status": "verified",
+    "sourceDigest": "506b383cb3ec48d4d9214cbe49bcbaf45debfbd3bc0c348e12ff113d40cea611",
+    "browserEquivalent": "Original Scene A Ring Modulation 2x3 Mute control (a_mute_ring23) is placed by this connector and editing it through its accessible node changes that parameter in the saved patch.",
+    "evidence": [
+      "web/tests/skin-connectors.spec.js"
+    ]
+  },
+  "src/common/SkinModel.cpp:skin-connector:mixer.panel": {
+    "status": "verified",
+    "sourceDigest": "506b383cb3ec48d4d9214cbe49bcbaf45debfbd3bc0c348e12ff113d40cea611",
+    "browserEquivalent": "Layout-only group connector: every placed child control sits at the position the unchanged skin engine resolved from this panel origin and its source offset.",
+    "evidence": [
+      "web/tests/skin-connectors.spec.js"
+    ]
+  },
+  "src/common/SkinModel.cpp:skin-connector:mixer.route_noise": {
+    "status": "verified",
+    "sourceDigest": "506b383cb3ec48d4d9214cbe49bcbaf45debfbd3bc0c348e12ff113d40cea611",
+    "browserEquivalent": "Original Scene A Noise Route control (a_route_noise) is placed by this connector and editing it through its accessible node changes that parameter in the saved patch.",
+    "evidence": [
+      "web/tests/skin-connectors.spec.js"
+    ]
+  },
+  "src/common/SkinModel.cpp:skin-connector:mixer.route_o1": {
+    "status": "verified",
+    "sourceDigest": "506b383cb3ec48d4d9214cbe49bcbaf45debfbd3bc0c348e12ff113d40cea611",
+    "browserEquivalent": "Original Scene A Osc 1 Route control (a_route_o1) is placed by this connector and editing it through its accessible node changes that parameter in the saved patch.",
+    "evidence": [
+      "web/tests/skin-connectors.spec.js"
+    ]
+  },
+  "src/common/SkinModel.cpp:skin-connector:mixer.route_o2": {
+    "status": "verified",
+    "sourceDigest": "506b383cb3ec48d4d9214cbe49bcbaf45debfbd3bc0c348e12ff113d40cea611",
+    "browserEquivalent": "Original Scene A Osc 2 Route control (a_route_o2) is placed by this connector and editing it through its accessible node changes that parameter in the saved patch.",
+    "evidence": [
+      "web/tests/skin-connectors.spec.js"
+    ]
+  },
+  "src/common/SkinModel.cpp:skin-connector:mixer.route_o3": {
+    "status": "verified",
+    "sourceDigest": "506b383cb3ec48d4d9214cbe49bcbaf45debfbd3bc0c348e12ff113d40cea611",
+    "browserEquivalent": "Original Scene A Osc 3 Route control (a_route_o3) is placed by this connector and editing it through its accessible node changes that parameter in the saved patch.",
+    "evidence": [
+      "web/tests/skin-connectors.spec.js"
+    ]
+  },
+  "src/common/SkinModel.cpp:skin-connector:mixer.route_ring12": {
+    "status": "verified",
+    "sourceDigest": "506b383cb3ec48d4d9214cbe49bcbaf45debfbd3bc0c348e12ff113d40cea611",
+    "browserEquivalent": "Original Scene A Ring Modulation 1x2 Route control (a_route_ring12) is placed by this connector and editing it through its accessible node changes that parameter in the saved patch.",
+    "evidence": [
+      "web/tests/skin-connectors.spec.js"
+    ]
+  },
+  "src/common/SkinModel.cpp:skin-connector:mixer.route_ring23": {
+    "status": "verified",
+    "sourceDigest": "506b383cb3ec48d4d9214cbe49bcbaf45debfbd3bc0c348e12ff113d40cea611",
+    "browserEquivalent": "Original Scene A Ring Modulation 2x3 Route control (a_route_ring23) is placed by this connector and editing it through its accessible node changes that parameter in the saved patch.",
+    "evidence": [
+      "web/tests/skin-connectors.spec.js"
+    ]
+  },
+  "src/common/SkinModel.cpp:skin-connector:mixer.solo_noise": {
+    "status": "verified",
+    "sourceDigest": "506b383cb3ec48d4d9214cbe49bcbaf45debfbd3bc0c348e12ff113d40cea611",
+    "browserEquivalent": "Original Scene A Noise Solo control (a_solo_noise) is placed by this connector and editing it through its accessible node changes that parameter in the saved patch.",
+    "evidence": [
+      "web/tests/skin-connectors.spec.js"
+    ]
+  },
+  "src/common/SkinModel.cpp:skin-connector:mixer.solo_o1": {
+    "status": "verified",
+    "sourceDigest": "506b383cb3ec48d4d9214cbe49bcbaf45debfbd3bc0c348e12ff113d40cea611",
+    "browserEquivalent": "Original Scene A Osc 1 Solo control (a_solo_o1) is placed by this connector and editing it through its accessible node changes that parameter in the saved patch.",
+    "evidence": [
+      "web/tests/skin-connectors.spec.js"
+    ]
+  },
+  "src/common/SkinModel.cpp:skin-connector:mixer.solo_o2": {
+    "status": "verified",
+    "sourceDigest": "506b383cb3ec48d4d9214cbe49bcbaf45debfbd3bc0c348e12ff113d40cea611",
+    "browserEquivalent": "Original Scene A Osc 2 Solo control (a_solo_o2) is placed by this connector and editing it through its accessible node changes that parameter in the saved patch.",
+    "evidence": [
+      "web/tests/skin-connectors.spec.js"
+    ]
+  },
+  "src/common/SkinModel.cpp:skin-connector:mixer.solo_o3": {
+    "status": "verified",
+    "sourceDigest": "506b383cb3ec48d4d9214cbe49bcbaf45debfbd3bc0c348e12ff113d40cea611",
+    "browserEquivalent": "Original Scene A Osc 3 Solo control (a_solo_o3) is placed by this connector and editing it through its accessible node changes that parameter in the saved patch.",
+    "evidence": [
+      "web/tests/skin-connectors.spec.js"
+    ]
+  },
+  "src/common/SkinModel.cpp:skin-connector:mixer.solo_ring12": {
+    "status": "verified",
+    "sourceDigest": "506b383cb3ec48d4d9214cbe49bcbaf45debfbd3bc0c348e12ff113d40cea611",
+    "browserEquivalent": "Original Scene A Ring Modulation 1x2 Solo control (a_solo_ring12) is placed by this connector and editing it through its accessible node changes that parameter in the saved patch.",
+    "evidence": [
+      "web/tests/skin-connectors.spec.js"
+    ]
+  },
+  "src/common/SkinModel.cpp:skin-connector:mixer.solo_ring23": {
+    "status": "verified",
+    "sourceDigest": "506b383cb3ec48d4d9214cbe49bcbaf45debfbd3bc0c348e12ff113d40cea611",
+    "browserEquivalent": "Original Scene A Ring Modulation 2x3 Solo control (a_solo_ring23) is placed by this connector and editing it through its accessible node changes that parameter in the saved patch.",
+    "evidence": [
+      "web/tests/skin-connectors.spec.js"
+    ]
+  },
+  "src/common/SkinModel.cpp:skin-connector:modlist.window": {
+    "status": "verified",
+    "sourceDigest": "506b383cb3ec48d4d9214cbe49bcbaf45debfbd3bc0c348e12ff113d40cea611",
+    "browserEquivalent": "Original Modulation List opens at exactly this connector's skin rectangle [148, 58, 602, 511].",
+    "evidence": [
+      "web/tests/skin-connectors.spec.js"
+    ]
+  },
+  "src/common/SkinModel.cpp:skin-connector:msegeditor.window": {
+    "status": "verified",
+    "sourceDigest": "506b383cb3ec48d4d9214cbe49bcbaf45debfbd3bc0c348e12ff113d40cea611",
+    "browserEquivalent": "Original MSEG editor opens at exactly this connector's skin rectangle [0, 57, 750, 366].",
+    "evidence": [
+      "web/tests/skin-connectors.spec.js"
+    ]
+  },
+  "src/common/SkinModel.cpp:skin-connector:osc.display": {
+    "status": "verified",
+    "sourceDigest": "506b383cb3ec48d4d9214cbe49bcbaf45debfbd3bc0c348e12ff113d40cea611",
+    "browserEquivalent": "Original oscillator waveform display is placed exactly at this connector (4,81,141,99).",
+    "evidence": [
+      "web/tests/skin-connectors.spec.js"
+    ]
+  },
+  "src/common/SkinModel.cpp:skin-connector:osc.keytrack": {
+    "status": "verified",
+    "sourceDigest": "506b383cb3ec48d4d9214cbe49bcbaf45debfbd3bc0c348e12ff113d40cea611",
+    "browserEquivalent": "Original Scene A Osc 1 Keytrack control (a_osc1_keytrack) is placed by this connector and editing it through its accessible node changes that parameter in the saved patch.",
+    "evidence": [
+      "web/tests/skin-connectors.spec.js"
+    ]
+  },
+  "src/common/SkinModel.cpp:skin-connector:osc.octave": {
+    "status": "verified",
+    "sourceDigest": "506b383cb3ec48d4d9214cbe49bcbaf45debfbd3bc0c348e12ff113d40cea611",
+    "browserEquivalent": "Original Scene A Osc 1 Octave control (a_osc1_octave) is placed by this connector and editing it through its accessible node changes that parameter in the saved patch.",
+    "evidence": [
+      "web/tests/skin-connectors.spec.js"
+    ]
+  },
+  "src/common/SkinModel.cpp:skin-connector:osc.param.panel": {
+    "status": "verified",
+    "sourceDigest": "506b383cb3ec48d4d9214cbe49bcbaf45debfbd3bc0c348e12ff113d40cea611",
+    "browserEquivalent": "Layout-only group connector: every placed child control sits at the position the unchanged skin engine resolved from this panel origin and its source offset.",
+    "evidence": [
+      "web/tests/skin-connectors.spec.js"
+    ]
+  },
+  "src/common/SkinModel.cpp:skin-connector:osc.param_1": {
+    "status": "verified",
+    "sourceDigest": "506b383cb3ec48d4d9214cbe49bcbaf45debfbd3bc0c348e12ff113d40cea611",
+    "browserEquivalent": "Original Scene A Osc 1 Shape control (a_osc1_param0) is placed by this connector and editing it through its accessible node changes that parameter in the saved patch.",
+    "evidence": [
+      "web/tests/skin-connectors.spec.js"
+    ]
+  },
+  "src/common/SkinModel.cpp:skin-connector:osc.param_2": {
+    "status": "verified",
+    "sourceDigest": "506b383cb3ec48d4d9214cbe49bcbaf45debfbd3bc0c348e12ff113d40cea611",
+    "browserEquivalent": "Original Scene A Osc 1 Width 1 control (a_osc1_param1) is placed by this connector and editing it through its accessible node changes that parameter in the saved patch.",
+    "evidence": [
+      "web/tests/skin-connectors.spec.js"
+    ]
+  },
+  "src/common/SkinModel.cpp:skin-connector:osc.param_3": {
+    "status": "verified",
+    "sourceDigest": "506b383cb3ec48d4d9214cbe49bcbaf45debfbd3bc0c348e12ff113d40cea611",
+    "browserEquivalent": "Original Scene A Osc 1 Width 2 control (a_osc1_param2) is placed by this connector and editing it through its accessible node changes that parameter in the saved patch.",
+    "evidence": [
+      "web/tests/skin-connectors.spec.js"
+    ]
+  },
+  "src/common/SkinModel.cpp:skin-connector:osc.param_4": {
+    "status": "verified",
+    "sourceDigest": "506b383cb3ec48d4d9214cbe49bcbaf45debfbd3bc0c348e12ff113d40cea611",
+    "browserEquivalent": "Original Scene A Osc 1 Sub Mix control (a_osc1_param3) is placed by this connector and editing it through its accessible node changes that parameter in the saved patch.",
+    "evidence": [
+      "web/tests/skin-connectors.spec.js"
+    ]
+  },
+  "src/common/SkinModel.cpp:skin-connector:osc.param_5": {
+    "status": "verified",
+    "sourceDigest": "506b383cb3ec48d4d9214cbe49bcbaf45debfbd3bc0c348e12ff113d40cea611",
+    "browserEquivalent": "Original Scene A Osc 1 Sync control (a_osc1_param4) is placed by this connector and editing it through its accessible node changes that parameter in the saved patch.",
+    "evidence": [
+      "web/tests/skin-connectors.spec.js"
+    ]
+  },
+  "src/common/SkinModel.cpp:skin-connector:osc.param_6": {
+    "status": "verified",
+    "sourceDigest": "506b383cb3ec48d4d9214cbe49bcbaf45debfbd3bc0c348e12ff113d40cea611",
+    "browserEquivalent": "Original Scene A Osc 1 Unison Detune control (a_osc1_param5) is placed by this connector and editing it through its accessible node changes that parameter in the saved patch.",
+    "evidence": [
+      "web/tests/skin-connectors.spec.js"
+    ]
+  },
+  "src/common/SkinModel.cpp:skin-connector:osc.param_7": {
+    "status": "verified",
+    "sourceDigest": "506b383cb3ec48d4d9214cbe49bcbaf45debfbd3bc0c348e12ff113d40cea611",
+    "browserEquivalent": "Original Scene A Osc 1 Unison Voices control (a_osc1_param6) is placed by this connector and editing it through its accessible node changes that parameter in the saved patch.",
+    "evidence": [
+      "web/tests/skin-connectors.spec.js"
+    ]
+  },
+  "src/common/SkinModel.cpp:skin-connector:osc.pitch": {
+    "status": "verified",
+    "sourceDigest": "506b383cb3ec48d4d9214cbe49bcbaf45debfbd3bc0c348e12ff113d40cea611",
+    "browserEquivalent": "Original Scene A Osc 1 Pitch control (a_osc1_pitch) is placed by this connector and editing it through its accessible node changes that parameter in the saved patch.",
+    "evidence": [
+      "web/tests/skin-connectors.spec.js"
+    ]
+  },
+  "src/common/SkinModel.cpp:skin-connector:osc.retrigger": {
+    "status": "verified",
+    "sourceDigest": "506b383cb3ec48d4d9214cbe49bcbaf45debfbd3bc0c348e12ff113d40cea611",
+    "browserEquivalent": "Original Scene A Osc 1 Retrigger control (a_osc1_retrigger) is placed by this connector and editing it through its accessible node changes that parameter in the saved patch.",
+    "evidence": [
+      "web/tests/skin-connectors.spec.js"
+    ]
+  },
+  "src/common/SkinModel.cpp:skin-connector:osc.select": {
+    "status": "verified",
+    "sourceDigest": "506b383cb3ec48d4d9214cbe49bcbaf45debfbd3bc0c348e12ff113d40cea611",
+    "browserEquivalent": "Original oscillator selector switches the displayed oscillator (Osc 3 controls appear).",
+    "evidence": [
+      "web/tests/skin-connectors.spec.js"
+    ]
+  },
+  "src/common/SkinModel.cpp:skin-connector:osc.type": {
+    "status": "verified",
+    "sourceDigest": "506b383cb3ec48d4d9214cbe49bcbaf45debfbd3bc0c348e12ff113d40cea611",
+    "browserEquivalent": "Original Oscillator Type button opens the oscillator type menu.",
+    "evidence": [
+      "web/tests/skin-connectors.spec.js"
+    ]
+  },
+  "src/common/SkinModel.cpp:skin-connector:oscilloscope.window": {
+    "status": "verified",
+    "sourceDigest": "506b383cb3ec48d4d9214cbe49bcbaf45debfbd3bc0c348e12ff113d40cea611",
+    "browserEquivalent": "Original Oscilloscope opens at exactly this connector's skin rectangle [150, 57, 600, 340].",
+    "evidence": [
+      "web/tests/skin-connectors.spec.js"
+    ]
+  },
+  "src/common/SkinModel.cpp:skin-connector:scene.drift": {
+    "status": "verified",
+    "sourceDigest": "506b383cb3ec48d4d9214cbe49bcbaf45debfbd3bc0c348e12ff113d40cea611",
+    "browserEquivalent": "Original Scene A Osc Drift control (a_drift) is placed by this connector and editing it through its accessible node changes that parameter in the saved patch.",
+    "evidence": [
+      "web/tests/skin-connectors.spec.js"
+    ]
+  },
+  "src/common/SkinModel.cpp:skin-connector:scene.fmdepth": {
+    "status": "verified",
+    "sourceDigest": "506b383cb3ec48d4d9214cbe49bcbaf45debfbd3bc0c348e12ff113d40cea611",
+    "browserEquivalent": "Original Scene A FM Depth control (a_fm_depth) is placed by this connector and editing it through its accessible node changes that parameter in the saved patch.",
+    "evidence": [
+      "web/tests/skin-connectors.spec.js"
+    ]
+  },
+  "src/common/SkinModel.cpp:skin-connector:scene.fmrouting": {
+    "status": "verified",
+    "sourceDigest": "506b383cb3ec48d4d9214cbe49bcbaf45debfbd3bc0c348e12ff113d40cea611",
+    "browserEquivalent": "Original Scene A FM Routing control (a_fm_switch) is placed by this connector and editing it through its accessible node changes that parameter in the saved patch.",
+    "evidence": [
+      "web/tests/skin-connectors.spec.js"
+    ]
+  },
+  "src/common/SkinModel.cpp:skin-connector:scene.gain": {
+    "status": "verified",
+    "sourceDigest": "506b383cb3ec48d4d9214cbe49bcbaf45debfbd3bc0c348e12ff113d40cea611",
+    "browserEquivalent": "Original Scene A VCA Gain control (a_vca_level) is placed by this connector and editing it through its accessible node changes that parameter in the saved patch.",
+    "evidence": [
+      "web/tests/skin-connectors.spec.js"
+    ]
+  },
+  "src/common/SkinModel.cpp:skin-connector:scene.keytrack_root": {
+    "status": "verified",
+    "sourceDigest": "506b383cb3ec48d4d9214cbe49bcbaf45debfbd3bc0c348e12ff113d40cea611",
+    "browserEquivalent": "Original Scene A Keytrack Root Key control (a_ktrkroot) is placed by this connector and editing it through its accessible node changes that parameter in the saved patch.",
+    "evidence": [
+      "web/tests/skin-connectors.spec.js"
+    ]
+  },
+  "src/common/SkinModel.cpp:skin-connector:scene.noise_color": {
+    "status": "verified",
+    "sourceDigest": "506b383cb3ec48d4d9214cbe49bcbaf45debfbd3bc0c348e12ff113d40cea611",
+    "browserEquivalent": "Original Scene A Noise Color control (a_noisecol) is placed by this connector and editing it through its accessible node changes that parameter in the saved patch.",
+    "evidence": [
+      "web/tests/skin-connectors.spec.js"
+    ]
+  },
+  "src/common/SkinModel.cpp:skin-connector:scene.octave": {
+    "status": "verified",
+    "sourceDigest": "506b383cb3ec48d4d9214cbe49bcbaf45debfbd3bc0c348e12ff113d40cea611",
+    "browserEquivalent": "Original Scene A Octave control (a_octave) is placed by this connector and editing it through its accessible node changes that parameter in the saved patch.",
+    "evidence": [
+      "web/tests/skin-connectors.spec.js"
+    ]
+  },
+  "src/common/SkinModel.cpp:skin-connector:scene.output.panel": {
+    "status": "verified",
+    "sourceDigest": "506b383cb3ec48d4d9214cbe49bcbaf45debfbd3bc0c348e12ff113d40cea611",
+    "browserEquivalent": "Layout-only group connector: every placed child control sits at the position the unchanged skin engine resolved from this panel origin and its source offset.",
+    "evidence": [
+      "web/tests/skin-connectors.spec.js"
+    ]
+  },
+  "src/common/SkinModel.cpp:skin-connector:scene.pan": {
+    "status": "verified",
+    "sourceDigest": "506b383cb3ec48d4d9214cbe49bcbaf45debfbd3bc0c348e12ff113d40cea611",
+    "browserEquivalent": "Original Scene A Pan control (a_pan) is placed by this connector and editing it through its accessible node changes that parameter in the saved patch.",
+    "evidence": [
+      "web/tests/skin-connectors.spec.js"
+    ]
+  },
+  "src/common/SkinModel.cpp:skin-connector:scene.pbrange_dn": {
+    "status": "verified",
+    "sourceDigest": "506b383cb3ec48d4d9214cbe49bcbaf45debfbd3bc0c348e12ff113d40cea611",
+    "browserEquivalent": "Original Scene A Pitch Bend Down Range control (a_pbrange_dn) is placed by this connector and editing it through its accessible node changes that parameter in the saved patch.",
+    "evidence": [
+      "web/tests/skin-connectors.spec.js"
+    ]
+  },
+  "src/common/SkinModel.cpp:skin-connector:scene.pbrange_up": {
+    "status": "verified",
+    "sourceDigest": "506b383cb3ec48d4d9214cbe49bcbaf45debfbd3bc0c348e12ff113d40cea611",
+    "browserEquivalent": "Original Scene A Pitch Bend Up Range control (a_pbrange_up) is placed by this connector and editing it through its accessible node changes that parameter in the saved patch.",
+    "evidence": [
+      "web/tests/skin-connectors.spec.js"
+    ]
+  },
+  "src/common/SkinModel.cpp:skin-connector:scene.pitch": {
+    "status": "verified",
+    "sourceDigest": "506b383cb3ec48d4d9214cbe49bcbaf45debfbd3bc0c348e12ff113d40cea611",
+    "browserEquivalent": "Original Scene A Pitch control (a_pitch) is placed by this connector and editing it through its accessible node changes that parameter in the saved patch.",
+    "evidence": [
+      "web/tests/skin-connectors.spec.js"
+    ]
+  },
+  "src/common/SkinModel.cpp:skin-connector:scene.playmode": {
+    "status": "verified",
+    "sourceDigest": "506b383cb3ec48d4d9214cbe49bcbaf45debfbd3bc0c348e12ff113d40cea611",
+    "browserEquivalent": "Original Scene A Play Mode control (a_polymode) is placed by this connector and editing it through its accessible node changes that parameter in the saved patch.",
+    "evidence": [
+      "web/tests/skin-connectors.spec.js"
+    ]
+  },
+  "src/common/SkinModel.cpp:skin-connector:scene.polylimit": {
+    "status": "verified",
+    "sourceDigest": "506b383cb3ec48d4d9214cbe49bcbaf45debfbd3bc0c348e12ff113d40cea611",
+    "browserEquivalent": "Original Polyphony Limit control (polylimit) is placed by this connector and editing it through its accessible node changes that parameter in the saved patch.",
+    "evidence": [
+      "web/tests/skin-connectors.spec.js"
+    ]
+  },
+  "src/common/SkinModel.cpp:skin-connector:scene.portamento": {
+    "status": "verified",
+    "sourceDigest": "506b383cb3ec48d4d9214cbe49bcbaf45debfbd3bc0c348e12ff113d40cea611",
+    "browserEquivalent": "Original Scene A Portamento control (a_portamento) is placed by this connector and editing it through its accessible node changes that parameter in the saved patch.",
+    "evidence": [
+      "web/tests/skin-connectors.spec.js"
+    ]
+  },
+  "src/common/SkinModel.cpp:skin-connector:scene.send_fx_1": {
+    "status": "verified",
+    "sourceDigest": "506b383cb3ec48d4d9214cbe49bcbaf45debfbd3bc0c348e12ff113d40cea611",
+    "browserEquivalent": "Original Scene A Send FX 1 Level control (a_send_fx_1) is placed by this connector and editing it through its accessible node changes that parameter in the saved patch.",
+    "evidence": [
+      "web/tests/skin-connectors.spec.js"
+    ]
+  },
+  "src/common/SkinModel.cpp:skin-connector:scene.send_fx_2": {
+    "status": "verified",
+    "sourceDigest": "506b383cb3ec48d4d9214cbe49bcbaf45debfbd3bc0c348e12ff113d40cea611",
+    "browserEquivalent": "Original Scene A Send FX 2 Level control (a_send_fx_2) is placed by this connector and editing it through its accessible node changes that parameter in the saved patch.",
+    "evidence": [
+      "web/tests/skin-connectors.spec.js"
+    ]
+  },
+  "src/common/SkinModel.cpp:skin-connector:scene.send_fx_3": {
+    "status": "verified",
+    "sourceDigest": "506b383cb3ec48d4d9214cbe49bcbaf45debfbd3bc0c348e12ff113d40cea611",
+    "browserEquivalent": "Stacked with Send FX 1 Level: shown while a send FX 3/4 slot is selected, as in the original.",
+    "evidence": [
+      "web/tests/skin-connectors.spec.js"
+    ]
+  },
+  "src/common/SkinModel.cpp:skin-connector:scene.send_fx_4": {
+    "status": "verified",
+    "sourceDigest": "506b383cb3ec48d4d9214cbe49bcbaf45debfbd3bc0c348e12ff113d40cea611",
+    "browserEquivalent": "Stacked with Send FX 2 Level: shown while a send FX 3/4 slot is selected, as in the original.",
+    "evidence": [
+      "web/tests/skin-connectors.spec.js"
+    ]
+  },
+  "src/common/SkinModel.cpp:skin-connector:scene.splitpoint": {
+    "status": "verified",
+    "sourceDigest": "506b383cb3ec48d4d9214cbe49bcbaf45debfbd3bc0c348e12ff113d40cea611",
+    "browserEquivalent": "Original Split Point control (splitkey) is placed by this connector and editing it through its accessible node changes that parameter in the saved patch.",
+    "evidence": [
+      "web/tests/skin-connectors.spec.js"
+    ]
+  },
+  "src/common/SkinModel.cpp:skin-connector:scene.velocity_sensitivity": {
+    "status": "verified",
+    "sourceDigest": "506b383cb3ec48d4d9214cbe49bcbaf45debfbd3bc0c348e12ff113d40cea611",
+    "browserEquivalent": "Original Scene A Velocity > VCA Gain control (a_vca_velsense) is placed by this connector and editing it through its accessible node changes that parameter in the saved patch.",
+    "evidence": [
+      "web/tests/skin-connectors.spec.js"
+    ]
+  },
+  "src/common/SkinModel.cpp:skin-connector:scene.volume": {
+    "status": "verified",
+    "sourceDigest": "506b383cb3ec48d4d9214cbe49bcbaf45debfbd3bc0c348e12ff113d40cea611",
+    "browserEquivalent": "Original Scene A Volume control (a_volume) is placed by this connector and editing it through its accessible node changes that parameter in the saved patch.",
+    "evidence": [
+      "web/tests/skin-connectors.spec.js"
+    ]
+  },
+  "src/common/SkinModel.cpp:skin-connector:scene.width": {
+    "status": "verified",
+    "sourceDigest": "506b383cb3ec48d4d9214cbe49bcbaf45debfbd3bc0c348e12ff113d40cea611",
+    "browserEquivalent": "Original Scene A Width control (a_pan2) is placed by this connector and editing it through its accessible node changes that parameter in the saved patch.",
+    "evidence": [
+      "web/tests/skin-connectors.spec.js"
+    ]
+  },
+  "src/common/SkinModel.cpp:skin-connector:tuningeditor.window": {
+    "status": "verified",
+    "sourceDigest": "506b383cb3ec48d4d9214cbe49bcbaf45debfbd3bc0c348e12ff113d40cea611",
+    "browserEquivalent": "Original Tuning Editor opens at exactly this connector's skin rectangle [0, 57, 750, 512].",
+    "evidence": [
+      "web/tests/skin-connectors.spec.js"
+    ]
+  },
+  "src/common/SkinModel.cpp:skin-connector:wtseditor.window": {
+    "status": "verified",
+    "sourceDigest": "506b383cb3ec48d4d9214cbe49bcbaf45debfbd3bc0c348e12ff113d40cea611",
+    "browserEquivalent": "Original Wavetable Script Editor opens at exactly this connector's skin rectangle [150, 57, 756, 512].",
+    "evidence": [
+      "web/tests/skin-connectors.spec.js"
+    ]
+  },
+  "src/common/SkinModel.h:skin-action:ACTION_UNDO": {
+    "status": "verified",
+    "sourceDigest": "a6bb57c2118c83920f8821bdbe38ab386696503cad0c04670b2c7b92fff4b19f",
+    "browserEquivalent": "Non-parameter connection used by the controls.action.undo connector. Original Undo button reverts an edit made through the slider's own key handling.",
+    "evidence": [
+      "web/tests/skin-connectors.spec.js"
+    ]
+  },
+  "src/common/SkinModel.h:skin-action:ACTION_REDO": {
+    "status": "verified",
+    "sourceDigest": "a6bb57c2118c83920f8821bdbe38ab386696503cad0c04670b2c7b92fff4b19f",
+    "browserEquivalent": "Non-parameter connection used by the controls.action.redo connector. Original Redo button reapplies the undone edit.",
+    "evidence": [
+      "web/tests/skin-connectors.spec.js"
+    ]
+  },
+  "src/common/SkinModel.h:skin-action:ANALYZE_FILTERS": {
+    "status": "verified",
+    "sourceDigest": "a6bb57c2118c83920f8821bdbe38ab386696503cad0c04670b2c7b92fff4b19f",
+    "browserEquivalent": "Non-parameter connection used by the filter.filter_preview connector. Original filter preview button opens the Filter Analysis window at its skin rectangle.",
+    "evidence": [
+      "web/tests/skin-connectors.spec.js"
+    ]
+  },
+  "src/common/SkinModel.h:skin-action:ANALYZE_WAVESHAPE": {
+    "status": "verified",
+    "sourceDigest": "a6bb57c2118c83920f8821bdbe38ab386696503cad0c04670b2c7b92fff4b19f",
+    "browserEquivalent": "Non-parameter connection used by the filter.waveshaper_preview connector. Original waveshaper preview button opens the Waveshaper Analysis window at its skin rectangle.",
+    "evidence": [
+      "web/tests/skin-connectors.spec.js"
+    ]
+  },
+  "src/common/SkinModel.h:skin-action:FILTER_ANALYSIS_WINDOW": {
+    "status": "verified",
+    "sourceDigest": "a6bb57c2118c83920f8821bdbe38ab386696503cad0c04670b2c7b92fff4b19f",
+    "browserEquivalent": "Non-parameter connection used by the filter.filter_analysis.window connector. Original Filter Analysis opens at exactly this connector's skin rectangle [300, 263, 450, 212].",
+    "evidence": [
+      "web/tests/skin-connectors.spec.js"
+    ]
+  },
+  "src/common/SkinModel.h:skin-action:FORMULA_EDITOR_WINDOW": {
+    "status": "verified",
+    "sourceDigest": "a6bb57c2118c83920f8821bdbe38ab386696503cad0c04670b2c7b92fff4b19f",
+    "browserEquivalent": "Non-parameter connection used by the formulaeditor.window connector. Original Formula editor opens at exactly this connector's skin rectangle [0, 57, 750, 366].",
+    "evidence": [
+      "web/tests/skin-connectors.spec.js"
+    ]
+  },
+  "src/common/SkinModel.h:skin-action:FXPRESET_LABEL": {
+    "status": "verified",
+    "sourceDigest": "a6bb57c2118c83920f8821bdbe38ab386696503cad0c04670b2c7b92fff4b19f",
+    "browserEquivalent": "Non-parameter connection used by the fx.preset.name connector. Original FX preset label shows the loaded preset name (Basic 1/4) and follows the preset jog.",
+    "evidence": [
+      "web/tests/skin-connectors.spec.js"
+    ]
+  },
+  "src/common/SkinModel.h:skin-action:FX_SELECTOR": {
+    "status": "verified",
+    "sourceDigest": "a6bb57c2118c83920f8821bdbe38ab386696503cad0c04670b2c7b92fff4b19f",
+    "browserEquivalent": "Non-parameter connection used by the fx.selector connector. Original FX slot selector: selecting a send FX 3/4 slot swaps in the stacked send and return controls, and each insert slot receives its own effect.",
+    "evidence": [
+      "web/tests/skin-connectors.spec.js"
+    ]
+  },
+  "src/common/SkinModel.h:skin-action:JOG_FX": {
+    "status": "verified",
+    "sourceDigest": "a6bb57c2118c83920f8821bdbe38ab386696503cad0c04670b2c7b92fff4b19f",
+    "browserEquivalent": "Non-parameter connection used by the fx.preset.prevnext connector. Original FX preset jog steps the Delay preset forward from Basic 1/4 and back again; the preset label follows.",
+    "evidence": [
+      "web/tests/skin-connectors.spec.js"
+    ]
+  },
+  "src/common/SkinModel.h:skin-action:JOG_PATCH": {
+    "status": "verified",
+    "sourceDigest": "a6bb57c2118c83920f8821bdbe38ab386696503cad0c04670b2c7b92fff4b19f",
+    "browserEquivalent": "Non-parameter connection used by the controls.patch.prevnext connector. Original patch jog: its right half loads the next factory patch and its left half the previous one.",
+    "evidence": [
+      "web/tests/skin-connectors.spec.js"
+    ]
+  },
+  "src/common/SkinModel.h:skin-action:JOG_PATCHCATEGORY": {
+    "status": "verified",
+    "sourceDigest": "a6bb57c2118c83920f8821bdbe38ab386696503cad0c04670b2c7b92fff4b19f",
+    "browserEquivalent": "Non-parameter connection used by the controls.category.prevnext connector. Original category jog: its right half loads the next category and its left half the previous one.",
+    "evidence": [
+      "web/tests/skin-connectors.spec.js"
+    ]
+  },
+  "src/common/SkinModel.h:skin-action:JOG_WAVESHAPE": {
+    "status": "verified",
+    "sourceDigest": "a6bb57c2118c83920f8821bdbe38ab386696503cad0c04670b2c7b92fff4b19f",
+    "browserEquivalent": "Non-parameter connection used by the filter.waveshaper_prevnext connector. Original waveshaper jog: its right half steps the waveshaper type forward and its left half back again.",
+    "evidence": [
+      "web/tests/skin-connectors.spec.js"
+    ]
+  },
+  "src/common/SkinModel.h:skin-action:LFO_LABEL": {
+    "status": "verified",
+    "sourceDigest": "a6bb57c2118c83920f8821bdbe38ab386696503cad0c04670b2c7b92fff4b19f",
+    "browserEquivalent": "Non-parameter connection used by the lfo.title connector. Original vertical LFO title is visible and changes when LFO 2 is selected.",
+    "evidence": [
+      "web/tests/skin-connectors.spec.js"
+    ]
+  },
+  "src/common/SkinModel.h:skin-action:LFO_MENU": {
+    "status": "verified",
+    "sourceDigest": "a6bb57c2118c83920f8821bdbe38ab386696503cad0c04670b2c7b92fff4b19f",
+    "browserEquivalent": "Non-parameter connection used by the lfo.presets connector. Original LFO Menu button opens the modulator preset menu.",
+    "evidence": [
+      "web/tests/skin-connectors.spec.js"
+    ]
+  },
+  "src/common/SkinModel.h:skin-action:MAIN_VU_METER": {
+    "status": "verified",
+    "sourceDigest": "a6bb57c2118c83920f8821bdbe38ab386696503cad0c04670b2c7b92fff4b19f",
+    "browserEquivalent": "Non-parameter connection used by the controls.vu_meter connector. Original level meter is visible at its skin position and opens its context menu (Oscilloscope, Show CPU Usage).",
+    "evidence": [
+      "web/tests/skin-connectors.spec.js"
+    ]
+  },
+  "src/common/SkinModel.h:skin-action:MOD_LIST_WINDOW": {
+    "status": "verified",
+    "sourceDigest": "a6bb57c2118c83920f8821bdbe38ab386696503cad0c04670b2c7b92fff4b19f",
+    "browserEquivalent": "Non-parameter connection used by the modlist.window connector. Original Modulation List opens at exactly this connector's skin rectangle [148, 58, 602, 511].",
+    "evidence": [
+      "web/tests/skin-connectors.spec.js"
+    ]
+  },
+  "src/common/SkinModel.h:skin-action:MSEG_EDITOR_OPEN": {
+    "status": "verified",
+    "sourceDigest": "a6bb57c2118c83920f8821bdbe38ab386696503cad0c04670b2c7b92fff4b19f",
+    "browserEquivalent": "Non-parameter connection used by the lfo.mseg_editor connector. Original MSEG editor button is hidden for other LFO shapes, appears for an MSEG LFO and opens its MSEG editor.",
+    "evidence": [
+      "web/tests/skin-connectors.spec.js"
+    ]
+  },
+  "src/common/SkinModel.h:skin-action:MSEG_EDITOR_WINDOW": {
+    "status": "verified",
+    "sourceDigest": "a6bb57c2118c83920f8821bdbe38ab386696503cad0c04670b2c7b92fff4b19f",
+    "browserEquivalent": "Non-parameter connection used by the msegeditor.window connector. Original MSEG editor opens at exactly this connector's skin rectangle [0, 57, 750, 366].",
+    "evidence": [
+      "web/tests/skin-connectors.spec.js"
+    ]
+  },
+  "src/common/SkinModel.h:skin-action:OSCILLATOR_DISPLAY": {
+    "status": "verified",
+    "sourceDigest": "a6bb57c2118c83920f8821bdbe38ab386696503cad0c04670b2c7b92fff4b19f",
+    "browserEquivalent": "Non-parameter connection used by the osc.display connector. Original oscillator waveform display is placed exactly at this connector (4,81,141,99).",
+    "evidence": [
+      "web/tests/skin-connectors.spec.js"
+    ]
+  },
+  "src/common/SkinModel.h:skin-action:OSCILLATOR_SELECT": {
+    "status": "verified",
+    "sourceDigest": "a6bb57c2118c83920f8821bdbe38ab386696503cad0c04670b2c7b92fff4b19f",
+    "browserEquivalent": "Non-parameter connection used by the osc.select connector. Original oscillator selector switches the displayed oscillator (Osc 3 controls appear).",
+    "evidence": [
+      "web/tests/skin-connectors.spec.js"
+    ]
+  },
+  "src/common/SkinModel.h:skin-action:OSCILLOSCOPE_WINDOW": {
+    "status": "verified",
+    "sourceDigest": "a6bb57c2118c83920f8821bdbe38ab386696503cad0c04670b2c7b92fff4b19f",
+    "browserEquivalent": "Non-parameter connection used by the oscilloscope.window connector. Original Oscilloscope opens at exactly this connector's skin rectangle [150, 57, 600, 340].",
+    "evidence": [
+      "web/tests/skin-connectors.spec.js"
+    ]
+  },
+  "src/common/SkinModel.h:skin-action:PATCH_BROWSER": {
+    "status": "verified",
+    "sourceDigest": "a6bb57c2118c83920f8821bdbe38ab386696503cad0c04670b2c7b92fff4b19f",
+    "browserEquivalent": "Non-parameter connection used by the controls.patch_browser connector. Original patch selector opens its patch menu.",
+    "evidence": [
+      "web/tests/skin-connectors.spec.js"
+    ]
+  },
+  "src/common/SkinModel.h:skin-action:SAVE_PATCH": {
+    "status": "verified",
+    "sourceDigest": "a6bb57c2118c83920f8821bdbe38ab386696503cad0c04670b2c7b92fff4b19f",
+    "browserEquivalent": "Non-parameter connection used by the controls.patch.save connector. Original Save Patch button opens the original save dialog.",
+    "evidence": [
+      "web/tests/skin-connectors.spec.js"
+    ]
+  },
+  "src/common/SkinModel.h:skin-action:SAVE_PATCH_DIALOG": {
+    "status": "verified",
+    "sourceDigest": "a6bb57c2118c83920f8821bdbe38ab386696503cad0c04670b2c7b92fff4b19f",
+    "browserEquivalent": "Non-parameter connection used by the controls.patch.save.window connector. Original save dialog takes its 390x300 size from this connector and is centred by the original overlay code; its content area measures the size minus border and title bar.",
+    "evidence": [
+      "web/tests/skin-connectors.spec.js"
+    ]
+  },
+  "src/common/SkinModel.h:skin-action:STATUS_MPE": {
+    "status": "verified",
+    "sourceDigest": "a6bb57c2118c83920f8821bdbe38ab386696503cad0c04670b2c7b92fff4b19f",
+    "browserEquivalent": "Non-parameter connection used by the controls.status.mpe connector. Original MPE status toggle turns MPE on and off (aria-checked follows).",
+    "evidence": [
+      "web/tests/skin-connectors.spec.js"
+    ]
+  },
+  "src/common/SkinModel.h:skin-action:STATUS_TUNE": {
+    "status": "verified",
+    "sourceDigest": "a6bb57c2118c83920f8821bdbe38ab386696503cad0c04670b2c7b92fff4b19f",
+    "browserEquivalent": "Non-parameter connection used by the controls.status.tune connector. Original Tune status opens the Tuning menu while tuning is standard (it toggles tuning otherwise), as in the original handler.",
+    "evidence": [
+      "web/tests/skin-connectors.spec.js"
+    ]
+  },
+  "src/common/SkinModel.h:skin-action:STATUS_ZOOM": {
+    "status": "verified",
+    "sourceDigest": "a6bb57c2118c83920f8821bdbe38ab386696503cad0c04670b2c7b92fff4b19f",
+    "browserEquivalent": "Non-parameter connection used by the controls.status.zoom connector. Original Zoom status opens the zoom menu with the current 100% zoom checked.",
+    "evidence": [
+      "web/tests/skin-connectors.spec.js"
+    ]
+  },
+  "src/common/SkinModel.h:skin-action:SURGE_MENU": {
+    "status": "verified",
+    "sourceDigest": "a6bb57c2118c83920f8821bdbe38ab386696503cad0c04670b2c7b92fff4b19f",
+    "browserEquivalent": "Non-parameter connection used by the controls.surge_menu connector. Original Main Menu button opens the original settings menu.",
+    "evidence": [
+      "web/tests/skin-connectors.spec.js"
+    ]
+  },
+  "src/common/SkinModel.h:skin-action:TUNING_EDITOR_WINDOW": {
+    "status": "verified",
+    "sourceDigest": "a6bb57c2118c83920f8821bdbe38ab386696503cad0c04670b2c7b92fff4b19f",
+    "browserEquivalent": "Non-parameter connection used by the tuningeditor.window connector. Original Tuning Editor opens at exactly this connector's skin rectangle [0, 57, 750, 512].",
+    "evidence": [
+      "web/tests/skin-connectors.spec.js"
+    ]
+  },
+  "src/common/SkinModel.h:skin-action:WAVESHAPER_ANALYSIS_WINDOW": {
+    "status": "verified",
+    "sourceDigest": "a6bb57c2118c83920f8821bdbe38ab386696503cad0c04670b2c7b92fff4b19f",
+    "browserEquivalent": "Non-parameter connection used by the filter.waveshaper_analysis.window connector. Original Waveshaper Analysis opens at exactly this connector's skin rectangle [450, 237, 300, 160].",
+    "evidence": [
+      "web/tests/skin-connectors.spec.js"
+    ]
+  },
+  "src/common/SkinModel.h:skin-action:WTS_EDITOR_WINDOW": {
+    "status": "verified",
+    "sourceDigest": "a6bb57c2118c83920f8821bdbe38ab386696503cad0c04670b2c7b92fff4b19f",
+    "browserEquivalent": "Non-parameter connection used by the wtseditor.window connector. Original Wavetable Script Editor opens at exactly this connector's skin rectangle [150, 57, 756, 512].",
+    "evidence": [
+      "web/tests/skin-connectors.spec.js"
     ]
   }
 }

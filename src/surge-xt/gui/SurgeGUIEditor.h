@@ -595,6 +595,10 @@ class SurgeGUIEditor : public Surge::GUI::IComponentTagValue::Listener,
         synth->processAudioThreadOpsWhenAudioEngineUnavailable();
     }
 
+#if SURGE_WEB
+    // Development diagnostic: every skin control, its component and parameter, as JSON.
+    std::string browserSkinControls();
+#endif
     void loadPatchWithDirtyCheck(std::function<void()> loadAction);
     void loadPatchWithDirtyCheck(bool increment, bool isCategory, bool insideCategory = false);
 
