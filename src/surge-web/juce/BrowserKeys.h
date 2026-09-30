@@ -28,20 +28,22 @@ namespace juce
 {
 const int extendedKeyModifier = 0x10000;
 
+// Printable keys use their character codes, as JUCE does on desktop, so
+// navigation and editing keys live outside the ASCII range (browserKeyCode).
 const int KeyPress::spaceKey = 32;
 const int KeyPress::returnKey = 13;
 const int KeyPress::escapeKey = 27;
 const int KeyPress::backspaceKey = 8;
-const int KeyPress::leftKey = 37;
-const int KeyPress::rightKey = 39;
-const int KeyPress::upKey = 38;
-const int KeyPress::downKey = 40;
-const int KeyPress::pageUpKey = 33;
-const int KeyPress::pageDownKey = 34;
-const int KeyPress::endKey = 35;
-const int KeyPress::homeKey = 36;
-const int KeyPress::deleteKey = 46;
-const int KeyPress::insertKey = 45;
+const int KeyPress::leftKey = extendedKeyModifier + 437;
+const int KeyPress::rightKey = extendedKeyModifier + 439;
+const int KeyPress::upKey = extendedKeyModifier + 438;
+const int KeyPress::downKey = extendedKeyModifier + 440;
+const int KeyPress::pageUpKey = extendedKeyModifier + 433;
+const int KeyPress::pageDownKey = extendedKeyModifier + 434;
+const int KeyPress::endKey = extendedKeyModifier + 435;
+const int KeyPress::homeKey = extendedKeyModifier + 436;
+const int KeyPress::deleteKey = extendedKeyModifier + 446;
+const int KeyPress::insertKey = extendedKeyModifier + 445;
 const int KeyPress::tabKey = 9;
 const int KeyPress::F1Key = extendedKeyModifier + 256;
 const int KeyPress::F2Key = extendedKeyModifier + 257;

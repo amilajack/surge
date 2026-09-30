@@ -10,9 +10,37 @@ namespace
 {
 Point<float> browserMouse;
 std::set<int> browserKeys;
+// DOM keyCode to JUCE key code. Letters, digits, space, Return, Escape, Tab and
+// Backspace share values, as do the OEM punctuation codes that the native
+// virtual-keyboard layouts use. Comma and period are characters there, and in
+// the Alt+, and Alt+. shortcuts, so they map to ',' and '.'. Navigation and
+// editing keys move out of the ASCII range so '.' no longer aliases Delete.
 int browserKeyCode(int domCode)
 {
-    return domCode >= 112 && domCode <= 135 ? KeyPress::F1Key + domCode - 112 : domCode;
+    if (domCode >= 112 && domCode <= 135) return KeyPress::F1Key + domCode - 112;
+    switch (domCode)
+    {
+    case 33: return KeyPress::pageUpKey;
+    case 34: return KeyPress::pageDownKey;
+    case 35: return KeyPress::endKey;
+    case 36: return KeyPress::homeKey;
+    case 37: return KeyPress::leftKey;
+    case 38: return KeyPress::upKey;
+    case 39: return KeyPress::rightKey;
+    case 40: return KeyPress::downKey;
+    case 45: return KeyPress::insertKey;
+    case 46: return KeyPress::deleteKey;
+    case 106: return KeyPress::numberPadMultiply;
+    case 107: return KeyPress::numberPadAdd;
+    case 109: return KeyPress::numberPadSubtract;
+    case 110: return KeyPress::numberPadDecimalPoint;
+    case 111: return KeyPress::numberPadDivide;
+    case 188: return ',';
+    case 190: return '.';
+    default: break;
+    }
+    if (domCode >= 96 && domCode <= 105) return KeyPress::numberPad0 + domCode - 96;
+    return domCode;
 }
 int browserPeerId = 0;
 TextInputTarget *browserCompositionTarget = nullptr;
@@ -83,9 +111,9 @@ class BrowserPeer final : public ComponentPeer
         const int code = event->keyCode;
         const bool down = type == EMSCRIPTEN_EVENT_KEYDOWN;
         if (down)
-            browserKeys.insert(code);
+            browserKeys.insert(browserKeyCode(code));
         else
-            browserKeys.erase(code);
+            browserKeys.erase(browserKeyCode(code));
         int flags = (event->shiftKey ? ModifierKeys::shiftModifier : 0) |
                     (event->ctrlKey ? ModifierKeys::ctrlModifier : 0) |
                     (event->altKey ? ModifierKeys::altModifier : 0) |
@@ -413,9 +441,8 @@ Point<float> MouseInputSource::getCurrentRawMousePosition() { return browserMous
 void MouseInputSource::setRawMousePosition(Point<float>) {}
 bool KeyPress::isKeyCurrentlyDown(int key)
 {
-    if (key >= KeyPress::F1Key && key <= KeyPress::F24Key)
-        key = 112 + key - KeyPress::F1Key;
-    else if (key >= 'a' && key <= 'z')
+    // browserKeys holds translated codes (browserKeyCode).
+    if (key >= 'a' && key <= 'z')
         key -= 'a' - 'A';
     return browserKeys.count(key) != 0;
 }

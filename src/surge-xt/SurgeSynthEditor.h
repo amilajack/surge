@@ -84,16 +84,8 @@ class SurgeSynthEditor : public juce::AudioProcessorEditor,
     SurgeGUIEditor *browserGUIEditor() { return sge.get(); }
 #endif
     void setVKBLayout(const std::string layout);
-    static int virtualKeyboardKeyCode(int key)
-    {
-#if SURGE_WEB
-        // Layouts mix character literals with platform key codes. Chrome uses
-        // OEM codes for these punctuation keys; '.' must not alias Delete (46).
-        if (key == ',') return 188;
-        if (key == '.') return 190;
-#endif
-        return key;
-    }
+    // Browser key codes match desktop JUCE (see browserKeyCode), so layouts need no mapping.
+    static int virtualKeyboardKeyCode(int key) { return key; }
 
     void reapplySurgeComponentColours();
 
