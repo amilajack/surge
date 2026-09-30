@@ -62,6 +62,8 @@ for(const active of [false,true])test(`scene paste preserves scripted wavetable 
   await page.getByRole('button',{name:'Save Patch',exact:true}).dispatchEvent('click');
   await expect(page.getByRole('checkbox',{name:'Save Wavetable Script Snapshots',exact:true})).not.toBeChecked();
   await page.getByRole('button',{name:'Cancel',exact:true}).dispatchEvent('click');
+  // The dialog restores focus as it closes; wait so the shortcut reaches the canvas.
+  await expect(page.getByRole('checkbox',{name:'Save Wavetable Script Snapshots',exact:true})).toHaveCount(0);
   await editor(page);
   const code=page.getByRole('textbox',{name:'Wavetable Code',exact:true});
   await expect(code).toHaveValue(script('Source',0.125));
