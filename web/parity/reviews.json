@@ -5815,5 +5815,203 @@
     "evidence": [
       "web/tests/parameter-menus.spec.js"
     ]
+  },
+  "src/surge-xt/gui/widgets/XMLConfiguredMenus.cpp:menu-call:9bd19462407fecd4": {
+    "status": "verified",
+    "sourceDigest": "9ba6898798081f37eb70ae5a15036e0a3945f9306e5275d8e2bb8a1f70f821cb",
+    "browserEquivalent": "Factory presets and preset-less oscillator types load from the original menus; the dropdown lists only the loaded effect's presets.",
+    "runtimeExpansion": [
+      "Back Room",
+      "Init (Dry)",
+      "Basic 1/4",
+      "Square (Modern)",
+      "Wavetable",
+      "FM2",
+      "FM3",
+      "String",
+      "Alias",
+      "Twist"
+    ],
+    "evidence": [
+      "web/tests/fx-menu.spec.js",
+      "web/tests/factory-presets.spec.js",
+      "web/tests/parameter-menus.spec.js"
+    ]
+  },
+  "src/surge-xt/gui/widgets/XMLConfiguredMenus.cpp:menu-call:0b4c91bbb4a05c26": {
+    "status": "verified",
+    "sourceDigest": "9ba6898798081f37eb70ae5a15036e0a3945f9306e5275d8e2bb8a1f70f821cb",
+    "browserEquivalent": "User FX presets appear in the user section of the type folder and in the dropdown, and load.",
+    "runtimeExpansion": [
+      "Browser Room"
+    ],
+    "evidence": [
+      "web/tests/fx-menu.spec.js"
+    ]
+  },
+  "src/surge-xt/gui/widgets/XMLConfiguredMenus.cpp:menu-call:b19f09d9c62e9daa": {
+    "status": "verified",
+    "sourceDigest": "9ba6898798081f37eb70ae5a15036e0a3945f9306e5275d8e2bb8a1f70f821cb",
+    "browserEquivalent": "Type folders for effects and oscillators; the loaded type's folder is ticked.",
+    "runtimeExpansion": [
+      "Reverb 2 (Checked)",
+      "Delay",
+      "Classic",
+      "Modern (Checked)",
+      "EQ",
+      "Bonsai",
+      "Combulator",
+      "Chorus",
+      "Airwindows"
+    ],
+    "evidence": [
+      "web/tests/fx-menu.spec.js",
+      "web/tests/factory-presets.spec.js"
+    ]
+  },
+  "src/surge-xt/gui/widgets/XMLConfiguredMenus.cpp:menu-call:de7d1b721a1e0632": {
+    "status": "platform-limitation",
+    "sourceDigest": "9ba6898798081f37eb70ae5a15036e0a3945f9306e5275d8e2bb8a1f70f821cb",
+    "capability": "udp-osc",
+    "reason": "Shows the Open Sound Control name when OSC input is listening; browsers cannot open UDP sockets, so OSC input never starts and the entry is absent.",
+    "portableAlternative": "Types and presets remain selectable from the same menus, and parameters through MIDI assignment."
+  },
+  "src/surge-xt/gui/widgets/XMLConfiguredMenus.cpp:menu-call:de7d1b721a1e0632:2": {
+    "status": "platform-limitation",
+    "sourceDigest": "9ba6898798081f37eb70ae5a15036e0a3945f9306e5275d8e2bb8a1f70f821cb",
+    "capability": "udp-osc",
+    "reason": "Shows the Open Sound Control name when OSC input is listening; browsers cannot open UDP sockets, so OSC input never starts and the entry is absent.",
+    "portableAlternative": "Types and presets remain selectable from the same menus, and parameters through MIDI assignment."
+  },
+  "src/surge-xt/gui/widgets/XMLConfiguredMenus.cpp:menu-call:0c93b1acdbddb8f9": {
+    "status": "verified",
+    "sourceDigest": "9ba6898798081f37eb70ae5a15036e0a3945f9306e5275d8e2bb8a1f70f821cb",
+    "browserEquivalent": "Deactivates and reactivates the slot; the label flips.",
+    "runtimeExpansion": [
+      "Deactivate Current FX Slot",
+      "Deactivate Scene A, Insert FX Slot 1",
+      "Activate Scene A, Insert FX Slot 2"
+    ],
+    "evidence": [
+      "web/tests/fx-menu.spec.js"
+    ]
+  },
+  "src/surge-xt/gui/widgets/XMLConfiguredMenus.cpp:menu-call:31ddeb151cc26f9f": {
+    "status": "verified",
+    "sourceDigest": "9ba6898798081f37eb70ae5a15036e0a3945f9306e5275d8e2bb8a1f70f821cb",
+    "browserEquivalent": "Clears the slot to Off.",
+    "runtimeExpansion": [
+      "Clear Current FX Slot",
+      "Clear Scene A, Insert FX Slot 1"
+    ],
+    "evidence": [
+      "web/tests/fx-menu.spec.js",
+      "web/tests/fx-modulation-cleanup.spec.js"
+    ]
+  },
+  "src/surge-xt/gui/widgets/XMLConfiguredMenus.cpp:menu-call:3c31c3e42864efd5": {
+    "status": "verified",
+    "sourceDigest": "9ba6898798081f37eb70ae5a15036e0a3945f9306e5275d8e2bb8a1f70f821cb",
+    "browserEquivalent": "Clears the scene A insert chain and leaves scene B.",
+    "runtimeExpansion": [
+      "Clear Scene A Insert FX Chain"
+    ],
+    "evidence": [
+      "web/tests/fx-menu.spec.js"
+    ]
+  },
+  "src/surge-xt/gui/widgets/XMLConfiguredMenus.cpp:menu-call:33c18d6d7eb3153f": {
+    "status": "verified",
+    "sourceDigest": "9ba6898798081f37eb70ae5a15036e0a3945f9306e5275d8e2bb8a1f70f821cb",
+    "browserEquivalent": "Clears every FX slot.",
+    "evidence": [
+      "web/tests/fx-menu.spec.js"
+    ]
+  },
+  "src/surge-xt/gui/widgets/XMLConfiguredMenus.cpp:menu-call:8309481c73f7b901": {
+    "status": "verified",
+    "sourceDigest": "9ba6898798081f37eb70ae5a15036e0a3945f9306e5275d8e2bb8a1f70f821cb",
+    "browserEquivalent": "Original prompt saves the effect as a user preset in the persisted FX Presets folder.",
+    "evidence": [
+      "web/tests/fx-menu.spec.js"
+    ]
+  },
+  "src/surge-xt/gui/widgets/XMLConfiguredMenus.cpp:menu-call:ec26edc6be7c910d": {
+    "status": "verified",
+    "sourceDigest": "9ba6898798081f37eb70ae5a15036e0a3945f9306e5275d8e2bb8a1f70f821cb",
+    "browserEquivalent": "Offered only for a loaded user preset; the confirmation deletes the file and removes it from the menus.",
+    "evidence": [
+      "web/tests/fx-menu.spec.js"
+    ]
+  },
+  "src/surge-xt/gui/widgets/XMLConfiguredMenus.cpp:menu-call:61fccec3fdc6baa5": {
+    "status": "verified",
+    "sourceDigest": "9ba6898798081f37eb70ae5a15036e0a3945f9306e5275d8e2bb8a1f70f821cb",
+    "browserEquivalent": "Original prompt saves the chain preset; it persists and reloads.",
+    "evidence": [
+      "web/tests/fx-chain.spec.js"
+    ]
+  },
+  "src/surge-xt/gui/widgets/XMLConfiguredMenus.cpp:menu-call:e96c056a0f336ac4": {
+    "status": "verified",
+    "sourceDigest": "9ba6898798081f37eb70ae5a15036e0a3945f9306e5275d8e2bb8a1f70f821cb",
+    "browserEquivalent": "Copies the effect; Paste FX Preset then appears.",
+    "evidence": [
+      "web/tests/fx-menu.spec.js"
+    ]
+  },
+  "src/surge-xt/gui/widgets/XMLConfiguredMenus.cpp:menu-call:1f6ac5f490ae0e3a": {
+    "status": "verified",
+    "sourceDigest": "9ba6898798081f37eb70ae5a15036e0a3945f9306e5275d8e2bb8a1f70f821cb",
+    "browserEquivalent": "Pastes the copied effect into another slot.",
+    "evidence": [
+      "web/tests/fx-menu.spec.js"
+    ]
+  },
+  "src/surge-xt/gui/widgets/XMLConfiguredMenus.cpp:menu-call:2070243e1826f315": {
+    "status": "verified",
+    "sourceDigest": "9ba6898798081f37eb70ae5a15036e0a3945f9306e5275d8e2bb8a1f70f821cb",
+    "browserEquivalent": "Copies the FX chain.",
+    "evidence": [
+      "web/tests/fx-chain.spec.js"
+    ]
+  },
+  "src/surge-xt/gui/widgets/XMLConfiguredMenus.cpp:menu-call:ee199fb1a323b6cc": {
+    "status": "verified",
+    "sourceDigest": "9ba6898798081f37eb70ae5a15036e0a3945f9306e5275d8e2bb8a1f70f821cb",
+    "browserEquivalent": "Pastes the copied FX chain.",
+    "evidence": [
+      "web/tests/fx-chain.spec.js"
+    ]
+  },
+  "src/surge-xt/gui/widgets/XMLConfiguredMenus.cpp:menu-call:cfc7a496a0a5637c": {
+    "status": "verified",
+    "sourceDigest": "9ba6898798081f37eb70ae5a15036e0a3945f9306e5275d8e2bb8a1f70f821cb",
+    "browserEquivalent": "Saved chain presets are listed under FX Chains and load; invalid ones are skipped.",
+    "runtimeExpansion": [
+      "Browser chain",
+      "Retry chain"
+    ],
+    "evidence": [
+      "web/tests/fx-chain.spec.js",
+      "web/tests/fx-preset-failure.spec.js"
+    ]
+  },
+  "src/surge-xt/gui/widgets/XMLConfiguredMenus.cpp:menu-call:047dfd415c4661f1": {
+    "status": "verified",
+    "sourceDigest": "9ba6898798081f37eb70ae5a15036e0a3945f9306e5275d8e2bb8a1f70f821cb",
+    "browserEquivalent": "FX Chains submenu.",
+    "evidence": [
+      "web/tests/fx-chain.spec.js",
+      "web/tests/fx-preset-failure.spec.js"
+    ]
+  },
+  "src/surge-xt/gui/widgets/XMLConfiguredMenus.cpp:menu-call:70738f99eaa907dc": {
+    "status": "verified",
+    "sourceDigest": "9ba6898798081f37eb70ae5a15036e0a3945f9306e5275d8e2bb8a1f70f821cb",
+    "browserEquivalent": "Rescans the FX preset folders.",
+    "evidence": [
+      "web/tests/fx-preset-failure.spec.js"
+    ]
   }
 }
