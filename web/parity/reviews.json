@@ -6360,5 +6360,828 @@
     "evidence": [
       "web/tests/modulation-list.spec.js"
     ]
+  },
+  "src/surge-xt/gui/SurgeGUIEditor.cpp:menu-call:357c81ba4121447a": {
+    "status": "verified",
+    "sourceDigest": "d95ca8ff4fdbcf564b923e582ecc32417acd3da4b8919d3f31eec3e8895deea2",
+    "browserEquivalent": "FX grid scene label menu: disables the scene hard clip; saved in hardclipmodes.",
+    "runtimeExpansion": [
+      "Scene A Hard Clip Disabled",
+      "Scene B Hard Clip Disabled"
+    ],
+    "evidence": [
+      "web/tests/display-menus.spec.js"
+    ]
+  },
+  "src/surge-xt/gui/SurgeGUIEditor.cpp:menu-call:00e3728fe45e291e": {
+    "status": "verified",
+    "sourceDigest": "d95ca8ff4fdbcf564b923e582ecc32417acd3da4b8919d3f31eec3e8895deea2",
+    "browserEquivalent": "FX grid scene label menu: 0 dBFS scene hard clip; saved.",
+    "runtimeExpansion": [
+      "Scene A Hard Clip at 0 dBFS",
+      "Scene B Hard Clip at 0 dBFS"
+    ],
+    "evidence": [
+      "web/tests/display-menus.spec.js"
+    ]
+  },
+  "src/surge-xt/gui/SurgeGUIEditor.cpp:menu-call:0a0ab00d530aaffc": {
+    "status": "verified",
+    "sourceDigest": "d95ca8ff4fdbcf564b923e582ecc32417acd3da4b8919d3f31eec3e8895deea2",
+    "browserEquivalent": "FX grid scene label menu: +18 dBFS scene hard clip (default).",
+    "runtimeExpansion": [
+      "Scene A Hard Clip at +18 dBFS",
+      "Scene B Hard Clip at +18 dBFS"
+    ],
+    "evidence": [
+      "web/tests/display-menus.spec.js"
+    ]
+  },
+  "src/surge-xt/gui/SurgeGUIEditor.cpp:menu-call:74b6804ae0202d94": {
+    "status": "verified",
+    "sourceDigest": "d95ca8ff4fdbcf564b923e582ecc32417acd3da4b8919d3f31eec3e8895deea2",
+    "browserEquivalent": "Opens the oscilloscope from the Workflow menu (shortcut shown), toggling the overlay.",
+    "runtimeExpansion": [
+      "Oscilloscope..."
+    ],
+    "evidence": [
+      "web/tests/main-menu.spec.js",
+      "web/tests/keyboard-shortcuts.spec.js"
+    ]
+  },
+  "src/surge-xt/gui/SurgeJUCEHelpers.h:menu-call:ce25c3693cb51ba1": {
+    "status": "verified",
+    "sourceDigest": "209329ea02d4e7611680de930a75bb40ab19b9f886a239a1e79927b61613f013",
+    "browserEquivalent": "Shared helper that adds menu items with their keyboard shortcut descriptions; exercised by every shortcut-bearing item in the browser menus.",
+    "runtimeExpansion": [
+      "Zoom: Grow by 10%/25%, Shrink by 10%/25%",
+      "Edit Keyboard Shortcuts...",
+      "Virtual Keyboard",
+      "Reload Current Skin",
+      "Initialize Patch",
+      "Save Patch",
+      "Oscilloscope...",
+      "Open MSEG Editor..."
+    ],
+    "evidence": [
+      "web/tests/main-menu.spec.js",
+      "web/tests/patch-menu.spec.js",
+      "web/tests/parameter-menus.spec.js"
+    ]
+  },
+  "src/surge-xt/gui/SurgeJUCEHelpers.h:menu-call:de7d1b721a1e0632": {
+    "status": "verified",
+    "sourceDigest": "209329ea02d4e7611680de930a75bb40ab19b9f886a239a1e79927b61613f013",
+    "browserEquivalent": "Shared helper that adds menu items with their keyboard shortcut descriptions; exercised by every shortcut-bearing item in the browser menus.",
+    "runtimeExpansion": [
+      "Zoom: Grow by 10%/25%, Shrink by 10%/25%",
+      "Edit Keyboard Shortcuts...",
+      "Virtual Keyboard",
+      "Reload Current Skin",
+      "Initialize Patch",
+      "Save Patch",
+      "Oscilloscope...",
+      "Open MSEG Editor..."
+    ],
+    "evidence": [
+      "web/tests/main-menu.spec.js",
+      "web/tests/patch-menu.spec.js",
+      "web/tests/parameter-menus.spec.js"
+    ]
+  },
+  "src/surge-xt/gui/SurgeJUCEHelpers.h:menu-call:ce25c3693cb51ba1:2": {
+    "status": "verified",
+    "sourceDigest": "209329ea02d4e7611680de930a75bb40ab19b9f886a239a1e79927b61613f013",
+    "browserEquivalent": "Shared helper that adds menu items with their keyboard shortcut descriptions; exercised by every shortcut-bearing item in the browser menus.",
+    "runtimeExpansion": [
+      "Zoom: Grow by 10%/25%, Shrink by 10%/25%",
+      "Edit Keyboard Shortcuts...",
+      "Virtual Keyboard",
+      "Reload Current Skin",
+      "Initialize Patch",
+      "Save Patch",
+      "Oscilloscope...",
+      "Open MSEG Editor..."
+    ],
+    "evidence": [
+      "web/tests/main-menu.spec.js",
+      "web/tests/patch-menu.spec.js",
+      "web/tests/parameter-menus.spec.js"
+    ]
+  },
+  "src/surge-xt/gui/SurgeJUCEHelpers.h:menu-call:b0c5cb0d00d1d7cc": {
+    "status": "verified",
+    "sourceDigest": "209329ea02d4e7611680de930a75bb40ab19b9f886a239a1e79927b61613f013",
+    "browserEquivalent": "Shared helper that adds menu items with their keyboard shortcut descriptions; exercised by every shortcut-bearing item in the browser menus.",
+    "runtimeExpansion": [
+      "Zoom: Grow by 10%/25%, Shrink by 10%/25%",
+      "Edit Keyboard Shortcuts...",
+      "Virtual Keyboard",
+      "Reload Current Skin",
+      "Initialize Patch",
+      "Save Patch",
+      "Oscilloscope...",
+      "Open MSEG Editor..."
+    ],
+    "evidence": [
+      "web/tests/main-menu.spec.js",
+      "web/tests/patch-menu.spec.js",
+      "web/tests/parameter-menus.spec.js"
+    ]
+  },
+  "src/surge-xt/gui/widgets/LFOAndStepDisplay.cpp:menu-call:c36fcf7b80e28e29": {
+    "status": "verified",
+    "sourceDigest": "17090163b885688b162c33cb41ed81b62e3323435997ba8baf577172ad4b3cf6",
+    "browserEquivalent": "LFO display menu opens and closes the MSEG or formula editor for the current shape.",
+    "runtimeExpansion": [
+      "Open MSEG Editor...",
+      "Close MSEG Editor...",
+      "Open Formula Editor...",
+      "Close Formula Editor..."
+    ],
+    "evidence": [
+      "web/tests/display-menus.spec.js"
+    ]
+  },
+  "src/surge-xt/gui/widgets/LFOAndStepDisplay.cpp:menu-call:a4f62c89437e5afa": {
+    "status": "verified",
+    "sourceDigest": "17090163b885688b162c33cb41ed81b62e3323435997ba8baf577172ad4b3cf6",
+    "browserEquivalent": "MSEG no looping; single checkmark, saved loopMode 1, reopens an open editor.",
+    "evidence": [
+      "web/tests/display-menus.spec.js"
+    ]
+  },
+  "src/surge-xt/gui/widgets/LFOAndStepDisplay.cpp:menu-call:f731e594cd3f162b": {
+    "status": "verified",
+    "sourceDigest": "17090163b885688b162c33cb41ed81b62e3323435997ba8baf577172ad4b3cf6",
+    "browserEquivalent": "MSEG loop always; saved loopMode 2.",
+    "evidence": [
+      "web/tests/display-menus.spec.js"
+    ]
+  },
+  "src/surge-xt/gui/widgets/LFOAndStepDisplay.cpp:menu-call:3ea2100071d7778c": {
+    "status": "verified",
+    "sourceDigest": "17090163b885688b162c33cb41ed81b62e3323435997ba8baf577172ad4b3cf6",
+    "browserEquivalent": "MSEG loop until release (default for the preset); single checkmark.",
+    "evidence": [
+      "web/tests/display-menus.spec.js",
+      "web/tests/mseg-workflows.spec.js"
+    ]
+  },
+  "src/surge-xt/gui/widgets/LFOAndStepDisplay.cpp:menu-call:5f3502f15a74e436": {
+    "status": "verified",
+    "sourceDigest": "17090163b885688b162c33cb41ed81b62e3323435997ba8baf577172ad4b3cf6",
+    "browserEquivalent": "Step menu opens the step type-in; the saved sequence has the entered value.",
+    "runtimeExpansion": [
+      "Edit Step 1 Value: 37.50 %"
+    ],
+    "evidence": [
+      "web/tests/display-menus.spec.js"
+    ]
+  },
+  "src/surge-xt/gui/widgets/OscillatorWaveformDisplay.cpp:menu-call:e296ca6fb0daa2d7": {
+    "status": "verified",
+    "sourceDigest": "7745946f054b524e9d4c0b3df9caa6744c10b55bd0bc3622c9eeee3a593f9935",
+    "browserEquivalent": "Switches the wavetable display between 2D and 3D.",
+    "runtimeExpansion": [
+      "Switch to 3D Display",
+      "Switch to 2D Display"
+    ],
+    "evidence": [
+      "web/tests/display-menus.spec.js"
+    ]
+  },
+  "src/surge-xt/gui/widgets/OscillatorWaveformDisplay.cpp:menu-call:6f2daaae48ad5963": {
+    "status": "verified",
+    "sourceDigest": "7745946f054b524e9d4c0b3df9caa6744c10b55bd0bc3622c9eeee3a593f9935",
+    "browserEquivalent": "Wavetable playback mode; single checkmark.",
+    "evidence": [
+      "web/tests/display-menus.spec.js"
+    ]
+  },
+  "src/surge-xt/gui/widgets/OscillatorWaveformDisplay.cpp:menu-call:28abefab6ca0dd74": {
+    "status": "verified",
+    "sourceDigest": "7745946f054b524e9d4c0b3df9caa6744c10b55bd0bc3622c9eeee3a593f9935",
+    "browserEquivalent": "Oneshot sample playback mode.",
+    "evidence": [
+      "web/tests/display-menus.spec.js"
+    ]
+  },
+  "src/surge-xt/gui/widgets/OscillatorWaveformDisplay.cpp:menu-call:7a4771186bdeb850": {
+    "status": "verified",
+    "sourceDigest": "7745946f054b524e9d4c0b3df9caa6744c10b55bd0bc3622c9eeee3a593f9935",
+    "browserEquivalent": "Looped sample playback mode.",
+    "evidence": [
+      "web/tests/display-menus.spec.js"
+    ]
+  },
+  "src/surge-xt/gui/widgets/OscillatorWaveformDisplay.cpp:menu-call:c81b0ab370aa39ea": {
+    "status": "verified",
+    "sourceDigest": "7745946f054b524e9d4c0b3df9caa6744c10b55bd0bc3622c9eeee3a593f9935",
+    "browserEquivalent": "INFO entry reporting the frame count.",
+    "runtimeExpansion": [
+      "Number of Frames: 16"
+    ],
+    "evidence": [
+      "web/tests/display-menus.spec.js"
+    ]
+  },
+  "src/surge-xt/gui/widgets/OscillatorWaveformDisplay.cpp:menu-call:441e08662700c343": {
+    "status": "verified",
+    "sourceDigest": "7745946f054b524e9d4c0b3df9caa6744c10b55bd0bc3622c9eeee3a593f9935",
+    "browserEquivalent": "Frame length choices; choosing one resamples the table.",
+    "runtimeExpansion": [
+      "1024",
+      "2048",
+      "4096"
+    ],
+    "evidence": [
+      "web/tests/display-menus.spec.js"
+    ]
+  },
+  "src/surge-xt/gui/widgets/OscillatorWaveformDisplay.cpp:menu-call:c8dd541e63feed25": {
+    "status": "verified",
+    "sourceDigest": "7745946f054b524e9d4c0b3df9caa6744c10b55bd0bc3622c9eeee3a593f9935",
+    "browserEquivalent": "Frame Length submenu labelled with the current length.",
+    "runtimeExpansion": [
+      "Frame Length: 2048 samples",
+      "Frame Length: 1024 samples"
+    ],
+    "evidence": [
+      "web/tests/display-menus.spec.js"
+    ]
+  },
+  "src/surge-xt/gui/widgets/OscillatorWaveformDisplay.cpp:menu-call:637bfea4d015e3d6": {
+    "status": "verified",
+    "sourceDigest": "7745946f054b524e9d4c0b3df9caa6744c10b55bd0bc3622c9eeee3a593f9935",
+    "browserEquivalent": "Wavetable names in category submenus; choosing one loads it.",
+    "runtimeExpansion": [
+      "first Generated table",
+      "Triangle (Basic)"
+    ],
+    "evidence": [
+      "web/tests/display-menus.spec.js",
+      "web/tests/wavetable-context.spec.js"
+    ]
+  },
+  "src/surge-xt/gui/widgets/OscillatorWaveformDisplay.cpp:menu-call:d440c09cfe92d1e1": {
+    "status": "verified",
+    "sourceDigest": "7745946f054b524e9d4c0b3df9caa6744c10b55bd0bc3622c9eeee3a593f9935",
+    "browserEquivalent": "Wavetable category submenus; the current category is ticked.",
+    "runtimeExpansion": [
+      "Basic",
+      "Generated",
+      "Oneshot",
+      "Rhythmic",
+      "Sampled",
+      "Scripted",
+      "Waldorf",
+      "third-party categories"
+    ],
+    "evidence": [
+      "web/tests/display-menus.spec.js",
+      "web/tests/wavetable-context.spec.js"
+    ]
+  },
+  "src/surge-xt/gui/overlays/MSEGEditor.cpp:editor-implementation:MSEGEditor": {
+    "status": "verified",
+    "sourceDigest": "f81521188b922b48e2684a705436b81499d162588a44a8ad4c6a87139a31aabe",
+    "browserEquivalent": "The original MSEG editor: node and segment editing, curve types, control points, loop and edit modes, snap, creation, transforms, triggers, keyboard access, undo/redo and saved presets.",
+    "evidence": [
+      "web/tests/mseg-workflows.spec.js",
+      "web/tests/display-menus.spec.js",
+      "web/tests/overlays.spec.js"
+    ]
+  },
+  "src/surge-xt/gui/overlays/MSEGEditor.cpp:menu-call:97225d97afd6c59f": {
+    "status": "verified",
+    "sourceDigest": "f81521188b922b48e2684a705436b81499d162588a44a8ad4c6a87139a31aabe",
+    "browserEquivalent": "Segment menu duration entry opens the type-in.",
+    "runtimeExpansion": [
+      "Duration: (current duration)"
+    ],
+    "evidence": [
+      "web/tests/mseg-workflows.spec.js",
+      "web/tests/display-menus.spec.js"
+    ]
+  },
+  "src/surge-xt/gui/overlays/MSEGEditor.cpp:menu-call:4f1d4960afacbc70": {
+    "status": "verified",
+    "sourceDigest": "f81521188b922b48e2684a705436b81499d162588a44a8ad4c6a87139a31aabe",
+    "browserEquivalent": "Segment menu value entry opens the type-in; the node takes the entered value.",
+    "runtimeExpansion": [
+      "Value: 0.50"
+    ],
+    "evidence": [
+      "web/tests/display-menus.spec.js"
+    ]
+  },
+  "src/surge-xt/gui/overlays/MSEGEditor.cpp:menu-call:c843700e18e6e493": {
+    "status": "verified",
+    "sourceDigest": "f81521188b922b48e2684a705436b81499d162588a44a8ad4c6a87139a31aabe",
+    "browserEquivalent": "Actions > Split divides the selected segment.",
+    "evidence": [
+      "web/tests/display-menus.spec.js",
+      "web/tests/mseg-workflows.spec.js"
+    ]
+  },
+  "src/surge-xt/gui/overlays/MSEGEditor.cpp:menu-call:28b4a9b8013b74bf": {
+    "status": "verified",
+    "sourceDigest": "f81521188b922b48e2684a705436b81499d162588a44a8ad4c6a87139a31aabe",
+    "browserEquivalent": "Actions > Delete removes the selected segment with undo/redo.",
+    "evidence": [
+      "web/tests/mseg-workflows.spec.js"
+    ]
+  },
+  "src/surge-xt/gui/overlays/MSEGEditor.cpp:menu-call:e8d19c926eb51e8e": {
+    "status": "verified",
+    "sourceDigest": "f81521188b922b48e2684a705436b81499d162588a44a8ad4c6a87139a31aabe",
+    "browserEquivalent": "Actions submenu, including keyboard navigation.",
+    "evidence": [
+      "web/tests/mseg-workflows.spec.js",
+      "web/tests/display-menus.spec.js"
+    ]
+  },
+  "src/surge-xt/gui/overlays/MSEGEditor.cpp:menu-call:5e2afad329e0740f": {
+    "status": "verified",
+    "sourceDigest": "f81521188b922b48e2684a705436b81499d162588a44a8ad4c6a87139a31aabe",
+    "browserEquivalent": "Create submenu; every creation serializes its shape.",
+    "evidence": [
+      "web/tests/mseg-workflows.spec.js"
+    ]
+  },
+  "src/surge-xt/gui/overlays/MSEGEditor.cpp:menu-call:c57a853d77dbfc25": {
+    "status": "verified",
+    "sourceDigest": "f81521188b922b48e2684a705436b81499d162588a44a8ad4c6a87139a31aabe",
+    "browserEquivalent": "Trigger submenu; segment triggers serialize with undo/redo.",
+    "evidence": [
+      "web/tests/mseg-workflows.spec.js"
+    ]
+  },
+  "src/surge-xt/gui/overlays/MSEGEditor.cpp:menu-call:564d1557651047fa": {
+    "status": "verified",
+    "sourceDigest": "f81521188b922b48e2684a705436b81499d162588a44a8ad4c6a87139a31aabe",
+    "browserEquivalent": "Settings submenu; linked edge nodes.",
+    "evidence": [
+      "web/tests/mseg-workflows.spec.js"
+    ]
+  },
+  "src/surge-xt/gui/overlays/MSEGEditor.cpp:menu-call:a8ff6b6ebce2d3d8": {
+    "status": "verified",
+    "sourceDigest": "f81521188b922b48e2684a705436b81499d162588a44a8ad4c6a87139a31aabe",
+    "browserEquivalent": "Control-bar option menus select edit mode, loop mode and snap grid values.",
+    "runtimeExpansion": [
+      "Envelope",
+      "LFO",
+      "Off",
+      "Loop",
+      "Gate (Loop Until Release)",
+      "1",
+      "2",
+      "3",
+      "4",
+      "5",
+      "6",
+      "7",
+      "8",
+      "9",
+      "10",
+      "12",
+      "16",
+      "24",
+      "32"
+    ],
+    "evidence": [
+      "web/tests/mseg-workflows.spec.js",
+      "web/tests/display-menus.spec.js"
+    ]
+  },
+  "src/surge-xt/gui/overlays/MSEGEditor.cpp:menu-call:d49c04948a2343f6": {
+    "status": "verified",
+    "sourceDigest": "f81521188b922b48e2684a705436b81499d162588a44a8ad4c6a87139a31aabe",
+    "browserEquivalent": "Snap grid value entry opens the type-in.",
+    "runtimeExpansion": [
+      "Edit Value: 8",
+      "Edit Value: 12",
+      "Edit Value: 16"
+    ],
+    "evidence": [
+      "web/tests/display-menus.spec.js"
+    ]
+  },
+  "src/surge-xt/gui/overlays/Oscilloscope.cpp:editor-implementation:Oscilloscope": {
+    "status": "verified",
+    "sourceDigest": "a53e613d67d0d567b8c7de9277574950cd43baa81bc4d9fdfcd8fd48d5af24fe",
+    "browserEquivalent": "The original oscilloscope overlay: opens from its shortcut and menus, sits at its skin rectangle, switches waveform/spectrum and channels, and closes.",
+    "evidence": [
+      "web/tests/overlays.spec.js",
+      "web/tests/display-menus.spec.js",
+      "web/tests/skin-connectors.spec.js",
+      "web/tests/keyboard-shortcuts.spec.js"
+    ]
+  },
+  "src/surge-xt/gui/overlays/Oscilloscope.cpp:menu-call:a8ff6b6ebce2d3d8": {
+    "status": "verified",
+    "sourceDigest": "a53e613d67d0d567b8c7de9277574950cd43baa81bc4d9fdfcd8fd48d5af24fe",
+    "browserEquivalent": "Mode switch options.",
+    "runtimeExpansion": [
+      "Waveform",
+      "Spectrum"
+    ],
+    "evidence": [
+      "web/tests/display-menus.spec.js"
+    ]
+  },
+  "src/surge-xt/gui/widgets/CurrentFxDisplay.cpp:menu-call:691ccaf9f7256152": {
+    "status": "verified",
+    "sourceDigest": "3733da433c93a5b2d23c707075a1deeaa1965bf820f749518fd3d9462239840a",
+    "browserEquivalent": "Impulse response names in the original picker load verified data.",
+    "runtimeExpansion": [
+      "factory impulse responses in their categories"
+    ],
+    "evidence": [
+      "web/tests/impulses.spec.js"
+    ]
+  },
+  "src/surge-xt/gui/widgets/CurrentFxDisplay.cpp:menu-call:d440c09cfe92d1e1": {
+    "status": "verified",
+    "sourceDigest": "3733da433c93a5b2d23c707075a1deeaa1965bf820f749518fd3d9462239840a",
+    "browserEquivalent": "Impulse response category submenus.",
+    "runtimeExpansion": [
+      "factory impulse categories"
+    ],
+    "evidence": [
+      "web/tests/impulses.spec.js"
+    ]
+  },
+  "src/surge-xt/gui/widgets/CurrentFxDisplay.cpp:menu-call:a4cf682de9e734f8": {
+    "status": "verified",
+    "sourceDigest": "3733da433c93a5b2d23c707075a1deeaa1965bf820f749518fd3d9462239840a",
+    "browserEquivalent": "Loads an impulse response through the browser file picker; invalid files leave the current response.",
+    "evidence": [
+      "web/tests/impulses.spec.js"
+    ]
+  },
+  "src/surge-xt/gui/widgets/CurrentFxDisplay.cpp:menu-call:a5bc16d9c7e57f1b": {
+    "status": "verified",
+    "sourceDigest": "3733da433c93a5b2d23c707075a1deeaa1965bf820f749518fd3d9462239840a",
+    "browserEquivalent": "Removes the impulse response.",
+    "evidence": [
+      "web/tests/impulses.spec.js"
+    ]
+  },
+  "src/surge-xt/gui/overlays/OpenSoundControlSettings.cpp:menu-call:6e1d15fff3e4c0ea": {
+    "status": "platform-limitation",
+    "sourceDigest": "260ff7765ccf240db28027c7ae954aa961c9a2a7e53a86797235e58b8c22d438",
+    "capability": "udp-osc",
+    "reason": "Part of the OSC settings overlay, which requires UDP sockets; the OSC menus are excluded in SURGE_WEB builds.",
+    "portableAlternative": "Parameters remain controllable through MIDI assignment."
+  },
+  "src/surge-xt/SurgeSynthEditor.cpp:menu-call:2f852b3eabd641cb": {
+    "status": "platform-limitation",
+    "sourceDigest": "fe105281431ac9fe6d38be5dcbd3a44a30adc285b57f94d3d5a64e568acac27a",
+    "capability": "plugin-host",
+    "reason": "Items a plugin host adds to the editor context menu; the browser, like the standalone app, has no host.",
+    "portableAlternative": "All Surge menus remain available."
+  },
+  "libs/JUCE/modules/juce_audio_plugin_client/Standalone/juce_StandaloneFilterWindow.h:menu-call:dea2f5867641266d": {
+    "status": "platform-limitation",
+    "sourceDigest": "db222dc2f542b3dfc8c421c7feec39898a7c2af3d8bf0af9b60c05efc4e583a4",
+    "capability": "native-driver",
+    "reason": "The JUCE standalone Audio/MIDI Settings dialog chooses native audio drivers, devices, rates and buffers.",
+    "portableAlternative": "The page's own controls enable, suspend and resume Web Audio output and audio input, and select Web MIDI inputs."
+  },
+  "libs/JUCE/modules/juce_audio_plugin_client/Standalone/juce_StandaloneFilterWindow.h:menu-call:e8ccffec1fb74223": {
+    "status": "verified",
+    "sourceDigest": "db222dc2f542b3dfc8c421c7feec39898a7c2af3d8bf0af9b60c05efc4e583a4",
+    "browserEquivalent": "Browser equivalent: Save Patch (button, menu or shortcut) writes the patch, including embedded tuning, to persisted browser storage; user folders, patches included, export through the browser directory picker.",
+    "evidence": [
+      "web/tests/patch-menu.spec.js",
+      "web/tests/user-folder-export.spec.js"
+    ],
+    "runtimeExpansion": [
+      "Save Patch",
+      "Save Patch dialog"
+    ]
+  },
+  "libs/JUCE/modules/juce_audio_plugin_client/Standalone/juce_StandaloneFilterWindow.h:menu-call:76d8a62a4d3232b5": {
+    "status": "verified",
+    "sourceDigest": "db222dc2f542b3dfc8c421c7feec39898a7c2af3d8bf0af9b60c05efc4e583a4",
+    "browserEquivalent": "Browser equivalent: Load Patch from File... reads a patch through the browser file picker (with undo), and patch files can also be dropped on the editor.",
+    "evidence": [
+      "web/tests/patch-menu.spec.js",
+      "web/tests/file-drop.spec.js"
+    ],
+    "runtimeExpansion": [
+      "Load Patch from File..."
+    ]
+  },
+  "libs/JUCE/modules/juce_audio_plugin_client/Standalone/juce_StandaloneFilterWindow.h:menu-call:04a32e6e079e3782": {
+    "status": "verified",
+    "sourceDigest": "db222dc2f542b3dfc8c421c7feec39898a7c2af3d8bf0af9b60c05efc4e583a4",
+    "browserEquivalent": "Browser equivalent: Initialize Patch returns to the default patch (Init Saw or the chosen default).",
+    "evidence": [
+      "web/tests/patch-menu.spec.js",
+      "web/tests/default-patch.spec.js"
+    ],
+    "runtimeExpansion": [
+      "Initialize Patch"
+    ]
+  },
+  "libs/JUCE/modules/juce_audio_utils/gui/juce_AudioDeviceSelectorComponent.cpp:menu-call:c72bc4745651fe2a": {
+    "status": "platform-limitation",
+    "sourceDigest": "589cd08139bbb9e4b925b6aaa13ddcca2249a1c4591a624cf85975d7adb7bbc0",
+    "capability": "native-driver",
+    "reason": "The JUCE device selector lists native MIDI output choices (none); browsers do not expose native audio drivers.",
+    "portableAlternative": "Web Audio plays through the browser's output at its rate (the engine is verified at 44.1 and 48 kHz), with the page's audio enable, input and Web MIDI input controls."
+  },
+  "libs/JUCE/modules/juce_audio_utils/gui/juce_AudioDeviceSelectorComponent.cpp:menu-call:7d5594b63a7468d4": {
+    "status": "platform-limitation",
+    "sourceDigest": "589cd08139bbb9e4b925b6aaa13ddcca2249a1c4591a624cf85975d7adb7bbc0",
+    "capability": "native-driver",
+    "reason": "The JUCE device selector lists native MIDI output devices; browsers do not expose native audio drivers.",
+    "portableAlternative": "Web Audio plays through the browser's output at its rate (the engine is verified at 44.1 and 48 kHz), with the page's audio enable, input and Web MIDI input controls."
+  },
+  "libs/JUCE/modules/juce_audio_utils/gui/juce_AudioDeviceSelectorComponent.cpp:menu-call:f6aa6d116512a9cb": {
+    "status": "platform-limitation",
+    "sourceDigest": "589cd08139bbb9e4b925b6aaa13ddcca2249a1c4591a624cf85975d7adb7bbc0",
+    "capability": "native-driver",
+    "reason": "The JUCE device selector lists native audio devices; browsers do not expose native audio drivers.",
+    "portableAlternative": "Web Audio plays through the browser's output at its rate (the engine is verified at 44.1 and 48 kHz), with the page's audio enable, input and Web MIDI input controls."
+  },
+  "libs/JUCE/modules/juce_audio_utils/gui/juce_AudioDeviceSelectorComponent.cpp:menu-call:c72bc4745651fe2a:2": {
+    "status": "platform-limitation",
+    "sourceDigest": "589cd08139bbb9e4b925b6aaa13ddcca2249a1c4591a624cf85975d7adb7bbc0",
+    "capability": "native-driver",
+    "reason": "The JUCE device selector lists native audio device choices (none); browsers do not expose native audio drivers.",
+    "portableAlternative": "Web Audio plays through the browser's output at its rate (the engine is verified at 44.1 and 48 kHz), with the page's audio enable, input and Web MIDI input controls."
+  },
+  "libs/JUCE/modules/juce_audio_utils/gui/juce_AudioDeviceSelectorComponent.cpp:menu-call:ae53c68d405c09a0": {
+    "status": "platform-limitation",
+    "sourceDigest": "589cd08139bbb9e4b925b6aaa13ddcca2249a1c4591a624cf85975d7adb7bbc0",
+    "capability": "native-driver",
+    "reason": "The JUCE device selector lists native sample rates; browsers do not expose native audio drivers.",
+    "portableAlternative": "Web Audio plays through the browser's output at its rate (the engine is verified at 44.1 and 48 kHz), with the page's audio enable, input and Web MIDI input controls."
+  },
+  "libs/JUCE/modules/juce_audio_utils/gui/juce_AudioDeviceSelectorComponent.cpp:menu-call:2828e88f46aeeace": {
+    "status": "platform-limitation",
+    "sourceDigest": "589cd08139bbb9e4b925b6aaa13ddcca2249a1c4591a624cf85975d7adb7bbc0",
+    "capability": "native-driver",
+    "reason": "The JUCE device selector lists native buffer sizes; browsers do not expose native audio drivers.",
+    "portableAlternative": "Web Audio plays through the browser's output at its rate (the engine is verified at 44.1 and 48 kHz), with the page's audio enable, input and Web MIDI input controls."
+  },
+  "libs/JUCE/modules/juce_audio_utils/gui/juce_AudioDeviceSelectorComponent.cpp:menu-call:4aee313cd08aa97e": {
+    "status": "platform-limitation",
+    "sourceDigest": "589cd08139bbb9e4b925b6aaa13ddcca2249a1c4591a624cf85975d7adb7bbc0",
+    "capability": "native-driver",
+    "reason": "The JUCE device selector lists native audio driver types; browsers do not expose native audio drivers.",
+    "portableAlternative": "Web Audio plays through the browser's output at its rate (the engine is verified at 44.1 and 48 kHz), with the page's audio enable, input and Web MIDI input controls."
+  },
+  "src/surge-xt/gui/SurgeGUIEditor.h:overlay:MSEG_EDITOR": {
+    "status": "verified",
+    "sourceDigest": "b03e2724516b1a5e8eb4fd17be4ee8e5773de07e2a6754fdc5de6304e6620de7",
+    "browserEquivalent": "MSEG editor overlay opens, takes JUCE keyboard focus, keeps Tab and Shift+Tab inside its focus container, and closes back to the editor; the MSEG canvas consumes Tab for node editing, as on desktop.",
+    "evidence": [
+      "web/tests/overlays.spec.js",
+      "web/tests/mseg-workflows.spec.js"
+    ]
+  },
+  "src/surge-xt/gui/SurgeGUIEditor.h:overlay:SAVE_PATCH": {
+    "status": "verified",
+    "sourceDigest": "b03e2724516b1a5e8eb4fd17be4ee8e5773de07e2a6754fdc5de6304e6620de7",
+    "browserEquivalent": "Modal save dialog opens, takes JUCE keyboard focus, keeps Tab and Shift+Tab inside its focus container, and closes back to the editor.",
+    "evidence": [
+      "web/tests/overlays.spec.js",
+      "web/tests/patch-menu.spec.js",
+      "web/tests/patch-metadata.spec.js"
+    ]
+  },
+  "src/surge-xt/gui/SurgeGUIEditor.h:overlay:PATCH_BROWSER": {
+    "status": "verified",
+    "sourceDigest": "b03e2724516b1a5e8eb4fd17be4ee8e5773de07e2a6754fdc5de6304e6620de7",
+    "browserEquivalent": "Unreachable on desktop as well: only PatchSelector::openPatchBrowser opens it, nothing calls that, and its shortcut and menu item are compiled out (INCLUDE_PATCH_BROWSER is never defined). The spec asserts no route exists.",
+    "evidence": [
+      "web/tests/overlays.spec.js",
+      "web/tests/patch-menu.spec.js",
+      "web/tests/keyboard-shortcuts.spec.js"
+    ]
+  },
+  "src/surge-xt/gui/SurgeGUIEditor.h:overlay:MODULATION_EDITOR": {
+    "status": "verified",
+    "sourceDigest": "b03e2724516b1a5e8eb4fd17be4ee8e5773de07e2a6754fdc5de6304e6620de7",
+    "browserEquivalent": "Modulation list overlay opens, takes JUCE keyboard focus, keeps Tab and Shift+Tab inside its focus container, and closes back to the editor, and tears out into its own window.",
+    "evidence": [
+      "web/tests/overlays.spec.js",
+      "web/tests/modulation-list.spec.js"
+    ]
+  },
+  "src/surge-xt/gui/SurgeGUIEditor.h:overlay:FORMULA_EDITOR": {
+    "status": "verified",
+    "sourceDigest": "b03e2724516b1a5e8eb4fd17be4ee8e5773de07e2a6754fdc5de6304e6620de7",
+    "browserEquivalent": "Formula editor overlay opens and takes keyboard focus into its code editor (which takes Tab as text, as on desktop) and closes back to the editor.",
+    "evidence": [
+      "web/tests/overlays.spec.js",
+      "web/tests/formula-editor.spec.js"
+    ]
+  },
+  "src/surge-xt/gui/SurgeGUIEditor.h:overlay:WTS_EDITOR": {
+    "status": "verified",
+    "sourceDigest": "b03e2724516b1a5e8eb4fd17be4ee8e5773de07e2a6754fdc5de6304e6620de7",
+    "browserEquivalent": "Wavetable script editor overlay opens and takes keyboard focus into its code editor (which takes Tab as text) and closes back to the editor.",
+    "evidence": [
+      "web/tests/overlays.spec.js",
+      "web/tests/wavetable-scripting.spec.js"
+    ]
+  },
+  "src/surge-xt/gui/SurgeGUIEditor.h:overlay:TUNING_EDITOR": {
+    "status": "verified",
+    "sourceDigest": "b03e2724516b1a5e8eb4fd17be4ee8e5773de07e2a6754fdc5de6304e6620de7",
+    "browserEquivalent": "Tuning editor overlay opens, takes JUCE keyboard focus, keeps Tab and Shift+Tab inside its focus container, and closes back to the editor (closed with its toggle shortcut).",
+    "evidence": [
+      "web/tests/overlays.spec.js",
+      "web/tests/tuning-import.spec.js",
+      "web/tests/accessibility-focus.spec.js"
+    ]
+  },
+  "src/surge-xt/gui/SurgeGUIEditor.h:overlay:WAVESHAPER_ANALYZER": {
+    "status": "verified",
+    "sourceDigest": "b03e2724516b1a5e8eb4fd17be4ee8e5773de07e2a6754fdc5de6304e6620de7",
+    "browserEquivalent": "Waveshaper analysis overlay opens, takes JUCE keyboard focus, keeps Tab and Shift+Tab inside its focus container, and closes back to the editor.",
+    "evidence": [
+      "web/tests/overlays.spec.js",
+      "web/tests/skin-connectors.spec.js"
+    ]
+  },
+  "src/surge-xt/gui/SurgeGUIEditor.h:overlay:FILTER_ANALYZER": {
+    "status": "verified",
+    "sourceDigest": "b03e2724516b1a5e8eb4fd17be4ee8e5773de07e2a6754fdc5de6304e6620de7",
+    "browserEquivalent": "Filter analysis overlay opens without taking focus (wantsInitialKeyboardFocus is false, as on desktop) and closes.",
+    "evidence": [
+      "web/tests/overlays.spec.js",
+      "web/tests/skin-connectors.spec.js"
+    ]
+  },
+  "src/surge-xt/gui/SurgeGUIEditor.h:overlay:OSCILLOSCOPE": {
+    "status": "verified",
+    "sourceDigest": "b03e2724516b1a5e8eb4fd17be4ee8e5773de07e2a6754fdc5de6304e6620de7",
+    "browserEquivalent": "Oscilloscope overlay opens without taking focus (wantsInitialKeyboardFocus is false, as on desktop) and closes.",
+    "evidence": [
+      "web/tests/overlays.spec.js",
+      "web/tests/display-menus.spec.js"
+    ]
+  },
+  "src/surge-xt/gui/SurgeGUIEditor.h:overlay:KEYBINDINGS_EDITOR": {
+    "status": "verified",
+    "sourceDigest": "b03e2724516b1a5e8eb4fd17be4ee8e5773de07e2a6754fdc5de6304e6620de7",
+    "browserEquivalent": "Modal keyboard shortcut editor opens, takes JUCE keyboard focus, keeps Tab and Shift+Tab inside its focus container, and closes back to the editor (closed with OK).",
+    "evidence": [
+      "web/tests/overlays.spec.js",
+      "web/tests/keybinding-editor.spec.js",
+      "web/tests/keyboard-shortcuts.spec.js"
+    ]
+  },
+  "src/surge-xt/gui/SurgeGUIEditor.h:overlay:ACTION_HISTORY": {
+    "status": "verified",
+    "sourceDigest": "b03e2724516b1a5e8eb4fd17be4ee8e5773de07e2a6754fdc5de6304e6620de7",
+    "browserEquivalent": "Not implemented on desktop either: createOverlay returns no overlay for ACTION_HISTORY (an upstream TODO), and no route opens it; the spec asserts it is absent.",
+    "evidence": [
+      "web/tests/overlays.spec.js"
+    ]
+  },
+  "src/surge-xt/gui/overlays/AboutScreen.cpp:editor-implementation:AboutScreen": {
+    "status": "verified",
+    "sourceDigest": "1f07c95555517dbcaab23a20bae521ab4c9e704cecd04f24eb927d612c53ded2",
+    "browserEquivalent": "About screen from the main menu and shortcuts, and the developer layout grid; a click closes it.",
+    "evidence": [
+      "web/tests/main-menu.spec.js",
+      "web/tests/keyboard-shortcuts.spec.js"
+    ]
+  },
+  "src/surge-xt/gui/overlays/Alert.cpp:editor-implementation:Alert": {
+    "status": "verified",
+    "sourceDigest": "510888d689050b9e9989b0d144792ea7ec0735eb7f7354b6d6a5709d35fcb47a",
+    "browserEquivalent": "Original OK/Cancel confirmations and message alerts, e.g. patch and FX preset deletion and keyboard guidance.",
+    "evidence": [
+      "web/tests/patch-menu.spec.js",
+      "web/tests/fx-menu.spec.js",
+      "web/tests/mseg-workflows.spec.js"
+    ]
+  },
+  "src/surge-xt/gui/overlays/FilterAnalysis.cpp:editor-implementation:FilterAnalysis": {
+    "status": "verified",
+    "sourceDigest": "325284247d9c612d17d6d82648e4459536e530850a79969259eb6adac77547cd",
+    "browserEquivalent": "Filter analysis overlay placement, focus behaviour and closing.",
+    "evidence": [
+      "web/tests/overlays.spec.js",
+      "web/tests/skin-connectors.spec.js"
+    ]
+  },
+  "src/surge-xt/gui/overlays/KeyBindingsOverlay.cpp:editor-implementation:KeyBindingsOverlay": {
+    "status": "verified",
+    "sourceDigest": "f4f7b6c13c11ad4e2e485371e15ef2972e54319a339e429bf935002d7cf25734",
+    "browserEquivalent": "Keyboard shortcut editor: every bindable action listed, learn, reset and persisted bindings.",
+    "evidence": [
+      "web/tests/keybinding-editor.spec.js",
+      "web/tests/keyboard-shortcuts.spec.js",
+      "web/tests/overlays.spec.js"
+    ]
+  },
+  "src/surge-xt/gui/overlays/LuaEditors.cpp:editor-implementation:LuaEditors": {
+    "status": "verified",
+    "sourceDigest": "cafd7385fd244e7dd7bb1413160df5f77bf8f26bdd4e5787c664379e58db2043",
+    "browserEquivalent": "Formula and wavetable script editors: editing, compilation, errors, prelude, find/replace and shortcuts, live apply.",
+    "evidence": [
+      "web/tests/formula-editor.spec.js",
+      "web/tests/wavetable-scripting.spec.js",
+      "web/tests/lua-editor-shortcuts.spec.js",
+      "web/tests/formula-contexts.spec.js"
+    ]
+  },
+  "src/surge-xt/gui/overlays/MSEGEditorAccessibleKeyboard.cpp:editor-implementation:MSEGEditorAccessibleKeyboard": {
+    "status": "verified",
+    "sourceDigest": "cd31abe4579dc6e4278ac3cbe500e6700abe34b5e734fa6c3eb8866ef5c48bf0",
+    "browserEquivalent": "MSEG keyboard editing: node navigation, value and control-point entry, menus from the keyboard, and mode shortcuts.",
+    "evidence": [
+      "web/tests/mseg-workflows.spec.js"
+    ]
+  },
+  "src/surge-xt/gui/overlays/MiniEdit.cpp:editor-implementation:MiniEdit": {
+    "status": "verified",
+    "sourceDigest": "08e6f75c82929bd7c31020ab781968466be0611ad776e9908f5bc8f85c95251c",
+    "browserEquivalent": "Original single-value prompts (rename, remap A4, zoom default, MIDI mapping name, layout grid, preset names), OK and Cancel.",
+    "evidence": [
+      "web/tests/main-menu.spec.js",
+      "web/tests/parameter-menus.spec.js",
+      "web/tests/wavetable-context.spec.js"
+    ]
+  },
+  "src/surge-xt/gui/overlays/OverlayUtils.cpp:editor-implementation:OverlayUtils": {
+    "status": "verified",
+    "sourceDigest": "c3a572c3fd3b1221308d852fc64219defc207073a16f654a234cd9a98662ce06",
+    "browserEquivalent": "Shared overlay helpers used by every overlay spec (sizing, focus and close paths).",
+    "evidence": [
+      "web/tests/overlays.spec.js",
+      "web/tests/skin-connectors.spec.js"
+    ]
+  },
+  "src/surge-xt/gui/overlays/OverlayWrapper.cpp:editor-implementation:OverlayWrapper": {
+    "status": "verified",
+    "sourceDigest": "7b7111c3538808fcc12962dd25365eee0279ba2f98c55c3aea0011f69b516681",
+    "browserEquivalent": "Overlay title bars with close and tear-out; a torn-out overlay gets its own window and closes from there; placement follows the skin.",
+    "evidence": [
+      "web/tests/overlays.spec.js",
+      "web/tests/skin-connectors.spec.js"
+    ]
+  },
+  "src/surge-xt/gui/overlays/PatchDBViewer.cpp:editor-implementation:PatchDBViewer": {
+    "status": "verified",
+    "sourceDigest": "4251dd0a7d0f666b5e06813f567fc56b56a68ca22aec34f5bd50668d60bcf7f5",
+    "browserEquivalent": "Unreachable on desktop as well: the patch database viewer is only created for PATCH_BROWSER, which nothing opens (see the PATCH_BROWSER overlay review). Patch search and browsing use the patch selector instead.",
+    "evidence": [
+      "web/tests/overlays.spec.js",
+      "web/tests/patch-selection.spec.js"
+    ]
+  },
+  "src/surge-xt/gui/overlays/PatchStoreDialog.cpp:editor-implementation:PatchStoreDialog": {
+    "status": "verified",
+    "sourceDigest": "24d018bcd69431b31c8edefa1325e7f948f3562c928b8bdca8a0f4cfba5cbbeb",
+    "browserEquivalent": "Save and rename dialog: name, category and metadata fields with persisted defaults, original-author attribution, rename mode, cancel, and persisted results.",
+    "evidence": [
+      "web/tests/patch-menu.spec.js",
+      "web/tests/patch-metadata.spec.js",
+      "web/tests/overlays.spec.js"
+    ]
+  },
+  "src/surge-xt/gui/overlays/TuningOverlays.cpp:editor-implementation:TuningOverlays": {
+    "status": "verified",
+    "sourceDigest": "04410c92cfaeec5e9484fe6080ca546642161d7e50678846f309642e92eb75a4",
+    "browserEquivalent": "Tuning editor: scale and mapping text and table, validated imports, and factory library loading with download failure and retry.",
+    "evidence": [
+      "web/tests/tuning-import.spec.js",
+      "web/tests/tuning-library.spec.js",
+      "web/tests/tuning-recall.spec.js",
+      "web/tests/accessibility-focus.spec.js",
+      "web/tests/overlays.spec.js"
+    ]
+  },
+  "src/surge-xt/gui/overlays/TypeinParamEditor.cpp:editor-implementation:TypeinParamEditor": {
+    "status": "verified",
+    "sourceDigest": "25a855eb630ad4b2449570d2ab60adc08551d4ec139b824e612472f561f0f51a",
+    "browserEquivalent": "Type-in editor for parameter values, macro values, modulation depths and MSEG values, including invalid input handling.",
+    "evidence": [
+      "web/tests/parameter-menus.spec.js",
+      "web/tests/modulation-list.spec.js",
+      "web/tests/mseg-workflows.spec.js",
+      "web/tests/wavetable-scripting.spec.js"
+    ]
+  },
+  "src/surge-xt/gui/overlays/WaveShaperAnalysis.cpp:editor-implementation:WaveShaperAnalysis": {
+    "status": "verified",
+    "sourceDigest": "3d635c9f2797744e952ce0e70fd6e22df95b47dba857f476bbe8ff3b70ca6238",
+    "browserEquivalent": "Waveshaper analysis overlay placement, focus containment and closing.",
+    "evidence": [
+      "web/tests/overlays.spec.js",
+      "web/tests/skin-connectors.spec.js"
+    ]
   }
 }
