@@ -31,6 +31,7 @@
 #include "dsp/effects/airwindows/AirWindowsEffect.h"
 bool surge_convolution_is_realtime();
 #endif
+#include "airwindows/AirWinBaseClass.h"
 #include <fmt/core.h>
 #include "DSPUtils.h"
 #include <ctime>
@@ -98,6 +99,8 @@ SurgeSynthesizer::SurgeSynthesizer(PluginLayer *parent, const std::string &suppl
     }
 
     srand((unsigned)time(nullptr));
+    // Airwindows effects draw from portable per-instance generators instead of rand().
+    AirWinBaseClass::seedRandomSource((uint32_t)time(nullptr));
     // TODO: FIX SCENE ASSUMPTION
     memset(storage.getPatch().scenedata[0], 0, sizeof(pdata) * n_scene_params);
     memset(storage.getPatch().scenedata[1], 0, sizeof(pdata) * n_scene_params);

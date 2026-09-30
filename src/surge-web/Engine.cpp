@@ -5,6 +5,7 @@
 #include "dsp/modulators/FormulaModulationHelper.h"
 #include "dsp/effects/ConvolutionEffect.h"
 #include "dsp/effects/airwindows/AirWindowsEffect.h"
+#include "airwindows/AirWinBaseClass.h"
 #include "dsp/ControlSnapshot.h"
 #include "MidiQueue.h"
 #include <atomic>
@@ -165,6 +166,9 @@ extern "C"
             if (!std::isfinite(sr) || sr < 12000 || sr > 384000 || !path)
                 throw std::runtime_error("Invalid sample rate or data path");
             result = new SurgeWebEngine(sr, path);
+            // Comparison renders must not depend on the clock: effects created
+            // from here on draw identical random streams on every platform.
+            AirWinBaseClass::seedRandomSource(0x5eed5eedu);
         });
         return result;
     }
@@ -308,6 +312,7 @@ extern "C"
             if (e) e->requireOwnership();
             if (!e) throw std::runtime_error("Missing engine for RNG seed");
             e->synth->storage.rngGen.g.seed(seed);
+            AirWinBaseClass::seedRandomSource(seed);
         });
     }
     EXPORT int surge_set_oscillator_type(SurgeWebEngine *e, int scene, int oscillator, int type)

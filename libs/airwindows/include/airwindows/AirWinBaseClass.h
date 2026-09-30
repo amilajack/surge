@@ -5,7 +5,9 @@
 ** param methods. So this is a minimal header that lets us compile
 */
 
+#include <atomic>
 #include <cstdio>
+#include <cstdlib>
 #include <cmath>
 #include <cstdint>
 #include <cstring>
@@ -22,7 +24,23 @@ class SurgeStorage;
 
 struct AirWinBaseClass {
 
-   AirWinBaseClass( audioMasterCallback amc, int knpr, int knpa ) : paramCount( knpa ) { }
+   AirWinBaseClass( audioMasterCallback amc, int knpr, int knpa ) : paramCount( knpa ), randomState( nextInstanceSeed() ) { }
+
+   /*
+    * Portable replacement for libc rand() in the effects (see the end of this
+    * file). Each instance owns an xorshift32 stream, so results do not depend
+    * on the platform's libc or on other threads. Instance seeds come from one
+    * process-wide source: products seed it from the clock, as srand(time) did,
+    * and comparison harnesses seed it with a constant.
+    */
+   static void seedRandomSource( uint32_t seed ) { randomSource().store( seed, std::memory_order_relaxed ); }
+   int portableRand()
+   {
+      randomState ^= randomState << 13;
+      randomState ^= randomState >> 17;
+      randomState ^= randomState << 5;
+      return (int)( randomState % ( (uint32_t)RAND_MAX + 1u ) );
+   }
    virtual ~AirWinBaseClass() = default;
 
    virtual void setNumInputs( int i ) { }
@@ -60,6 +78,22 @@ struct AirWinBaseClass {
    double getSampleRate() { return sr; }
 
    int paramCount = 0;
+   uint32_t randomState;
+
+   static std::atomic<uint32_t> &randomSource()
+   {
+      static std::atomic<uint32_t> source{ 0x2545f491u };
+      return source;
+   }
+   static uint32_t nextInstanceSeed()
+   {
+      // splitmix32 over a Weyl sequence; never zero, which would stall xorshift.
+      uint32_t z = randomSource().fetch_add( 0x9e3779b9u, std::memory_order_relaxed ) + 0x9e3779b9u;
+      z = ( z ^ ( z >> 16 ) ) * 0x85ebca6bu;
+      z = ( z ^ ( z >> 13 ) ) * 0xc2b2ae35u;
+      z ^= z >> 16;
+      return z ? z : 1u;
+   }
 
    static constexpr int kVstMaxProgNameLen = 64;
    static constexpr int kVstMaxParamStrLen = 64;
@@ -140,3 +174,8 @@ struct AirWindowsNoOp : AirWinBaseClass {
    virtual void getParameterLabel(VstInt32 index, char *txt) {};
    virtual void getParameterDisplay(VstInt32 index, char *txt, float extVal = 0, bool isExternal = false) {};
 };
+
+// Effect sources (and only they) are compiled with this definition; see CMakeLists.txt.
+#ifdef AIRWINDOWS_PORTABLE_RANDOM
+#define rand() portableRand()
+#endif

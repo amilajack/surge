@@ -25,8 +25,10 @@ extern "C"
     // Offline oscillator selection uses the original control/default path.
     // May construct an oscillator or load a table; exclusive ownership required.
     int surge_set_oscillator_type(SurgeWebEngine *engine, int scene, int oscillator, int type);
-    // Development-only reproducibility control for storage.rngGen, not every
-    // independent DSP RNG. Call before notes with exclusive engine ownership.
+    // Development-only reproducibility control for storage.rngGen and for the
+    // Airwindows random streams of effects created afterwards (surge_create
+    // already seeds those with a constant). Not every independent DSP RNG.
+    // Call before notes with exclusive engine ownership.
     int surge_seed_storage_rng(SurgeWebEngine *engine, uint32_t seed);
     // Development-only: seed an existing voice MSEG after note-on and before
     // rendering. Requires exclusive ownership; rejects absent/non-MSEG voices.
