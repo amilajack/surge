@@ -1381,5 +1381,255 @@
       "web/tests/wavetable-scripting.spec.js",
       "web/tests/storage.spec.js"
     ]
+  },
+  "src/surge-xt/gui/SurgeGUIEditorKeyboardActions.h:shortcut:UNDO": {
+    "status": "verified",
+    "sourceDigest": "adf626136f917f8eaf48ac489a2f4e9191a9e6e93d931fcff5e467ece4903262",
+    "browserEquivalent": "Original JUCE Undo action on its default Control+Z binding (Command maps to Control in the browser) reverts a Global Volume edit made through the original slider.",
+    "evidence": [
+      "web/tests/keyboard-shortcuts.spec.js"
+    ]
+  },
+  "src/surge-xt/gui/SurgeGUIEditorKeyboardActions.h:shortcut:REDO": {
+    "status": "verified",
+    "sourceDigest": "adf626136f917f8eaf48ac489a2f4e9191a9e6e93d931fcff5e467ece4903262",
+    "browserEquivalent": "Original JUCE Redo action on its default Control+Y binding reapplies the undone Global Volume edit.",
+    "evidence": [
+      "web/tests/keyboard-shortcuts.spec.js"
+    ]
+  },
+  "src/surge-xt/gui/SurgeGUIEditorKeyboardActions.h:shortcut:SAVE_PATCH": {
+    "status": "verified",
+    "sourceDigest": "adf626136f917f8eaf48ac489a2f4e9191a9e6e93d931fcff5e467ece4903262",
+    "browserEquivalent": "Original Save Patch action on Control+S opens the original save dialog; the browser keydown is prevented, so Chrome does not save the page.",
+    "evidence": [
+      "web/tests/keyboard-shortcuts.spec.js"
+    ]
+  },
+  "src/surge-xt/gui/SurgeGUIEditorKeyboardActions.h:shortcut:PREV_PATCH": {
+    "status": "verified",
+    "sourceDigest": "adf626136f917f8eaf48ac489a2f4e9191a9e6e93d931fcff5e467ece4903262",
+    "browserEquivalent": "Original Previous Patch action on Control+Left returns from the next factory patch to Init Saw through the original jog logic.",
+    "evidence": [
+      "web/tests/keyboard-shortcuts.spec.js"
+    ]
+  },
+  "src/surge-xt/gui/SurgeGUIEditorKeyboardActions.h:shortcut:NEXT_PATCH": {
+    "status": "verified",
+    "sourceDigest": "adf626136f917f8eaf48ac489a2f4e9191a9e6e93d931fcff5e467ece4903262",
+    "browserEquivalent": "Original Next Patch action on Control+Right loads the next factory patch after Init Saw.",
+    "evidence": [
+      "web/tests/keyboard-shortcuts.spec.js"
+    ]
+  },
+  "src/surge-xt/gui/SurgeGUIEditorKeyboardActions.h:shortcut:PREV_CATEGORY": {
+    "status": "verified",
+    "sourceDigest": "adf626136f917f8eaf48ac489a2f4e9191a9e6e93d931fcff5e467ece4903262",
+    "browserEquivalent": "Original Previous Category action on Shift+Left returns to the first patch of the previous category after two category jogs.",
+    "evidence": [
+      "web/tests/keyboard-shortcuts.spec.js"
+    ]
+  },
+  "src/surge-xt/gui/SurgeGUIEditorKeyboardActions.h:shortcut:NEXT_CATEGORY": {
+    "status": "verified",
+    "sourceDigest": "adf626136f917f8eaf48ac489a2f4e9191a9e6e93d931fcff5e467ece4903262",
+    "browserEquivalent": "Original Next Category action on Shift+Right loads the first patch of the next category, twice in succession.",
+    "evidence": [
+      "web/tests/keyboard-shortcuts.spec.js"
+    ]
+  },
+  "src/surge-xt/gui/SurgeGUIEditorKeyboardActions.h:shortcut:INITIALIZE_PATCH": {
+    "status": "verified",
+    "sourceDigest": "adf626136f917f8eaf48ac489a2f4e9191a9e6e93d931fcff5e467ece4903262",
+    "browserEquivalent": "Original Initialize Patch action has no default binding, as on desktop. Bound to Alt+Shift+I in the original shortcut editor, it loads Init Saw from Init FM2.",
+    "evidence": [
+      "web/tests/keyboard-shortcuts.spec.js"
+    ]
+  },
+  "src/surge-xt/gui/SurgeGUIEditorKeyboardActions.h:shortcut:RANDOM_PATCH": {
+    "status": "verified",
+    "sourceDigest": "adf626136f917f8eaf48ac489a2f4e9191a9e6e93d931fcff5e467ece4903262",
+    "browserEquivalent": "Original Random Patch action has no default binding. Bound in the shortcut editor, it loads a different factory patch and Control+Z restores the previous one (it pushes an undo step).",
+    "evidence": [
+      "web/tests/keyboard-shortcuts.spec.js"
+    ]
+  },
+  "src/surge-xt/gui/SurgeGUIEditorKeyboardActions.h:shortcut:ZOOM_FULLSCREEN": {
+    "status": "verified",
+    "sourceDigest": "adf626136f917f8eaf48ac489a2f4e9191a9e6e93d931fcff5e467ece4903262",
+    "browserEquivalent": "Original Zoom: Toggle Fullscreen action is disabled in the original handler (#if 0) and has no default binding. Bound in the shortcut editor it is consumed without resizing or entering fullscreen, exactly as the original.",
+    "evidence": [
+      "web/tests/keyboard-shortcuts.spec.js"
+    ]
+  },
+  "src/surge-xt/gui/SurgeGUIEditorKeyboardActions.h:shortcut:TOGGLE_PATCH_BRWOSER": {
+    "status": "verified",
+    "sourceDigest": "adf626136f917f8eaf48ac489a2f4e9191a9e6e93d931fcff5e467ece4903262",
+    "browserEquivalent": "Original enum member has no name, default binding or handler (the patch database overlay is compiled out by INCLUDE_PATCH_BROWSER); the shortcut editor lists all 40 bindable actions and no patch browser action, as on desktop.",
+    "evidence": [
+      "web/tests/keyboard-shortcuts.spec.js"
+    ]
+  },
+  "src/surge-xt/gui/SurgeGUIEditorKeyboardActions.h:shortcut:TOGGLE_MODULATOR_ARM": {
+    "status": "verified",
+    "sourceDigest": "adf626136f917f8eaf48ac489a2f4e9191a9e6e93d931fcff5e467ece4903262",
+    "browserEquivalent": "Original Alt+A toggles the modulator armed state: every modulatable slider value adds its modulation depth (\" mod \") and a second press removes it.",
+    "evidence": [
+      "web/tests/keyboard-shortcuts.spec.js"
+    ]
+  },
+  "src/surge-xt/gui/SurgeGUIEditorKeyboardActions.h:shortcut:TOGGLE_LFO_EDITOR": {
+    "status": "verified",
+    "sourceDigest": "adf626136f917f8eaf48ac489a2f4e9191a9e6e93d931fcff5e467ece4903262",
+    "browserEquivalent": "Original Alt+E opens the MSEG editor for an MSEG LFO and the formula editor for a formula LFO, and closes the MSEG editor again. With the formula editor focused, Option keys go to its code editor (Option+E is a dead key), as on macOS desktop.",
+    "evidence": [
+      "web/tests/keyboard-shortcuts.spec.js"
+    ]
+  },
+  "src/surge-xt/gui/SurgeGUIEditorKeyboardActions.h:shortcut:TOGGLE_WTS_EDITOR": {
+    "status": "verified",
+    "sourceDigest": "adf626136f917f8eaf48ac489a2f4e9191a9e6e93d931fcff5e467ece4903262",
+    "browserEquivalent": "Original Alt+W opens the wavetable script editor for a wavetable oscillator. With its code editor focused, Option characters type into the script (Option+W types ∑), as in the desktop app on macOS.",
+    "evidence": [
+      "web/tests/keyboard-shortcuts.spec.js"
+    ]
+  },
+  "src/surge-xt/gui/SurgeGUIEditorKeyboardActions.h:shortcut:TOGGLE_MODLIST": {
+    "status": "verified",
+    "sourceDigest": "adf626136f917f8eaf48ac489a2f4e9191a9e6e93d931fcff5e467ece4903262",
+    "browserEquivalent": "Original Alt+M opens and closes the Modulation List overlay.",
+    "evidence": [
+      "web/tests/keyboard-shortcuts.spec.js"
+    ]
+  },
+  "src/surge-xt/gui/SurgeGUIEditorKeyboardActions.h:shortcut:TOGGLE_TUNING_EDITOR": {
+    "status": "verified",
+    "sourceDigest": "adf626136f917f8eaf48ac489a2f4e9191a9e6e93d931fcff5e467ece4903262",
+    "browserEquivalent": "Original Alt+T opens and closes the tuning editor, including its 128-row tuning table.",
+    "evidence": [
+      "web/tests/keyboard-shortcuts.spec.js"
+    ]
+  },
+  "src/surge-xt/gui/SurgeGUIEditorKeyboardActions.h:shortcut:TOGGLE_OSCILLOSCOPE": {
+    "status": "verified",
+    "sourceDigest": "adf626136f917f8eaf48ac489a2f4e9191a9e6e93d931fcff5e467ece4903262",
+    "browserEquivalent": "Original Alt+O opens and closes the Oscilloscope overlay.",
+    "evidence": [
+      "web/tests/keyboard-shortcuts.spec.js"
+    ]
+  },
+  "src/surge-xt/gui/SurgeGUIEditorKeyboardActions.h:shortcut:TOGGLE_ABOUT": {
+    "status": "verified",
+    "sourceDigest": "adf626136f917f8eaf48ac489a2f4e9191a9e6e93d931fcff5e467ece4903262",
+    "browserEquivalent": "Original F12 opens and closes the About screen (headless Chrome does not reserve F12 for developer tools; a browser with open developer tools may intercept it).",
+    "evidence": [
+      "web/tests/keyboard-shortcuts.spec.js"
+    ]
+  },
+  "src/surge-xt/gui/SurgeGUIEditorKeyboardActions.h:shortcut:SKIN_LAYOUT_GRID": {
+    "status": "verified",
+    "sourceDigest": "adf626136f917f8eaf48ac489a2f4e9191a9e6e93d931fcff5e467ece4903262",
+    "browserEquivalent": "Original Alt+L opens the About screen in layout-grid mode and a second press closes it.",
+    "evidence": [
+      "web/tests/keyboard-shortcuts.spec.js"
+    ]
+  },
+  "src/surge-xt/gui/SurgeGUIEditorKeyboardActions.h:shortcut:VKB_OCTAVE_UP": {
+    "status": "verified",
+    "sourceDigest": "adf626136f917f8eaf48ac489a2f4e9191a9e6e93d931fcff5e467ece4903262",
+    "browserEquivalent": "Original C key raises the virtual keyboard octave: the A key then plays MIDI 72 at the measured pitch through the real AudioWorklet.",
+    "evidence": [
+      "web/tests/keyboard-shortcuts.spec.js"
+    ]
+  },
+  "src/surge-xt/gui/SurgeGUIEditorKeyboardActions.h:shortcut:VKB_OCTAVE_DOWN": {
+    "status": "verified",
+    "sourceDigest": "adf626136f917f8eaf48ac489a2f4e9191a9e6e93d931fcff5e467ece4903262",
+    "browserEquivalent": "Original X key lowers the virtual keyboard octave: after two presses from MIDI 72 the A key plays MIDI 48 at the measured pitch.",
+    "evidence": [
+      "web/tests/keyboard-shortcuts.spec.js"
+    ]
+  },
+  "src/surge-xt/gui/SurgeGUIEditorKeyboardActions.h:shortcut:ZOOM_PLUS_10": {
+    "status": "verified",
+    "sourceDigest": "adf626136f917f8eaf48ac489a2f4e9191a9e6e93d931fcff5e467ece4903262",
+    "browserEquivalent": "Original Zoom: +10% text binding (\"+\", no modifier) resizes the editor canvas to 110%. On US layouts \"+\" without Shift comes from the numeric keypad, as on desktop.",
+    "evidence": [
+      "web/tests/keyboard-shortcuts.spec.js"
+    ]
+  },
+  "src/surge-xt/gui/SurgeGUIEditorKeyboardActions.h:shortcut:ZOOM_MINUS_10": {
+    "status": "verified",
+    "sourceDigest": "adf626136f917f8eaf48ac489a2f4e9191a9e6e93d931fcff5e467ece4903262",
+    "browserEquivalent": "Original Zoom: -10% (\"-\") returns the editor canvas from 110% to 100%.",
+    "evidence": [
+      "web/tests/keyboard-shortcuts.spec.js"
+    ]
+  },
+  "src/surge-xt/gui/SurgeGUIEditorKeyboardActions.h:shortcut:ZOOM_PLUS_25": {
+    "status": "verified",
+    "sourceDigest": "adf626136f917f8eaf48ac489a2f4e9191a9e6e93d931fcff5e467ece4903262",
+    "browserEquivalent": "Original Zoom: +25% (Shift with \"+\") resizes the canvas from 100% to 125%.",
+    "evidence": [
+      "web/tests/keyboard-shortcuts.spec.js"
+    ]
+  },
+  "src/surge-xt/gui/SurgeGUIEditorKeyboardActions.h:shortcut:ZOOM_MINUS_25": {
+    "status": "verified",
+    "sourceDigest": "adf626136f917f8eaf48ac489a2f4e9191a9e6e93d931fcff5e467ece4903262",
+    "browserEquivalent": "Original Zoom: -25% (Shift with \"-\") returns the canvas from 125% to 100%; on US layouts Shift+\"-\" types \"_\", so the keypad minus supplies it, as on desktop.",
+    "evidence": [
+      "web/tests/keyboard-shortcuts.spec.js"
+    ]
+  },
+  "src/surge-xt/gui/SurgeGUIEditorKeyboardActions.h:shortcut:ZOOM_TO_DEFAULT": {
+    "status": "verified",
+    "sourceDigest": "adf626136f917f8eaf48ac489a2f4e9191a9e6e93d931fcff5e467ece4903262",
+    "browserEquivalent": "Original Zoom: Default binding is Shift with \"/\", which types \"?\" on US layouts and so does not fire there, as on desktop. Bound in the shortcut editor it returns the canvas from 110% to the default 100%.",
+    "evidence": [
+      "web/tests/keyboard-shortcuts.spec.js"
+    ]
+  },
+  "src/surge-xt/gui/SurgeGUIEditorKeyboardActions.h:shortcut:FOCUS_NEXT_CONTROL_GROUP": {
+    "status": "verified",
+    "sourceDigest": "adf626136f917f8eaf48ac489a2f4e9191a9e6e93d931fcff5e467ece4903262",
+    "browserEquivalent": "Original Alt+. moves JUCE focus through four successive control groups; the canvas exposes each focused control through aria-activedescendant.",
+    "evidence": [
+      "web/tests/keyboard-shortcuts.spec.js",
+      "web/tests/accessibility-focus.spec.js"
+    ]
+  },
+  "src/surge-xt/gui/SurgeGUIEditorKeyboardActions.h:shortcut:FOCUS_PRIOR_CONTROL_GROUP": {
+    "status": "verified",
+    "sourceDigest": "adf626136f917f8eaf48ac489a2f4e9191a9e6e93d931fcff5e467ece4903262",
+    "browserEquivalent": "Original Alt+, moves JUCE focus back to the previous control group.",
+    "evidence": [
+      "web/tests/keyboard-shortcuts.spec.js",
+      "web/tests/accessibility-focus.spec.js"
+    ]
+  },
+  "src/surge-xt/gui/SurgeGUIEditorKeyboardActions.h:shortcut:REFRESH_SKIN": {
+    "status": "verified",
+    "sourceDigest": "adf626136f917f8eaf48ac489a2f4e9191a9e6e93d931fcff5e467ece4903262",
+    "browserEquivalent": "Original F5 refreshes the skin through the original handler; the keydown is prevented, so Chrome does not reload the page, and the editor remains.",
+    "evidence": [
+      "web/tests/keyboard-shortcuts.spec.js"
+    ]
+  },
+  "src/surge-xt/gui/SurgeGUIEditorKeyboardActions.h:shortcut:OPEN_MANUAL": {
+    "status": "verified",
+    "sourceDigest": "adf626136f917f8eaf48ac489a2f4e9191a9e6e93d931fcff5e467ece4903262",
+    "browserEquivalent": "Original F1 opens the Surge XT manual (https://surge-synthesizer.github.io/manual-xt/) through the browser; the launch goes through window.open.",
+    "evidence": [
+      "web/tests/keyboard-shortcuts.spec.js"
+    ]
+  },
+  "src/surge-xt/gui/SurgeGUIEditorKeyboardActions.h:shortcut:ANNOUNCE_STATE": {
+    "status": "verified",
+    "sourceDigest": "adf626136f917f8eaf48ac489a2f4e9191a9e6e93d931fcff5e467ece4903262",
+    "browserEquivalent": "Original Alt+0 announces the editor state through the accessibility live region once \"Send Additional Accessibility Announcements\" is enabled in the original Accessibility menu, as on desktop.",
+    "evidence": [
+      "web/tests/keyboard-shortcuts.spec.js"
+    ]
   }
 }
