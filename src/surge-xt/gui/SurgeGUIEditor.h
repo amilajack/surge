@@ -421,6 +421,9 @@ class SurgeGUIEditor : public Surge::GUI::IComponentTagValue::Listener,
 
     std::string tuningToHtml();
     void tuningChanged();
+    // Load a scale or keyboard mapping as the Tuning menu does, reporting errors.
+    void loadSCLFile(const fs::path &file);
+    void loadKBMFile(const fs::path &file);
 
     // Surge's own tuning, or the one MTS-ESP is sending when this instance is a client
     bool isMTSESPClient() const;
@@ -566,6 +569,25 @@ class SurgeGUIEditor : public Surge::GUI::IComponentTagValue::Listener,
         {
             std::lock_guard<std::mutex> mg(synth->patchLoadSpawnMutex);
             undoManager()->pushPatch();
+#if SURGE_WEB
+            // Search/history/browser results use paths, while factory catalog
+            // files may still be placeholders. Let the browser prepare catalog
+            // selections before the engine consumes them, as for category menus.
+            if (synth->browserNeedsFactoryPreparation)
+            {
+                for (size_t i = 0; i < synth->storage.patch_list.size(); ++i)
+                {
+                    if (synth->storage.patch_list[i].path.u8string() == file)
+                    {
+                        synth->has_patchid_file = false;
+                        synth->patchid_queue = static_cast<int>(i);
+                        return;
+                    }
+                }
+                // A newly imported file supersedes a pending catalog selection.
+                synth->patchid_queue = -1;
+            }
+#endif
             strncpy(synth->patchid_file, file.c_str(), FILENAME_MAX);
             synth->patchid_file_isPreset = isPreset;
             synth->has_patchid_file = true;
@@ -573,6 +595,10 @@ class SurgeGUIEditor : public Surge::GUI::IComponentTagValue::Listener,
         synth->processAudioThreadOpsWhenAudioEngineUnavailable();
     }
 
+#if SURGE_WEB
+    // Development diagnostic: every skin control, its component and parameter, as JSON.
+    std::string browserSkinControls();
+#endif
     void loadPatchWithDirtyCheck(std::function<void()> loadAction);
     void loadPatchWithDirtyCheck(bool increment, bool isCategory, bool insideCategory = false);
 
@@ -1070,6 +1096,11 @@ class SurgeGUIEditor : public Surge::GUI::IComponentTagValue::Listener,
 
   private:
     void setupSkinFromEntry(const Surge::GUI::SkinDB::Entry &entry);
+    void selectSkinFromEntry(const Surge::GUI::SkinDB::Entry &entry);
+#if SURGE_WEB
+    int browserSkinRequest{0};
+    std::optional<Surge::GUI::SkinDB::Entry> browserPendingSkin;
+#endif
     void reloadFromSkin();
 
   public:

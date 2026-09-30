@@ -247,6 +247,7 @@ else()
 endif()
 
 target_compile_definitions(${PROJECT_NAME} PRIVATE
+    AIRWINDOWS_PORTABLE_RANDOM=1
     AudioEffectX=AirWinBaseClass
     VstPlugCategory=long
     $<$<BOOL:${WIN32}>:_USE_MATH_DEFINES>

@@ -1,0 +1,107 @@
+{
+  "schemaVersion": 2,
+  "status": "closed-real-time-gate",
+  "capturedAt": "2026-09-30T05:40:17.067Z",
+  "command": "SURGE_TEST_SILENT_OUTPUT=1 ./node_modules/.bin/playwright test tests/formula-editor.spec.js --grep \"preserve held voices\"",
+  "contract": "Each live edit is compiled once on the control thread (live) and adopted once as bytecode (adopted); callback compilations (audio) and callback system-heap calls (heap) stay unchanged.",
+  "measurements": [
+    {
+      "test": "formula edits preserve held voices and reach new notes at 44100 Hz",
+      "status": "passed",
+      "rate": 44100,
+      "edits": [
+        {
+          "value": 0.5,
+          "beforeApply": {
+            "audio": 24,
+            "live": 1,
+            "adopted": 1,
+            "heap": 0
+          },
+          "beforeAttack": {
+            "audio": 24,
+            "live": 2,
+            "adopted": 2,
+            "heap": 0
+          },
+          "afterAttack": {
+            "audio": 24,
+            "live": 2,
+            "adopted": 2,
+            "heap": 0
+          }
+        },
+        {
+          "value": -0.25,
+          "beforeApply": {
+            "audio": 24,
+            "live": 2,
+            "adopted": 2,
+            "heap": 0
+          },
+          "beforeAttack": {
+            "audio": 24,
+            "live": 3,
+            "adopted": 3,
+            "heap": 0
+          },
+          "afterAttack": {
+            "audio": 24,
+            "live": 3,
+            "adopted": 3,
+            "heap": 0
+          }
+        }
+      ]
+    },
+    {
+      "test": "formula edits preserve held voices and reach new notes at 48000 Hz",
+      "status": "passed",
+      "rate": 48000,
+      "edits": [
+        {
+          "value": 0.5,
+          "beforeApply": {
+            "audio": 24,
+            "live": 1,
+            "adopted": 1,
+            "heap": 0
+          },
+          "beforeAttack": {
+            "audio": 24,
+            "live": 2,
+            "adopted": 2,
+            "heap": 0
+          },
+          "afterAttack": {
+            "audio": 24,
+            "live": 2,
+            "adopted": 2,
+            "heap": 0
+          }
+        },
+        {
+          "value": -0.25,
+          "beforeApply": {
+            "audio": 24,
+            "live": 2,
+            "adopted": 2,
+            "heap": 0
+          },
+          "beforeAttack": {
+            "audio": 24,
+            "live": 3,
+            "adopted": 3,
+            "heap": 0
+          },
+          "afterAttack": {
+            "audio": 24,
+            "live": 3,
+            "adopted": 3,
+            "heap": 0
+          }
+        }
+      ]
+    }
+  ]
+}

@@ -79,7 +79,13 @@ class SurgeSynthEditor : public juce::AudioProcessorEditor,
     bool keyPressed(const juce::KeyPress &key, juce::Component *originatingComponent) override;
     bool keyStateChanged(bool isKeyDown, juce::Component *originatingComponent) override;
 
+#if SURGE_WEB
+    // Browser glue (factory tuning library) reaches the original editor's actions.
+    SurgeGUIEditor *browserGUIEditor() { return sge.get(); }
+#endif
     void setVKBLayout(const std::string layout);
+    // Browser key codes match desktop JUCE (see browserKeyCode), so layouts need no mapping.
+    static int virtualKeyboardKeyCode(int key) { return key; }
 
     void reapplySurgeComponentColours();
 

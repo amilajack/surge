@@ -286,6 +286,7 @@ class Skin
     void resolveBaseParentOffsets(Skin::Control::ptr_t);
 
     void addControl(Skin::Control::ptr_t c) { controls.push_back(c); }
+    const std::vector<Control::ptr_t> &allControls() const { return controls; }
 
     std::optional<std::string> propertyValue(Skin::Control::ptr_t c,
                                              Surge::Skin::Component::Properties pkey)
@@ -480,6 +481,9 @@ class SkinDB : public juce::DeletedAtShutdown
     }
 
     std::optional<Entry> installSkinFromPathToUserDirectory(SurgeStorage *, const fs::path &from);
+#if SURGE_WEB
+    void validateSkinForImport(const fs::path &from);
+#endif
 
   private:
     SkinDB();

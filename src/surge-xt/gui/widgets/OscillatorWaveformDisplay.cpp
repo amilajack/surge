@@ -32,6 +32,9 @@
 #include "RuntimeFont.h"
 #include "SurgeGUIUtils.h"
 #include "SurgeGUIEditor.h"
+#if SURGE_WEB
+#include "overlays/LuaEditors.h"
+#endif
 #include "SurgeJUCEHelpers.h"
 #include "SurgeXTBinary.h"
 #include "StringOscillator.h"
@@ -76,34 +79,10 @@ OscillatorWaveformDisplay::OscillatorWaveformDisplay()
     ol->setWantsKeyboardFocus(true);
     addChildComponent(*ol);
 
-    ol->onPress = [this](OscillatorWaveformDisplay *d) {
-        if (customEditor)
-        {
-            hideCustomEditor();
-            d->customEditorAccOverlay->setDescription("Close Custom Editor");
-            d->customEditorAccOverlay->setTitle("Close Custom Editor");
-        }
-        else
-        {
-            showCustomEditor();
-            d->customEditorAccOverlay->setDescription("Open Custom Editor");
-            d->customEditorAccOverlay->setTitle("Open Custom Editor");
-        }
-    };
+    ol->onPress = [](OscillatorWaveformDisplay *d) { d->toggleCustomEditor(); };
 
-    ol->onReturnKey = [this](OscillatorWaveformDisplay *d) {
-        if (customEditor)
-        {
-            hideCustomEditor();
-            d->customEditorAccOverlay->setDescription("Close Custom Editor");
-            d->customEditorAccOverlay->setTitle("Close Custom Editor");
-        }
-        else
-        {
-            showCustomEditor();
-            d->customEditorAccOverlay->setDescription("Open Custom Editor");
-            d->customEditorAccOverlay->setTitle("Open Custom Editor");
-        }
+    ol->onReturnKey = [](OscillatorWaveformDisplay *d) {
+        d->toggleCustomEditor();
         return true;
     };
 
@@ -913,11 +892,12 @@ void OscillatorWaveformDisplay::createAliasOptionsMenu(const bool useComponentBo
         constexpr int num_partials = AliasOscillator::n_additive_partials;
 
         contextMenu.addItem("Sine", [this]() {
+            auto extra = oscdata->extraConfig.edit();
             sge->undoManager()->pushOscillatorExtraConfig(scene, oscInScene);
 
             for (int qq = 0; qq < num_partials; ++qq)
             {
-                oscdata->extraConfig.data[qq] = (qq == 0) ? 1 : 0;
+                extra->data[qq] = (qq == 0) ? 1 : 0;
             }
 
             storage->getPatch().isDirty = true;
@@ -926,15 +906,16 @@ void OscillatorWaveformDisplay::createAliasOptionsMenu(const bool useComponentBo
         });
 
         contextMenu.addItem("Triangle", [this]() {
+            auto extra = oscdata->extraConfig.edit();
             sge->undoManager()->pushOscillatorExtraConfig(scene, oscInScene);
 
             for (int qq = 0; qq < num_partials; ++qq)
             {
-                oscdata->extraConfig.data[qq] = (qq % 2 == 0) * 1.f / ((qq + 1) * (qq + 1));
+                extra->data[qq] = (qq % 2 == 0) * 1.f / ((qq + 1) * (qq + 1));
 
                 if (qq % 4 == 2)
                 {
-                    oscdata->extraConfig.data[qq] *= -1.f;
+                    extra->data[qq] *= -1.f;
                 }
             }
 
@@ -944,11 +925,12 @@ void OscillatorWaveformDisplay::createAliasOptionsMenu(const bool useComponentBo
         });
 
         contextMenu.addItem("Sawtooth", [this]() {
+            auto extra = oscdata->extraConfig.edit();
             sge->undoManager()->pushOscillatorExtraConfig(scene, oscInScene);
 
             for (int qq = 0; qq < num_partials; ++qq)
             {
-                oscdata->extraConfig.data[qq] = 1.f / (qq + 1);
+                extra->data[qq] = 1.f / (qq + 1);
             }
 
             storage->getPatch().isDirty = true;
@@ -957,11 +939,12 @@ void OscillatorWaveformDisplay::createAliasOptionsMenu(const bool useComponentBo
         });
 
         contextMenu.addItem("Square", [this]() {
+            auto extra = oscdata->extraConfig.edit();
             sge->undoManager()->pushOscillatorExtraConfig(scene, oscInScene);
 
             for (int qq = 0; qq < num_partials; ++qq)
             {
-                oscdata->extraConfig.data[qq] = (qq % 2 == 0) * 1.f / (qq + 1);
+                extra->data[qq] = (qq % 2 == 0) * 1.f / (qq + 1);
             }
 
             storage->getPatch().isDirty = true;
@@ -970,11 +953,12 @@ void OscillatorWaveformDisplay::createAliasOptionsMenu(const bool useComponentBo
         });
 
         contextMenu.addItem("Random", [this]() {
+            auto extra = oscdata->extraConfig.edit();
             sge->undoManager()->pushOscillatorExtraConfig(scene, oscInScene);
 
             for (int qq = 0; qq < num_partials; ++qq)
             {
-                oscdata->extraConfig.data[qq] = storage->rand_pm1();
+                extra->data[qq] = storage->rand_pm1();
             }
 
             storage->getPatch().isDirty = true;
@@ -985,11 +969,12 @@ void OscillatorWaveformDisplay::createAliasOptionsMenu(const bool useComponentBo
         contextMenu.addSeparator();
 
         contextMenu.addItem("Shift Left", [this]() {
+            auto extra = oscdata->extraConfig.edit();
             sge->undoManager()->pushOscillatorExtraConfig(scene, oscInScene);
 
             for (int qq = 0; qq < num_partials - 1; ++qq)
             {
-                std::swap(oscdata->extraConfig.data[qq + 1], oscdata->extraConfig.data[qq]);
+                std::swap(extra->data[qq + 1], extra->data[qq]);
             }
 
             storage->getPatch().isDirty = true;
@@ -998,12 +983,13 @@ void OscillatorWaveformDisplay::createAliasOptionsMenu(const bool useComponentBo
         });
 
         contextMenu.addItem("Shift Right", [this]() {
+            auto extra = oscdata->extraConfig.edit();
             sge->undoManager()->pushOscillatorExtraConfig(scene, oscInScene);
 
             for (int qq = 0; qq < num_partials - 1; ++qq)
             {
-                std::swap(oscdata->extraConfig.data[num_partials - 2 - qq],
-                          oscdata->extraConfig.data[num_partials - 1 - qq]);
+                std::swap(extra->data[num_partials - 2 - qq],
+                          extra->data[num_partials - 1 - qq]);
             }
 
             storage->getPatch().isDirty = true;
@@ -1014,13 +1000,14 @@ void OscillatorWaveformDisplay::createAliasOptionsMenu(const bool useComponentBo
         contextMenu.addSeparator();
 
         contextMenu.addItem("Keep Positive", [this]() {
+            auto extra = oscdata->extraConfig.edit();
             sge->undoManager()->pushOscillatorExtraConfig(scene, oscInScene);
 
             for (int qq = 0; qq < num_partials; ++qq)
             {
-                if (oscdata->extraConfig.data[qq] < 0)
+                if (extra->data[qq] < 0)
                 {
-                    oscdata->extraConfig.data[qq] = 0;
+                    extra->data[qq] = 0;
                 }
             }
 
@@ -1030,13 +1017,14 @@ void OscillatorWaveformDisplay::createAliasOptionsMenu(const bool useComponentBo
         });
 
         contextMenu.addItem("Keep Negative", [this]() {
+            auto extra = oscdata->extraConfig.edit();
             sge->undoManager()->pushOscillatorExtraConfig(scene, oscInScene);
 
             for (int qq = 0; qq < num_partials; ++qq)
             {
-                if (oscdata->extraConfig.data[qq] > 0)
+                if (extra->data[qq] > 0)
                 {
-                    oscdata->extraConfig.data[qq] = 0;
+                    extra->data[qq] = 0;
                 }
             }
 
@@ -1046,13 +1034,14 @@ void OscillatorWaveformDisplay::createAliasOptionsMenu(const bool useComponentBo
         });
 
         contextMenu.addItem("Keep Even Harmonics", [this]() {
+            auto extra = oscdata->extraConfig.edit();
             sge->undoManager()->pushOscillatorExtraConfig(scene, oscInScene);
 
             for (int qq = 0; qq < num_partials; ++qq)
             {
                 if (qq > 0 && qq % 2 == 0)
                 {
-                    oscdata->extraConfig.data[qq] = 0;
+                    extra->data[qq] = 0;
                 }
             }
 
@@ -1062,13 +1051,14 @@ void OscillatorWaveformDisplay::createAliasOptionsMenu(const bool useComponentBo
         });
 
         contextMenu.addItem("Keep Odd Harmonics", [this]() {
+            auto extra = oscdata->extraConfig.edit();
             sge->undoManager()->pushOscillatorExtraConfig(scene, oscInScene);
 
             for (int qq = 0; qq < num_partials; ++qq)
             {
                 if (qq > 0 && qq % 2 == 1)
                 {
-                    oscdata->extraConfig.data[qq] = 0;
+                    extra->data[qq] = 0;
                 }
             }
 
@@ -1080,13 +1070,14 @@ void OscillatorWaveformDisplay::createAliasOptionsMenu(const bool useComponentBo
         contextMenu.addSeparator();
 
         contextMenu.addItem("Absolute", [this]() {
+            auto extra = oscdata->extraConfig.edit();
             sge->undoManager()->pushOscillatorExtraConfig(scene, oscInScene);
 
             for (int qq = 0; qq < num_partials; ++qq)
             {
-                if (oscdata->extraConfig.data[qq] < 0)
+                if (extra->data[qq] < 0)
                 {
-                    oscdata->extraConfig.data[qq] *= -1;
+                    extra->data[qq] *= -1;
                 }
             }
 
@@ -1096,11 +1087,12 @@ void OscillatorWaveformDisplay::createAliasOptionsMenu(const bool useComponentBo
         });
 
         contextMenu.addItem("Invert", [this]() {
+            auto extra = oscdata->extraConfig.edit();
             sge->undoManager()->pushOscillatorExtraConfig(scene, oscInScene);
 
             for (int qq = 0; qq < num_partials; ++qq)
             {
-                oscdata->extraConfig.data[qq] = -oscdata->extraConfig.data[qq];
+                extra->data[qq] = -extra->data[qq];
             }
 
             storage->getPatch().isDirty = true;
@@ -1109,13 +1101,14 @@ void OscillatorWaveformDisplay::createAliasOptionsMenu(const bool useComponentBo
         });
 
         contextMenu.addItem("Invert Even Harmonics", [this]() {
+            auto extra = oscdata->extraConfig.edit();
             sge->undoManager()->pushOscillatorExtraConfig(scene, oscInScene);
 
             for (int qq = 0; qq < num_partials; ++qq)
             {
-                oscdata->extraConfig.data[qq] = (qq > 0 && qq % 2 == 0)
-                                                    ? -oscdata->extraConfig.data[qq]
-                                                    : oscdata->extraConfig.data[qq];
+                extra->data[qq] = (qq > 0 && qq % 2 == 0)
+                                                    ? -extra->data[qq]
+                                                    : extra->data[qq];
             }
 
             storage->getPatch().isDirty = true;
@@ -1124,13 +1117,14 @@ void OscillatorWaveformDisplay::createAliasOptionsMenu(const bool useComponentBo
         });
 
         contextMenu.addItem("Invert Odd Harmonics", [this]() {
+            auto extra = oscdata->extraConfig.edit();
             sge->undoManager()->pushOscillatorExtraConfig(scene, oscInScene);
 
             for (int qq = 0; qq < num_partials; ++qq)
             {
-                oscdata->extraConfig.data[qq] = (qq > 0 && qq % 2 == 1)
-                                                    ? -oscdata->extraConfig.data[qq]
-                                                    : oscdata->extraConfig.data[qq];
+                extra->data[qq] = (qq > 0 && qq % 2 == 1)
+                                                    ? -extra->data[qq]
+                                                    : extra->data[qq];
             }
 
             storage->getPatch().isDirty = true;
@@ -1139,18 +1133,19 @@ void OscillatorWaveformDisplay::createAliasOptionsMenu(const bool useComponentBo
         });
 
         contextMenu.addItem("Reverse", [this]() {
+            auto extra = oscdata->extraConfig.edit();
             sge->undoManager()->pushOscillatorExtraConfig(scene, oscInScene);
 
             float pdata[num_partials];
 
             for (int qq = 0; qq < num_partials; ++qq)
             {
-                pdata[qq] = oscdata->extraConfig.data[qq];
+                pdata[qq] = extra->data[qq];
             }
 
             for (int qq = 0; qq < num_partials; ++qq)
             {
-                oscdata->extraConfig.data[15 - qq] = pdata[qq];
+                extra->data[15 - qq] = pdata[qq];
             }
 
             storage->getPatch().isDirty = true;
@@ -1161,14 +1156,15 @@ void OscillatorWaveformDisplay::createAliasOptionsMenu(const bool useComponentBo
         contextMenu.addSeparator();
 
         contextMenu.addItem("Soften", [this]() {
+            auto extra = oscdata->extraConfig.edit();
             sge->undoManager()->pushOscillatorExtraConfig(scene, oscInScene);
 
             float average = 0;
 
             for (int qq = 0; qq < num_partials; ++qq)
             {
-                average = average + ((oscdata->extraConfig.data[qq] - average) / 2);
-                oscdata->extraConfig.data[qq] = average;
+                average = average + ((extra->data[qq] - average) / 2);
+                extra->data[qq] = average;
             }
 
             storage->getPatch().isDirty = true;
@@ -1177,11 +1173,12 @@ void OscillatorWaveformDisplay::createAliasOptionsMenu(const bool useComponentBo
         });
 
         contextMenu.addItem("Window (Linear)", [this]() {
+            auto extra = oscdata->extraConfig.edit();
             sge->undoManager()->pushOscillatorExtraConfig(scene, oscInScene);
 
             for (int qq = 0; qq < num_partials; ++qq)
             {
-                oscdata->extraConfig.data[qq] *=
+                extra->data[qq] *=
                     static_cast<float>(num_partials - qq) / static_cast<float>(num_partials);
             }
 
@@ -1191,11 +1188,12 @@ void OscillatorWaveformDisplay::createAliasOptionsMenu(const bool useComponentBo
         });
 
         contextMenu.addItem("Window (Cosine)", [this]() {
+            auto extra = oscdata->extraConfig.edit();
             sge->undoManager()->pushOscillatorExtraConfig(scene, oscInScene);
 
             for (int qq = 0; qq < num_partials; ++qq)
             {
-                oscdata->extraConfig.data[qq] *=
+                extra->data[qq] *=
                     std::cos(static_cast<float>(qq) / static_cast<float>(num_partials));
             }
 
@@ -1306,8 +1304,16 @@ bool OscillatorWaveformDisplay::populateMenuForCategory(juce::PopupMenu &context
                 item.setAction(action);
                 item.setSharedDrawable(wtScriptIcon);
 
+#if SURGE_WEB
+                // Keep pointer, keyboard and accessibility activation on the same action path.
+                item.itemID = p + 1;
+                if (wtScriptIcon)
+                    item.setImage(wtScriptIcon->createCopy());
+                subMenu->addItem(item);
+#else
                 subMenu->addCustomItem(p, std::make_unique<ItemWithSharedIconComponent>(item),
                                        nullptr, storage->wt_list[p].name);
+#endif
             }
             else
             {
@@ -1459,6 +1465,37 @@ void OscillatorWaveformDisplay::loadWavetableFromFile()
         return;
     }
 
+#if SURGE_WEB
+    std::unique_lock<std::mutex> targetLock(sge->synth->patchLoadSpawnMutex, std::try_to_lock);
+    if (!targetLock.owns_lock() || sge->synth->halt_engine.load(std::memory_order_acquire))
+    {
+        storage->reportError("Wait for the current patch to finish loading, then import again.",
+                             "Wavetable Import Unavailable");
+        return;
+    }
+    const int targetSlot = scene * n_oscs + oscInScene;
+    const auto generation = sge->synth->browserPatchGeneration.load(std::memory_order_acquire);
+    const auto token = storage->wtGenPublishToken[targetSlot].load(std::memory_order_acquire);
+    const auto type = oscdata->type.val.i;
+    const auto queuedId = oscdata->wt.queue_id;
+    const auto queuedFile = oscdata->wt.queue_filename;
+    const auto script = oscdata->wavetable_script;
+    const auto frames = oscdata->wavetable_script_nframes;
+    const auto resolution = oscdata->wavetable_script_res_base;
+    const auto snapshotVersion = [&]() {
+        std::lock_guard<std::mutex> lock(storage->wtSnapshotMutex);
+        return oscdata->wtSnapshotsVersion;
+    }();
+    juce::Component::SafePointer<Surge::Overlays::WavetableScriptEditor> scriptEditor;
+    juce::String draft;
+    if (auto *overlay = sge->getOverlayIfOpenAs<Surge::Overlays::WavetableScriptEditor>(SurgeGUIEditor::WTS_EDITOR);
+        overlay && overlay->scene * n_oscs + overlay->osc_id == targetSlot)
+    {
+        scriptEditor = overlay;
+        draft = overlay->mainDocument->getAllContent();
+    }
+#endif
+
     juce::String fileTypes = "*.wav;*.wt";
 #if HAS_LUA
     fileTypes << ";*.wtscript";
@@ -1467,7 +1504,17 @@ void OscillatorWaveformDisplay::loadWavetableFromFile()
         "Select Wavetable to Load", juce::File(path_to_string(wtPath)), fileTypes);
     sge->fileChooser->launchAsync(
         juce::FileBrowserComponent::openMode | juce::FileBrowserComponent::canSelectFiles,
-        [this, wtPath](const juce::FileChooser &c) {
+        [safe = juce::Component::SafePointer<OscillatorWaveformDisplay>(this), wtPath
+#if SURGE_WEB
+         , targetSlot, generation, token, type, queuedId, queuedFile, script, frames, resolution,
+           snapshotVersion, scriptEditor, draft
+#endif
+        ](const juce::FileChooser &c) {
+            auto *self = safe.getComponent();
+            if (!self || !self->sge)
+                return;
+            auto *storage = self->storage;
+            auto *oscdata = self->oscdata;
             auto ress = c.getResults();
 
             if (ress.size() != 1)
@@ -1475,16 +1522,52 @@ void OscillatorWaveformDisplay::loadWavetableFromFile()
                 return;
             }
 
+#if SURGE_WEB
+            auto *synth = self->sge->synth;
+            std::unique_lock<std::mutex> importLock(synth->patchLoadSpawnMutex, std::try_to_lock);
+            bool changed = !importLock.owns_lock() ||
+                synth->halt_engine.load(std::memory_order_acquire) ||
+                synth->browserPatchGeneration.load(std::memory_order_acquire) != generation ||
+                self->scene * n_oscs + self->oscInScene != targetSlot ||
+                oscdata->type.val.i != type || oscdata->wt.queue_id != queuedId ||
+                oscdata->wt.queue_filename != queuedFile ||
+                storage->wtGenPublishToken[targetSlot].load(std::memory_order_acquire) != token;
+            if (!changed)
+            {
+                std::lock_guard<std::mutex> lock(storage->wtSnapshotMutex);
+                changed = oscdata->wavetable_script != script ||
+                    oscdata->wavetable_script_nframes != frames ||
+                    oscdata->wavetable_script_res_base != resolution ||
+                    oscdata->wtSnapshotsVersion != snapshotVersion;
+            }
+            if (!changed)
+            {
+                if (auto *overlay = self->sge->getOverlayIfOpenAs<Surge::Overlays::WavetableScriptEditor>(SurgeGUIEditor::WTS_EDITOR);
+                    overlay && overlay->scene * n_oscs + overlay->osc_id == targetSlot)
+                {
+                    changed = overlay == scriptEditor.getComponent()
+                        ? overlay->mainDocument->getAllContent() != draft
+                        : overlay->getPreCloseChickenBoxMessage().has_value();
+                }
+            }
+            if (changed)
+            {
+                storage->reportError("The oscillator changed while the wavetable picker was open. "
+                                     "The current state was retained.", "Wavetable Import Canceled");
+                return;
+            }
+#endif
+
             auto res = c.getResult();
             auto rString = res.getFullPathName().toStdString();
 
             if (res.hasFileExtension(".wtscript"))
             {
-                this->sge->loadWavetableScript(-1, string_to_path(rString), storage, oscdata);
+                self->sge->loadWavetableScript(-1, string_to_path(rString), storage, oscdata);
             }
             else
             {
-                this->oscdata->wt.queue_filename = rString;
+                oscdata->wt.queue_filename = rString;
             }
 
             auto dir = string_to_path(res.getParentDirectory().getFullPathName().toStdString());
@@ -2017,22 +2100,28 @@ struct AliasAdditiveEditor : public juce::Component,
         {
             std::string sn = "Harmonic " + std::to_string(i + 1);
             auto q = std::make_unique<OverlayAsAccessibleSlider<AliasAdditiveEditor>>(this, sn);
+#if SURGE_WEB
+            // Preserve the native harmonic jog, reset and context-menu key bindings.
+            q->getProperties().set("surgeNativeKeyCapture", true);
+#endif
 
             q->onGetValue = [this, i](auto *T) {
-                auto v = limitpm1(oscdata->extraConfig.data[i]);
+                auto v = limitpm1(oscdata->extraConfig.read().data[i]);
                 return v;
             };
 
             q->onSetValue = [this, i](auto *T, float f) {
+                auto extra = oscdata->extraConfig.edit();
                 sge->undoManager()->pushOscillatorExtraConfig(scene, oscInScene);
 
-                oscdata->extraConfig.data[i] = limitpm1(f);
+                extra->data[i] = limitpm1(f);
                 storage->getPatch().isDirty = true;
                 repaint();
             };
 
             q->onJogValue = [this, i](auto *t, int dir, bool isShift, bool isControl) {
-                auto v = limitpm1(oscdata->extraConfig.data[i]);
+                auto extra = oscdata->extraConfig.edit();
+                auto v = limitpm1(extra->data[i]);
                 auto fac = 0.05;
 
                 if (isShift)
@@ -2041,12 +2130,13 @@ struct AliasAdditiveEditor : public juce::Component,
                 }
 
                 sge->undoManager()->pushOscillatorExtraConfig(scene, oscInScene);
-                oscdata->extraConfig.data[i] = limitpm1(v + fac * dir);
+                extra->data[i] = limitpm1(v + fac * dir);
                 storage->getPatch().isDirty = true;
                 repaint();
             };
 
             q->onMinMaxDef = [this, i](auto *t, int mmd) {
+                auto extra = oscdata->extraConfig.edit();
                 auto val = 0.f;
 
                 if (mmd == 1)
@@ -2060,7 +2150,7 @@ struct AliasAdditiveEditor : public juce::Component,
                 }
 
                 sge->undoManager()->pushOscillatorExtraConfig(scene, oscInScene);
-                oscdata->extraConfig.data[i] = limitpm1(val);
+                extra->data[i] = limitpm1(val);
                 storage->getPatch().isDirty = true;
                 repaint();
             };
@@ -2109,12 +2199,14 @@ struct AliasAdditiveEditor : public juce::Component,
 
     void paint(juce::Graphics &g) override
     {
+        const auto value = oscdata->extraConfig.read();
+        const auto extra = &value;
         auto w = 1.f * getWidth() / AliasOscillator::n_additive_partials;
         float halfHeight = sliders[0].getHeight() / 2.f;
 
         for (int i = 0; i < AliasOscillator::n_additive_partials; ++i)
         {
-            auto v = limitpm1(oscdata->extraConfig.data[i]);
+            auto v = limitpm1(extra->data[i]);
             auto p = sliders[i];
             auto bar = sliders[i];
 
@@ -2139,6 +2231,7 @@ struct AliasAdditiveEditor : public juce::Component,
 
     void mouseDown(const juce::MouseEvent &event) override
     {
+        auto extra = oscdata->extraConfig.edit();
         mouseDownLongHold(event);
 
         if (event.mods.isPopupMenu())
@@ -2169,10 +2262,10 @@ struct AliasAdditiveEditor : public juce::Component,
 
                 if (event.mods.isAltDown())
                 {
-                    d = -oscdata->extraConfig.data[clickedSlider];
+                    d = -extra->data[clickedSlider];
                 }
 
-                oscdata->extraConfig.data[clickedSlider] = limitpm1(d);
+                extra->data[clickedSlider] = limitpm1(d);
 
                 repaint();
             }
@@ -2195,6 +2288,7 @@ struct AliasAdditiveEditor : public juce::Component,
 
     void mouseDoubleClick(const juce::MouseEvent &event) override
     {
+        auto extra = oscdata->extraConfig.edit();
         if (event.mods.isMiddleButtonDown())
         {
             return;
@@ -2215,7 +2309,7 @@ struct AliasAdditiveEditor : public juce::Component,
             sge->undoManager()->pushOscillatorExtraConfig(scene, oscInScene);
             storage->getPatch().isDirty = true;
 
-            oscdata->extraConfig.data[clickedSlider] = 0.f;
+            extra->data[clickedSlider] = 0.f;
 
             repaint();
         }
@@ -2223,6 +2317,7 @@ struct AliasAdditiveEditor : public juce::Component,
 
     void mouseDrag(const juce::MouseEvent &event) override
     {
+        auto extra = oscdata->extraConfig.edit();
         if (event.mods.isMiddleButtonDown())
         {
             return;
@@ -2275,10 +2370,10 @@ struct AliasAdditiveEditor : public juce::Component,
 
             if (event.mods.isAltDown())
             {
-                d = -oscdata->extraConfig.data[draggedSlider];
+                d = -extra->data[draggedSlider];
             }
 
-            oscdata->extraConfig.data[draggedSlider] = limitpm1(d);
+            extra->data[draggedSlider] = limitpm1(d);
 
             repaint();
         }
@@ -2287,6 +2382,7 @@ struct AliasAdditiveEditor : public juce::Component,
     void mouseWheelMove(const juce::MouseEvent &event,
                         const juce::MouseWheelDetails &wheel) override
     {
+        auto extra = oscdata->extraConfig.edit();
         // If I choose based on horiz/vert it only works on trackpads, so just add
         float delta = wheel.deltaX - (wheel.isReversed ? 1 : -1) * wheel.deltaY;
 
@@ -2323,9 +2419,9 @@ struct AliasAdditiveEditor : public juce::Component,
             sge->undoManager()->pushOscillatorExtraConfig(scene, oscInScene);
             storage->getPatch().isDirty = true;
 
-            auto d = oscdata->extraConfig.data[draggedSlider] + delta;
+            auto d = extra->data[draggedSlider] + delta;
 
-            oscdata->extraConfig.data[draggedSlider] = limitpm1(d);
+            extra->data[draggedSlider] = limitpm1(d);
             repaint();
         }
     }

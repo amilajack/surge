@@ -25,11 +25,15 @@
 #include "SurgeStorage.h"
 #include "SurgeVoice.h"
 #include "Effect.h"
+#if SURGE_WEB
+#include "dsp/effects/ConvolutionReloadEdits.h"
+#endif
 #include "BiquadFilter.h"
 #include <set>
 #include <sst/filters/HalfRateFilter.h>
 
 struct QuadFilterChainState;
+struct ConvolutionKernel;
 
 #include <list>
 #include <utility>
@@ -52,6 +56,16 @@ struct parametermeta
     unsigned int flags, clump;
     bool hide, expert, meta;
 };
+
+class EffectRetirementWorker;
+struct PreparedEffect;
+
+#if SURGE_WEB
+#include "VoiceListAllocator.h"
+using SurgeVoiceList = std::list<SurgeVoice *, Surge::VoiceListAllocator<SurgeVoice *>>;
+#else
+using SurgeVoiceList = std::list<SurgeVoice *>;
+#endif
 
 class alignas(16) SurgeSynthesizer
 {
@@ -95,7 +109,7 @@ class alignas(16) SurgeSynthesizer
      * Message thread only - the editor idle is the only thing that touches these.
      */
     std::chrono::steady_clock::time_point lastPatchBackupTime{std::chrono::steady_clock::now()};
-    size_t lastPatchBackupHash{0};
+    uint64_t lastPatchBackupHash{0};
     bool anyPatchBackupWritten{false};
     bool patchBackupsFailed{false};
 
@@ -159,12 +173,26 @@ class alignas(16) SurgeSynthesizer
     void
     processAudioThreadOpsWhenAudioEngineUnavailable(bool doItEvenIfAudioIsRunningDANGER = false);
     bool loadFx(bool initp, bool force_reload_all);
+#if SURGE_WEB
+    bool prepareBrowserFxReload(int slot, std::unique_ptr<ConvolutionKernel> &prepared);
+    void prepareBrowserEffects();
+    void processBrowserAirwindowsSelections();
+    bool browserEffectEditsPending(); // Main/control thread only.
+    std::atomic<unsigned> browserPatchGeneration{0};
+    std::atomic<unsigned> browserEffectPreparationFailures{0};
+    std::unique_ptr<PreparedEffect> browserPreparedEffects[n_fx_slots];
+    std::atomic<unsigned> browserConstructedEffects{0};
+    std::atomic<unsigned> browserAirwindowsAdoptions{0};
+    std::atomic<int> browserAirwindowsWanted[n_fx_slots];
+    uint64_t browserFxRequests[n_fx_slots]{};
+    ConvolutionReloadEdits browserIRReloadEdits[n_fx_slots];
+#endif
     void enqueueFXOff(int whichFX);
     bool loadOscalgos();
     std::atomic<bool> resendOscParam[n_scenes][n_oscs]{};
     std::atomic<bool> resendFXParam[n_fx_slots]{};
 
-    bool load_fx_needed;
+    std::atomic<bool> load_fx_needed{false};
 
     /*
      * FX Lifecycle events happen on the audio thread but is read in the openOrRecreateEditor
@@ -453,6 +481,9 @@ class alignas(16) SurgeSynthesizer
                          bool clearEvenIfInvalid);
     // clear the modulation routings on the algorithm-specific sliders
     void clear_osc_modulation(int scene, int entry);
+    // Remove every global route into an FX slot, including destinations made
+    // inactive by replacement. Browser reloads call this under engine ownership.
+    void clearFxModulation(int slot);
 
     /*
      * The modulation API (setModDepth01 etc...) is called from all sorts of places
@@ -571,6 +602,27 @@ class alignas(16) SurgeSynthesizer
      */
     std::atomic<bool> patchid_file_isPreset{true};
     std::atomic<int> patchid_queue;
+#if SURGE_WEB
+    // Published by browser asset preparation, consumed before the audio thread fades a patch.
+    bool browserNeedsFactoryPreparation{false};
+    std::atomic<int> browserReadyPatch{-1};
+    // Request in the engine block; publish pending only after the entire JUCE
+    // callback has finished touching engine state. The main thread starts the loader.
+    std::atomic<bool> browserPatchLoadRequested{false}, browserPatchLoadPending{false};
+    // Mutual exclusion between a browser audio callback (1) and control-thread
+    // engine work while audio is nominally inactive (2). Neither side waits: a
+    // busy callback renders silence and busy control work retries on its next pump.
+    std::atomic<int> browserEngineGate{0};
+    // Set while a context suspends, closes or fails, so an in-flight callback
+    // cannot re-assert audio_processing_active after the control thread cleared it.
+    std::atomic<bool> browserAudioReleasing{false};
+    bool tryAcquireBrowserEngine(int owner)
+    {
+        int expected = 0;
+        return browserEngineGate.compare_exchange_strong(expected, owner, std::memory_order_acquire);
+    }
+    void releaseBrowserEngine() { browserEngineGate.store(0, std::memory_order_release); }
+#endif
 
     // updated in audio thread, read from UI, so have assignments be atomic
     std::atomic<int> hasUpdatedMidiCC{false};
@@ -590,8 +642,11 @@ class alignas(16) SurgeSynthesizer
     bool approachingAllSoundOff{false};
     // TODO: FIX SCENE ASSUMPTION (for halfbandA/B - use std::array)
     sst::filters::HalfRate::HalfRateFilter halfbandA, halfbandB, halfbandIN;
-    std::list<SurgeVoice *> voices[n_scenes];
+    SurgeVoiceList voices[n_scenes];
     std::unique_ptr<Effect> fx[n_fx_slots];
+#if SURGE_WEB
+    std::unique_ptr<EffectRetirementWorker> browserEffectRetirement;
+#endif
     std::atomic<bool> halt_engine;
     MidiChannelState channelState[16];
     bool &mpeEnabled;

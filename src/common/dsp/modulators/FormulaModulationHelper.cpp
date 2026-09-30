@@ -44,10 +44,32 @@ namespace Formula
 
 void setupStorage(SurgeStorage *s) { s->formulaGlobalData = std::make_unique<GlobalData>(); }
 
-bool prepareForEvaluation(SurgeStorage *storage, FormulaModulatorStorage *fs, EvaluatorState &s,
-                          bool is_display)
+GlobalData::~GlobalData()
+{
+#if HAS_LUA
+    if (audioState)
+        lua_close(static_cast<lua_State *>(audioState));
+    if (displayState)
+        lua_close(static_cast<lua_State *>(displayState));
+#if SURGE_WEB
+    if (stagingState)
+        lua_close(static_cast<lua_State *>(stagingState));
+    for (auto *slots : {&audioFunctions.pendingSources, &audioFunctions.retiredSources})
+        for (auto &slot : *slots)
+            delete slot.exchange(nullptr);
+#endif
+#endif
+}
+
+// Built once, not at every first attack on the audio thread.
+static const std::vector<std::string> formulaEntryPoints{"process", "init"};
+
+static bool prepareEvaluator(SurgeStorage *storage, FormulaModulatorStorage *fs, EvaluatorState &s,
+                             bool is_display, bool compileOnly)
 {
     auto &stateData = *storage->formulaGlobalData;
+    auto &functions = stateData.functions(is_display);
+    s.is_display = is_display;
     bool firstTimeThrough = false;
     if (!is_display)
     {
@@ -55,10 +77,17 @@ bool prepareForEvaluation(SurgeStorage *storage, FormulaModulatorStorage *fs, Ev
         if (stateData.audioState == nullptr)
         {
 #if HAS_LUA
+#if SURGE_WEB
+            // Sized for the factory formula library with ample headroom; beyond
+            // it, allocations fall back to the heap (and the callback audit sees them).
+            stateData.audioArena = std::make_unique<LuaArena>(std::size_t(16) << 20);
+            stateData.audioState = lua_newstate(&LuaArena::allocate, stateData.audioArena.get());
+#else
             stateData.audioState = luaL_newstate();
+#endif
             if (!stateData.audioState)
                 return false;
-            luaL_openlibs((lua_State *)(stateData.audioState));
+            Surge::LuaSupport::openLibraries((lua_State *)(stateData.audioState));
 #endif
             firstTimeThrough = true;
         }
@@ -77,7 +106,7 @@ bool prepareForEvaluation(SurgeStorage *storage, FormulaModulatorStorage *fs, Ev
             stateData.displayState = luaL_newstate();
             if (!stateData.displayState)
                 return false;
-            luaL_openlibs((lua_State *)(stateData.displayState));
+            Surge::LuaSupport::openLibraries((lua_State *)(stateData.displayState));
 #endif
             firstTimeThrough = true;
         }
@@ -114,9 +143,6 @@ end
         }
     }
 
-    // Service any pending shared-table wipe here, immediately before init() runs below
-    wipeSharedData(storage, !is_display);
-
     // Calculate lfo_id from the element pointer
     // Requires that formulamods is a contiguous 2D array and that fs points inside it
     auto computeLfoId = [storage](const FormulaModulatorStorage *fs) {
@@ -128,6 +154,39 @@ end
     };
     s.lfo_id = computeLfoId(fs);
 
+    if (compileOnly)
+    {
+        auto &prepared = functions.preparedChunks[s.lfo_id - 1];
+#if SURGE_WEB
+        if (!is_display)
+        {
+            // The caller owns the engine exclusively: discard live edits made
+            // for the replaced source and record this one as published.
+            delete functions.pendingSources[s.lfo_id - 1].exchange(nullptr);
+            delete functions.retiredSources[s.lfo_id - 1].exchange(nullptr);
+            functions.publishedDefinitions[s.lfo_id - 1] = fs->formulaString;
+        }
+#endif
+        if (prepared.prepared && prepared.definition == fs->formulaString)
+            return prepared.registryReference >= 0;
+        std::string definition = fs->formulaString, error;
+        functions.compilationAttempts.fetch_add(1, std::memory_order_relaxed);
+        const bool compiled = Surge::LuaSupport::compileString(s.L, definition, error);
+        const int reference = compiled ? luaL_ref(s.L, LUA_REGISTRYINDEX) : -1;
+        if (prepared.registryReference >= 0)
+            luaL_unref(s.L, LUA_REGISTRYINDEX, prepared.registryReference);
+        prepared.definition = std::move(definition);
+        prepared.error = std::move(error);
+        prepared.hash = fs->formulaHash;
+        prepared.registryReference = reference;
+        prepared.prepared = true;
+        return compiled;
+    }
+
+    // Preserve the original timing: a pending reset is consumed when a new
+    // evaluator is created, never merely by compiling a replacement script.
+    wipeSharedData(storage, !is_display);
+
     // Reset the dynamic slider labels on every display script eval
     if (is_display)
     {
@@ -136,21 +195,31 @@ end
 
     // OK so now evaluate the formula. This is a mistake - the loading and
     // compiling can be expensive so lets look it up by hash first
-    auto h = fs->formulaHash;
-    auto pvn = std::string("pvn") + std::to_string(is_display) + "_" + std::to_string(h);
-    auto pvf = pvn + "_f";
-    auto pvfInit = pvn + "_fInit";
-    snprintf(s.funcName, TXT_SIZE, "%s", pvf.c_str());
-    snprintf(s.funcNameInit, TXT_SIZE, "%s", pvfInit.c_str());
+    // Browser audio evaluation uses only its adopted chunk, never the UI-owned
+    // source string, which a live edit may be replacing on another thread.
+    const auto &prepared = functions.preparedChunks[s.lfo_id - 1];
+#if SURGE_WEB
+    const bool adopted = !is_display && prepared.prepared;
+#else
+    const bool adopted = false;
+#endif
+    const std::string &definition = adopted ? prepared.definition : fs->formulaString;
+    const size_t definitionHash = adopted ? prepared.hash : fs->formulaHash;
+
+    // Fixed buffers: this runs at note-on on the audio thread.
+    char pvn[TXT_SIZE];
+    snprintf(pvn, TXT_SIZE, "pvn%d_%llu", int(is_display), (unsigned long long)definitionHash);
+    snprintf(s.funcName, TXT_SIZE, "%s_f", pvn);
+    snprintf(s.funcNameInit, TXT_SIZE, "%s_fInit", pvn);
 
     // Handle hash collisions
-    lua_getglobal(s.L, pvn.c_str());
+    lua_getglobal(s.L, pvn);
     s.isvalid = false;
 
     bool hasString = false;
     if (lua_isstring(s.L, -1))
     {
-        if (fs->formulaString != lua_tostring(s.L, -1))
+        if (definition != lua_tostring(s.L, -1))
         {
             s.adderror("Hash collision in function! Bad luck...");
         }
@@ -162,14 +231,12 @@ end
     lua_pop(s.L, 1); // we don't need the string or whatever on the stack
     if (hasString)
     {
-        snprintf(s.funcName, TXT_SIZE, "%s", pvf.c_str());
-        snprintf(s.funcNameInit, TXT_SIZE, "%s", pvfInit.c_str());
         // CHECK that I can actually get the function here
         lua_getglobal(s.L, s.funcName);
         s.isvalid = lua_isfunction(s.L, -1);
         lua_pop(s.L, 1);
 
-        if (stateData.knownBadFunctions.find(s.funcName) != stateData.knownBadFunctions.end())
+        if (functions.knownBadFunctions.find(std::string_view(s.funcName)) != functions.knownBadFunctions.end())
         {
             s.isvalid = false;
         }
@@ -177,8 +244,27 @@ end
     else
     {
         std::string emsg;
-        int res = Surge::LuaSupport::parseStringDefiningMultipleFunctions(
-            s.L, fs->formulaString, {"process", "init"}, emsg);
+        int res = 0;
+        if (prepared.prepared && prepared.definition == definition)
+        {
+            if (prepared.registryReference >= 0)
+            {
+                lua_rawgeti(s.L, LUA_REGISTRYINDEX, prepared.registryReference);
+                res = Surge::LuaSupport::evaluateCompiledFunctions(s.L, formulaEntryPoints, emsg);
+            }
+            else
+            {
+                emsg = prepared.error;
+                lua_pushnil(s.L);
+                lua_pushnil(s.L);
+            }
+        }
+        else
+        {
+            functions.compilationAttempts.fetch_add(1, std::memory_order_relaxed);
+            res = Surge::LuaSupport::parseStringDefiningMultipleFunctions(
+                s.L, definition, formulaEntryPoints, emsg);
+        }
 
         if (res >= 1)
         {
@@ -201,8 +287,8 @@ end
             Surge::LuaSupport::setSurgeFunctionEnvironment(s.L, formulaFeatures);
             lua_pop(s.L, 1);
 
-            stateData.functionsPerFMS[fs].insert(s.funcName);
-            stateData.functionsPerFMS[fs].insert(s.funcNameInit);
+            functions.functionsPerFMS[fs].insert(s.funcName);
+            functions.functionsPerFMS[fs].insert(s.funcNameInit);
 
             s.isvalid = true;
         }
@@ -215,12 +301,12 @@ end
                 oss << "\n" << emsg;
             s.adderror(oss.str());
             lua_pop(s.L, 2); // Pop process and init (or nil)
-            stateData.knownBadFunctions.insert(s.funcName);
+            functions.knownBadFunctions.insert(s.funcName);
         }
 
         // this happens here because we did parse it at least. Don't parse again until it is changed
-        lua_pushstring(s.L, fs->formulaString.c_str());
-        lua_setglobal(s.L, pvn.c_str());
+        lua_pushstring(s.L, definition.c_str());
+        lua_setglobal(s.L, pvn);
     }
 
     if (s.isvalid)
@@ -330,7 +416,7 @@ end
                     s.adderror("The init() function must return a table.\nThis usually means "
                                "that you didn't close the init() function with 'return state' "
                                "before the 'end' statement.");
-                    stateData.knownBadFunctions.insert(s.funcName);
+                    functions.knownBadFunctions.insert(s.funcName);
                 }
             }
             else
@@ -344,7 +430,7 @@ end
                 oss << "Failed to evaluate init() function!\n" << err;
                 s.adderror(oss.str());
                 lua_pop(s.L, 1); // Pop error
-                stateData.knownBadFunctions.insert(s.funcName);
+                functions.knownBadFunctions.insert(s.funcName);
             }
         }
 
@@ -365,7 +451,6 @@ end
             if (!lua_istable(s.L, -1))
             {
                 lua_pop(s.L, 1); // Pop non-table
-                std::cout << "Not a table!" << std::endl;
             }
             else
             {
@@ -486,18 +571,126 @@ end
     s.deform = 0;
     s.tempo = 120;
 
-    if (s.raisedError)
-        std::cout << "Error: " << *(s.error) << std::endl;
+    // The caller consumes s.error through the normal error-reporting path.
+    // Do not write duplicate diagnostics to a shared stream from this thread.
 #endif
 
     return true;
 }
 
+bool prepareForEvaluation(SurgeStorage *storage, FormulaModulatorStorage *fs, EvaluatorState &s,
+                          bool is_display)
+{
+    return prepareEvaluator(storage, fs, s, is_display, false);
+}
+
+bool prepareCompilation(SurgeStorage *storage, FormulaModulatorStorage *fs, bool is_display)
+{
+    EvaluatorState state{};
+    initEvaluatorState(state);
+    return prepareEvaluator(storage, fs, state, is_display, true);
+}
+
+void preparePatchCompilation(SurgeStorage *storage)
+{
+    for (auto &scene : storage->getPatch().formulamods)
+        for (auto &formula : scene)
+            prepareCompilation(storage, &formula, false);
+}
+
+#if SURGE_WEB
+static int dumpBytecode(lua_State *, const void *data, size_t size, void *target)
+{
+    static_cast<std::string *>(target)->append(static_cast<const char *>(data), size);
+    return 0;
+}
+
+void publishLiveEdits(SurgeStorage *storage)
+{
+#if HAS_LUA
+    auto &stateData = *storage->formulaGlobalData;
+    auto &functions = stateData.audioFunctions;
+    for (auto &slot : functions.retiredSources)
+        delete slot.exchange(nullptr, std::memory_order_acq_rel);
+    // Until patch preparation creates the audio interpreter (under exclusive
+    // ownership), it compiles every slot itself; nothing is live yet.
+    if (!stateData.audioState)
+        return;
+    int index = 0;
+    for (auto &scene : storage->getPatch().formulamods)
+        for (auto &fs : scene)
+        {
+            const int slot = index++;
+            if (fs.formulaString == functions.publishedDefinitions[slot])
+                continue;
+            if (!stateData.stagingState)
+                stateData.stagingState = luaL_newstate();
+            auto *L = static_cast<lua_State *>(stateData.stagingState);
+            if (!L)
+                return;
+            auto source = std::make_unique<FunctionCache::LiveSource>();
+            source->definition = fs.formulaString;
+            source->hash = std::hash<std::string>{}(source->definition);
+            // Same chunk name and error formatting as audio-side compilation.
+            if (Surge::LuaSupport::compileString(L, source->definition, source->error))
+            {
+                lua_dump(L, dumpBytecode, &source->bytecode);
+                lua_pop(L, 1);
+            }
+            functions.liveCompilations.fetch_add(1, std::memory_order_relaxed);
+            functions.publishedDefinitions[slot] = source->definition;
+            // An unadopted older edit is superseded and was never seen by audio.
+            delete functions.pendingSources[slot].exchange(source.release(), std::memory_order_acq_rel);
+        }
+#endif
+}
+
+void adoptLiveEdits(SurgeStorage *storage)
+{
+#if HAS_LUA
+    auto &stateData = *storage->formulaGlobalData;
+    auto &functions = stateData.audioFunctions;
+    auto *L = static_cast<lua_State *>(stateData.audioState);
+    if (!L)
+        return;
+    for (int slot = 0; slot < int(functions.preparedChunks.size()); ++slot)
+    {
+        // Wait for control to reclaim the previous handoff; the slot holds one.
+        if (functions.retiredSources[slot].load(std::memory_order_acquire))
+            continue;
+        auto *source = functions.pendingSources[slot].exchange(nullptr, std::memory_order_acq_rel);
+        if (!source)
+            continue;
+        int reference = -1;
+        if (!source->bytecode.empty())
+        {
+            // Loading prepared bytecode allocates only from the interpreter's arena.
+            if (luaL_loadbuffer(L, source->bytecode.data(), source->bytecode.size(), "lua-script") == 0)
+                reference = luaL_ref(L, LUA_REGISTRYINDEX);
+            else
+                lua_pop(L, 1);
+        }
+        auto &prepared = functions.preparedChunks[slot];
+        if (prepared.registryReference >= 0)
+            luaL_unref(L, LUA_REGISTRYINDEX, prepared.registryReference);
+        // Swapping strings moves ownership without allocating or freeing here.
+        std::swap(prepared.definition, source->definition);
+        std::swap(prepared.error, source->error);
+        prepared.hash = source->hash;
+        prepared.registryReference = reference;
+        prepared.prepared = true;
+        functions.liveAdoptions.fetch_add(1, std::memory_order_relaxed);
+        functions.retiredSources[slot].store(source, std::memory_order_release);
+    }
+#endif
+}
+#endif
+
 void requestSharedDataWipe(SurgeStorage *storage)
 {
     auto &stateData = *storage->formulaGlobalData;
-    stateData.audioSharedWipeRequested.store(true, std::memory_order_relaxed);
-    stateData.displaySharedWipeRequested.store(true, std::memory_order_relaxed);
+    stateData.audioSharedWipeRequested.store(true, std::memory_order_release);
+    stateData.displaySharedWipeRequested.store(true, std::memory_order_release);
 }
 
 void wipeSharedData(SurgeStorage *storage, bool onAudioThread)
@@ -526,9 +719,8 @@ void wipeSharedData(SurgeStorage *storage, bool onAudioThread)
     auto *requested =
         onAudioThread ? &stateData.audioSharedWipeRequested : &stateData.displaySharedWipeRequested;
 
-    if (requested->load(std::memory_order_relaxed))
+    if (requested->exchange(false, std::memory_order_acq_rel))
     {
-        requested->store(false, std::memory_order_relaxed);
         auto *state = onAudioThread ? stateData.audioState : stateData.displayState;
         if (state)
             wipe(state);
@@ -544,10 +736,10 @@ void removeFunctionsAssociatedWith(SurgeStorage *storage, FormulaModulatorStorag
     auto S = stateData.audioState;
     if (!S)
         return;
-    if (stateData.functionsPerFMS.find(fs) == stateData.functionsPerFMS.end())
+    if (stateData.audioFunctions.functionsPerFMS.find(fs) == stateData.audioFunctions.functionsPerFMS.end())
         return;
 
-    stateData.functionsPerFMS.erase(fs);
+    stateData.audioFunctions.functionsPerFMS.erase(fs);
 #endif
 }
 
@@ -589,18 +781,18 @@ void valueAt(int phaseIntPart, float phaseFracPart, SurgeStorage *storage,
     auto gs = Surge::LuaSupport::SGLD("valueAt", s->L);
     struct OnErrorReplaceWithZero
     {
-        OnErrorReplaceWithZero(lua_State *L, std::string fn) : L(L), fn(fn) {}
+        OnErrorReplaceWithZero(lua_State *L, const char *fn) : L(L), fn(fn) {}
         ~OnErrorReplaceWithZero()
         {
             if (replace)
             {
                 // std::cout << "Would nuke " << fn << std::endl;
                 lua_getglobal(L, "surge_reserved_formula_error_stub");
-                lua_setglobal(L, fn.c_str());
+                lua_setglobal(L, fn);
             }
         }
         lua_State *L;
-        std::string fn;
+        const char *fn; // The evaluator's own name buffer outlives this guard.
         bool replace = true;
     } onerr(s->L, s->funcName);
 
@@ -786,8 +978,8 @@ void valueAt(int phaseIntPart, float phaseFracPart, SurgeStorage *storage,
                     if (idx > max_formula_outputs)
                         oss << "an index larger than the maximum table size!";
                     s->adderror(oss.str());
-                    auto &stateData = *storage->formulaGlobalData;
-                    stateData.knownBadFunctions.insert(s->funcName);
+                    auto &functions = storage->formulaGlobalData->functions(s->is_display);
+                    functions.knownBadFunctions.insert(s->funcName);
                     s->isvalid = false;
 
                     idx = 0;
@@ -803,13 +995,13 @@ void valueAt(int phaseIntPart, float phaseFracPart, SurgeStorage *storage,
         }
         else
         {
-            auto &stateData = *storage->formulaGlobalData;
+            auto &functions = storage->formulaGlobalData->functions(s->is_display);
 
-            if (stateData.knownBadFunctions.find(s->funcName) != stateData.knownBadFunctions.end())
+            if (functions.knownBadFunctions.find(std::string_view(s->funcName)) != functions.knownBadFunctions.end())
                 s->adderror(
                     "You must define the 'output' field in the returned table as a number or a "
                     "float array!");
-            stateData.knownBadFunctions.insert(s->funcName);
+            functions.knownBadFunctions.insert(s->funcName);
             s->isvalid = false;
         }
 

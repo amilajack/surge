@@ -35,6 +35,10 @@ extern "C"
 #include <lua.h>
 #include <lauxlib.h>
 #include <lualib.h>
+#if SURGE_PORTABLE_LUA
+#define LUA_OK 0
+int luaopen_bit(lua_State *L);
+#endif
 
 #include <pffft.h>
 }
@@ -43,6 +47,7 @@ typedef int lua_State;
 #endif
 
 #include <cstdint>
+#include <cstdio>
 #include <string>
 #include <vector>
 
@@ -50,6 +55,18 @@ namespace Surge
 {
 namespace LuaSupport
 {
+
+#if HAS_LUA
+inline void openLibraries(lua_State *state)
+{
+    luaL_openlibs(state);
+#if SURGE_PORTABLE_LUA
+    lua_pushcfunction(state, luaopen_bit);
+    lua_pushstring(state, "bit");
+    lua_call(state, 1, 0);
+#endif
+}
+#endif
 
 /*
  * Given a string which is supposed to be valid lua defining a function
@@ -75,6 +92,18 @@ bool parseStringDefiningFunction(lua_State *L, const std::string &definition,
 int parseStringDefiningMultipleFunctions(lua_State *L, const std::string &definition,
                                          const std::vector<std::string> &functions,
                                          std::string &errorMessage);
+
+// Compile without executing any top-level script code. On success, leave the
+// compiled chunk on the stack; on failure, restore the previous stack height.
+// The caller owns this Lua state exclusively throughout the operation.
+bool compileString(lua_State *L, const std::string &definition, std::string &errorMessage);
+
+// Consume a previously compiled chunk from the top of the stack, execute it,
+// and push the requested functions/nils in the same order as the parse helper.
+// Compilation and evaluation may be separated by a registry reference, but
+// that reference and the chunk must remain in their original Lua state.
+int evaluateCompiledFunctions(lua_State *L, const std::vector<std::string> &functions,
+                              std::string &errorMessage);
 
 /*
  * Call this function with the top of your stack being a
@@ -132,8 +161,11 @@ enum class FFTTransform
  */
 struct SGLD
 {
-    SGLD(const std::string &lab, lua_State *L) : label(lab), L(L)
+    // Guards run on the audio thread around formula evaluation, so the label is
+    // copied into fixed storage rather than a heap-allocated string.
+    SGLD(const char *lab, lua_State *L) : L(L)
     {
+        snprintf(label, sizeof(label), "%s", lab);
 #if HAS_LUA
         if (L)
         {
@@ -141,9 +173,10 @@ struct SGLD
         }
 #endif
     }
+    SGLD(const std::string &lab, lua_State *L) : SGLD(lab.c_str(), L) {}
     ~SGLD();
 
-    std::string label;
+    char label[96];
     lua_State *L;
     int top;
 };

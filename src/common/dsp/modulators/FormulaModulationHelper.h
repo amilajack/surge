@@ -26,11 +26,16 @@
 #include "SurgeStorage.h"
 #include "StringOps.h"
 #include "LuaSupport.h"
+#if SURGE_WEB
+#include "LuaArena.h"
+#endif
 
 #include <atomic>
+#include <array>
 #include <cstdint>
 #include <memory>
 #include <string>
+#include <string_view>
 #include <variant>
 #include <vector>
 
@@ -41,11 +46,60 @@ namespace Surge
 namespace Formula
 {
 
+struct FunctionCache
+{
+    struct PreparedChunk
+    {
+        std::string definition, error;
+        size_t hash{0};
+        int registryReference{-1};
+        bool prepared{false};
+    };
+    // Transparent lookup by function name, without building a string on the audio thread.
+    struct NameHash
+    {
+        using is_transparent = void;
+        std::size_t operator()(std::string_view name) const
+        {
+            return std::hash<std::string_view>{}(name);
+        }
+    };
+    std::unordered_set<std::string, NameHash, std::equal_to<>>
+        knownBadFunctions; // these are functions which cause an error
+    std::unordered_map<FormulaModulatorStorage *, std::unordered_set<std::string>> functionsPerFMS;
+    std::array<PreparedChunk, n_scenes * n_lfos> preparedChunks;
+    // Read by control-thread diagnostics while the audio interpreter runs.
+    std::atomic<uint64_t> compilationAttempts{0};
+#if SURGE_WEB
+    // A live edit compiled by the control thread; immutable once published.
+    struct LiveSource
+    {
+        std::string definition, error, bytecode;
+        size_t hash{0};
+    };
+    // Per slot: control publishes into pending; the engine owner adopts it at a
+    // block boundary and returns the replaced strings through retired, which
+    // only the control thread deletes. The audio side never frees a source.
+    std::array<std::atomic<LiveSource *>, n_scenes * n_lfos> pendingSources{}, retiredSources{};
+    std::array<std::string, n_scenes * n_lfos> publishedDefinitions; // control only
+    std::atomic<uint64_t> liveCompilations{0}, liveAdoptions{0};
+#endif
+};
+
 struct GlobalData
 {
-    std::unordered_set<std::string> knownBadFunctions; // these are functions which cause an error
-    std::unordered_map<FormulaModulatorStorage *, std::unordered_set<std::string>> functionsPerFMS;
+    ~GlobalData(); // All evaluators and workers must be retired before storage.
+    // Each interpreter and its cache have one owner. Display evaluation must
+    // never mutate containers used by the audio interpreter.
+    FunctionCache audioFunctions, displayFunctions;
+    FunctionCache &functions(bool display) { return display ? displayFunctions : audioFunctions; }
     void *audioState{nullptr}, *displayState{nullptr};
+#if SURGE_WEB
+    // Control-thread interpreter used only to compile live edits to bytecode.
+    void *stagingState{nullptr};
+    // Backs audioState; created with it, off the audio callback, and outlives it.
+    std::unique_ptr<LuaArena> audioArena;
+#endif
     std::atomic<bool> audioSharedWipeRequested{false};
     std::atomic<bool> displaySharedWipeRequested{false};
 };
@@ -117,6 +171,22 @@ void removeFunctionsAssociatedWith(SurgeStorage *,
                                    FormulaModulatorStorage *fs); // audio thread only please
 bool prepareForEvaluation(SurgeStorage *storage, FormulaModulatorStorage *fs, EvaluatorState &s,
                           bool is_display);
+
+// Requires exclusive ownership of the selected interpreter. Prepare a bounded
+// per-modulator chunk slot without executing user code or consuming a shared
+// reset request. A later prepareForEvaluation executes it at the original time.
+bool prepareCompilation(SurgeStorage *storage, FormulaModulatorStorage *fs, bool is_display);
+// Prepare every slot while the caller exclusively owns the audio engine.
+// Compilation errors remain cached for the normal evaluator error-reporting path.
+void preparePatchCompilation(SurgeStorage *storage);
+#if SURGE_WEB
+// Control thread, while no loader owns the patch: compile every formula whose
+// source changed since it was last prepared or published, and publish it.
+void publishLiveEdits(SurgeStorage *storage);
+// Engine owner at a block boundary: adopt published compilations by loading
+// their bytecode. Never parses source and never frees a published source.
+void adoptLiveEdits(SurgeStorage *storage);
+#endif
 
 bool isUserDefined(std::string);
 
