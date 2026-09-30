@@ -34,13 +34,25 @@ class FileChooser::Native final : public FileChooser::Pimpl,
         auto parsed = JSON::parse(String::fromUTF8(json));
         if (auto *paths = parsed.getArray())
             for (const auto &path : *paths) urls.add(URL(File(path.toString())));
+        completing = token;
+        deferred = false;
         selection->owner.finished(urls);
-        return 1;
+        completing = 0;
+        return deferred ? 2 : 1;
+    }
+    // A save callback that cannot finish its file synchronously defers the
+    // browser's copy to the selected destination until it calls finish.
+    static int defer()
+    {
+        if (!completing) return 0;
+        deferred = true;
+        return completing;
     }
   private:
     FileChooser &owner;
     int flags, token;
-    inline static int nextToken = 0;
+    inline static int nextToken = 0, completing = 0;
+    inline static bool deferred = false;
     inline static std::map<int, std::weak_ptr<Native>> pending;
 };
 bool FileChooser::isPlatformDialogAvailable() { return true; }
@@ -52,5 +64,10 @@ std::shared_ptr<FileChooser::Pimpl> FileChooser::showPlatformDialog(FileChooser 
 extern "C" EMSCRIPTEN_KEEPALIVE int surge_file_dialog_complete(int token, const char *json)
 {
     return FileChooser::Native::complete(token, json);
+}
+extern "C" int surge_file_dialog_defer() { return FileChooser::Native::defer(); }
+extern "C" void surge_file_dialog_deferred_done(int token, int ok, const char *message)
+{
+    EM_ASM({ SurgeBrowser.deferredDone($0, $1, UTF8ToString($2)); }, token, ok, message ? message : "");
 }
 }

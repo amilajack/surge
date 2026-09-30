@@ -389,9 +389,10 @@ The five combined metadata and file-export workflows pass (30.5 seconds).
 through Chrome's directory picker. It creates a fresh folder in the selected
 destination, adding a numeric suffix if needed; portable `.surge-skin` names keep
 that suffix at the end. Existing destination files remain untouched. A failed
-copy reports that some destination files may have been written, retains all
-browser sources, and permits retry into another fresh folder. Canceling the
-picker produces no export.
+copy removes the fresh destination folder, retains all browser sources, and
+permits retry. If the destination cannot remove it, the error names every file
+written before the failure. Directory saves into an existing folder report the
+same list. Canceling the picker produces no export.
 
 Folder tests export the complete PNG tutorial skin, check every file's SHA-256,
 and reinstall the exported bundle through the original skin installer. They also
@@ -422,6 +423,25 @@ are copied into the browser filesystem before returning the selection to JUCE.
 FXP imports undergo the engine's structural validation before being exposed to
 JUCE: header lengths, XML, embedded wavetable bounds, and compressed extension
 containers are checked without modifying the current synth or editor state.
+`.scl`/`.kbm` files (with the tuning library parser), `.wt` wavetables (header
+and sample bounds), and FX and modulator presets (XML root) are validated the
+same way. A selection or drop is a single transaction: one invalid or unreadable
+file rejects the whole batch and leaves nothing in browser storage. WAV files,
+which also serve as impulse responses with other sample formats, and `.wtscript`
+files, which have a binary container form, are left to their native loaders.
+Those loaders already report failures and retain the current state.
+A directory import that fails part-way removes its partial copy.
+
+Exporting a scripted wavetable no longer blocks the main thread. The file
+chooser callback defers completion: the script generates on the worker, a
+message-thread timer writes the file when it is ready, and the browser then
+copies it to the chosen destination. While it waits, the page shows
+**Preparing export…** and a **Cancel export** button; canceling writes nothing,
+even if generation finishes later. `wavetable-export-deferred.spec.js` checks
+that the page responds during generation, that cancellation writes nothing, and
+that closing the editor does not abandon the export. `import-transactions.spec.js`
+covers batch rejection, per-format validation, partial folder reads, and removal
+of a failed download folder.
 Exports use the selected browser handle; a failed disk write leaves the generated
 file in browser memory and shows an error. Directory exports request write access;
 directory imports request read access.

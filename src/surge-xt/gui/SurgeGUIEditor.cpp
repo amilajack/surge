@@ -47,6 +47,10 @@
 #include "SurgeJUCELookAndFeel.h"
 
 #include "SurgeGUIEditorTags.h"
+#if SURGE_WEB
+extern "C" int surge_file_dialog_defer();
+extern "C" void surge_file_dialog_deferred_done(int token, int ok, const char *message);
+#endif
 #include "fmt/core.h"
 #include <fmt/chrono.h>
 #include "sst/cpputils/scope_guard.h"
@@ -7591,65 +7595,104 @@ void SurgeGUIEditor::exportWavetableAs(WTExportFormat exportFormat)
                 return;
             }
 
-            std::shared_ptr<Wavetable> exportWt = selectedTable;
-            if (!request->script.empty())
-            {
-                // Export blocks the message thread, the job inserts before pending jobs.
-                auto r = this->synth->storage.wtGenService->submitBlocking(std::move(*request));
+            // Writes the finished table; returns an error message, empty on success.
+            auto *synth = this->synth;
+            auto write = [synth, result, metadata, exportFormat,
+                          wtName](std::shared_ptr<Wavetable> exportWt) -> std::string {
+                if (!exportWt)
+                    return "This wavetable has no frames to export!";
 
-                if (!r.ok || !r.exportOut)
+                if (exportFormat == WAV_FRAMES)
                 {
-                    if (!r.error.empty())
-                    {
-                        this->synth->storage.reportError(r.error, "Export Error");
-                    }
-                    return;
+                    auto dir = string_to_path(result[0].getFullPathName().toStdString());
+                    synth->storage.export_wt_wav_frames_portable(dir, wtName, exportWt.get());
                 }
                 else
                 {
-                    exportWt = std::move(r.exportOut);
+                    auto fsp = string_to_path(result[0].getFullPathName().toStdString());
+                    if (exportFormat == WT && fsp.extension() != ".wt")
+                    {
+                        fsp.replace_extension(".wt");
+                    }
+                    else if (exportFormat != WT && fsp.extension() != ".wav")
+                    {
+                        fsp.replace_extension(".wav");
+                    }
+
+                    if (exportFormat == WT)
+                    {
+                        if (!synth->storage.export_wt_wt_portable(fsp, exportWt.get(), metadata))
+                        {
+                            return "Unable to save the wavetable to " + fsp.u8string();
+                        }
+                    }
+                    else
+                    {
+                        bool exportForSerum = (exportFormat == SERUM);
+                        synth->storage.export_wt_wav_portable(fsp, exportWt.get(), metadata,
+                                                              exportForSerum);
+                    }
                 }
-            }
-            if (!exportWt)
+
+                synth->storage.refresh_wtlist();
+                return {};
+            };
+
+            if (request->script.empty())
             {
-                synth->storage.reportError("This wavetable has no frames to export!", "Export Error");
+                if (auto error = write(selectedTable); !error.empty())
+                    synth->storage.reportError(error, "Export Error");
                 return;
             }
-
-            if (exportFormat == WAV_FRAMES)
+#if SURGE_WEB
+            // Scripts can take many seconds to generate. Never block the browser's
+            // main thread: generate on the worker, poll here, and let the browser
+            // finish the save once the file has been written.
+            const int token = surge_file_dialog_defer();
+            auto pending = std::make_shared<std::future<Surge::WavetableScript::WtGenJobResponse>>(
+                synth->storage.wtGenService->submit(std::move(*request), true));
+            struct Poll : juce::Timer
             {
-                auto dir = string_to_path(result[0].getFullPathName().toStdString());
-                this->synth->storage.export_wt_wav_frames_portable(dir, wtName, exportWt.get());
-            }
-            else
+                std::function<bool()> step;
+                void timerCallback() override
+                {
+                    if (step())
+                        delete this;
+                }
+            };
+            auto *poll = new Poll;
+            poll->step = [synth, pending, write, token]() {
+                if (pending->wait_for(std::chrono::seconds(0)) != std::future_status::ready)
+                    return false;
+                auto r = pending->get();
+                std::string error = r.error;
+                if (r.ok && r.exportOut)
+                    error = write(std::shared_ptr<Wavetable>(std::move(r.exportOut)));
+                else if (error.empty())
+                    error = "The wavetable script did not produce a table.";
+                if (!error.empty())
+                    synth->storage.reportError(error, "Export Error");
+                if (token)
+                    surge_file_dialog_deferred_done(token, error.empty(), error.c_str());
+                return true;
+            };
+            poll->startTimer(20);
+#else
+            // Export blocks the message thread, the job inserts before pending jobs.
+            auto r = synth->storage.wtGenService->submitBlocking(std::move(*request));
+
+            if (!r.ok || !r.exportOut)
             {
-                auto fsp = string_to_path(result[0].getFullPathName().toStdString());
-                if (exportFormat == WT && fsp.extension() != ".wt")
+                if (!r.error.empty())
                 {
-                    fsp.replace_extension(".wt");
+                    synth->storage.reportError(r.error, "Export Error");
                 }
-                else if (exportFormat != WT && fsp.extension() != ".wav")
-                {
-                    fsp.replace_extension(".wav");
-                }
-
-                if (exportFormat == WT)
-                {
-                    if (!this->synth->storage.export_wt_wt_portable(fsp, exportWt.get(), metadata))
-                    {
-                        this->synth->storage.reportError(
-                            "Unable to save the wavetable to " + fsp.u8string(), "Export Error");
-                    }
-                }
-                else
-                {
-                    bool exportForSerum = (exportFormat == SERUM);
-                    this->synth->storage.export_wt_wav_portable(fsp, exportWt.get(), metadata,
-                                                                exportForSerum);
-                }
+                return;
             }
-
-            this->synth->storage.refresh_wtlist();
+            if (auto error = write(std::shared_ptr<Wavetable>(std::move(r.exportOut)));
+                !error.empty())
+                synth->storage.reportError(error, "Export Error");
+#endif
         });
 }
 
