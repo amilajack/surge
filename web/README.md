@@ -31,7 +31,13 @@ Development targets:
 
 - `surge-xt-browser`: existing Surge processor and JUCE editor.
 - `surge-juce-browser-check`: isolated JUCE paint/input diagnostic.
-- `surge-web`: engine C ABI and Emscripten Wasm AudioWorklet bridge.
+- `surge-web`: engine C ABI and Emscripten Wasm AudioWorklet bridge. The ABI
+  enforces ownership: after `surge_start_audio` attaches an engine, every control
+  call fails with "Engine is owned by audio", while `surge_midi` and
+  `surge_set_transport` are queued for the next rendered block.
+  `surge_stop_audio` asks the audio thread to detach after its final render.
+  `surge_audio_state()` becomes 4 when the engine is back with the caller; a
+  stopped bridge cannot be restarted.
 - `surge-wavetable-snapshot-check`: development-only Wasm check of pending wavetable ownership and export snapshots (runs under Node).
 - `surge-engine-reference`: native engine rendering harness (`SURGE_ENGINE_ONLY=ON`).
 - `surge-convolution-worker-check`: native FFT worker ownership and audio checks.

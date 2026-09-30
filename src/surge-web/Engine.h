@@ -6,10 +6,14 @@ extern "C"
 {
 #endif
     // All functions except surge_render require exclusive engine ownership.
-    // No C++ exceptions may cross this boundary. Errors persist until the next call.
+    // While audio owns an engine (surge_attach_audio), they fail without touching
+    // it; surge_midi and surge_set_transport are queued for the next rendered block.
+    // No C++ exceptions may cross this boundary. Errors persist until the next call
+    // on the same thread; surge_render and the audio thread never record errors.
     typedef struct SurgeWebEngine SurgeWebEngine;
     SurgeWebEngine *surge_create(double sample_rate, const char *data_path);
-    void surge_destroy(SurgeWebEngine *engine);
+    // Refuses (returns 0) while the engine is attached to audio.
+    int surge_destroy(SurgeWebEngine *engine);
     const char *surge_error(void);
     int surge_load_patch(SurgeWebEngine *engine, const char *path);
     int surge_save_patch(SurgeWebEngine *engine, const char *path);
@@ -45,6 +49,11 @@ extern "C"
     // without voices, routing or modulation. Requires exclusive engine ownership.
     int surge_render_effect_block(SurgeWebEngine *engine, int slot, const float *input_left,
                                   const float *input_right, float *left, float *right);
+    // Ownership transfer for an audio consumer. Attach on the owning thread before
+    // the first audio render; detach only from the audio thread after its last one.
+    int surge_attach_audio(SurgeWebEngine *engine);
+    void surge_detach_audio(SurgeWebEngine *engine);
+    int surge_audio_attached(SurgeWebEngine *engine);
 #ifdef __cplusplus
 }
 #endif

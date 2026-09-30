@@ -5,6 +5,9 @@
 #include "dsp/modulators/FormulaModulationHelper.h"
 #include "dsp/effects/ConvolutionEffect.h"
 #include "dsp/effects/airwindows/AirWindowsEffect.h"
+#include "dsp/ControlSnapshot.h"
+#include "MidiQueue.h"
+#include <atomic>
 #include <cmath>
 #include <cstring>
 #include <memory>
@@ -40,6 +43,41 @@ std::string jsonString(const char *s)
     }
     return result + '"';
 }
+struct TransportUpdate
+{
+    double bpm, ppq;
+};
+bool applyMidi(SurgeSynthesizer &s, int status, int a, int b)
+{
+    const int ch = status & 15;
+    switch (status & 0xf0)
+    {
+    case 0x80:
+        s.releaseNote(ch, a, b);
+        break;
+    case 0x90:
+        if (b)
+            s.playNote(ch, a, b, 0);
+        else
+            s.releaseNote(ch, a, 0);
+        break;
+    case 0xa0:
+        s.polyAftertouch(ch, a, b);
+        break;
+    case 0xb0:
+        s.channelController(ch, a, b);
+        break;
+    case 0xd0:
+        s.channelAftertouch(ch, a);
+        break;
+    case 0xe0:
+        s.pitchBend(ch, (a | (b << 7)) - 8192);
+        break;
+    default:
+        return false;
+    }
+    return true;
+}
 template <typename F> int checked(F fn)
 {
     lastError.clear();
@@ -68,6 +106,17 @@ struct SurgeWebEngine : SurgeSynthesizer::PluginLayer
     alignas(16) float effectBlock[2][BLOCK_SIZE]{};
     int cursor{0};
     double sampleRate;
+    // Set on the owning thread before audio starts; cleared only by the audio
+    // thread after its final render, which publishes all audio-side writes.
+    std::atomic<bool> attached{false};
+    Surge::Web::MidiQueue midi;             // owner produces, audio consumes
+    ControlSnapshot<TransportUpdate> transport; // likewise
+    uint64_t renderedFrames{0};             // audio only while attached
+    void requireOwnership() const
+    {
+        if (attached.load(std::memory_order_acquire))
+            throw std::runtime_error("Engine is owned by audio");
+    }
     void resolveAirwindowsSelection()
     {
         // This offline API owns its engine exclusively; unlike the original UI,
@@ -119,15 +168,35 @@ extern "C"
         });
         return result;
     }
-    EXPORT void surge_destroy(SurgeWebEngine *e) { delete e; }
+    EXPORT int surge_destroy(SurgeWebEngine *e)
+    {
+        return checked([&] {
+            if (e) e->requireOwnership();
+            delete e;
+        });
+    }
+    EXPORT int surge_attach_audio(SurgeWebEngine *e)
+    {
+        bool expected = false;
+        return e && e->attached.compare_exchange_strong(expected, true, std::memory_order_acq_rel);
+    }
+    EXPORT void surge_detach_audio(SurgeWebEngine *e)
+    {
+        if (e) e->attached.store(false, std::memory_order_release);
+    }
+    EXPORT int surge_audio_attached(SurgeWebEngine *e)
+    {
+        return e && e->attached.load(std::memory_order_acquire);
+    }
     EXPORT double surge_formula_compilation_count(SurgeWebEngine *e)
     {
-        return e ? static_cast<double>(e->synth->storage.formulaGlobalData->audioFunctions.compilationAttempts.load(std::memory_order_relaxed)) : -1.;
+        return e && !surge_audio_attached(e) ? static_cast<double>(e->synth->storage.formulaGlobalData->audioFunctions.compilationAttempts.load(std::memory_order_relaxed)) : -1.;
     }
     EXPORT int surge_set_impulse(SurgeWebEngine *e, int slot, double rate,
                                  const float *left, const float *right, int frames)
     {
         return checked([&] {
+            if (e) e->requireOwnership();
             if (!e || slot < 0 || slot >= n_fx_slots || !left || frames < 1 ||
                 frames > (1 << 22) || !std::isfinite(rate) || rate < 8000 || rate > 384000)
                 throw std::runtime_error("Invalid impulse response");
@@ -159,6 +228,7 @@ extern "C"
     EXPORT int surge_load_patch(SurgeWebEngine *e, const char *path)
     {
         return checked([&] {
+            if (e) e->requireOwnership();
             if (!e || !path)
                 throw std::runtime_error("Missing engine or patch path");
             if (!e->synth->loadPatchByPath(path, -1, "", false))
@@ -171,6 +241,7 @@ extern "C"
     EXPORT int surge_save_patch(SurgeWebEngine *e, const char *path)
     {
         return checked([&] {
+            if (e) e->requireOwnership();
             if (!e || !path)
                 throw std::runtime_error("Missing engine or patch path");
             e->synth->savePatchToPath(fs::path(path), false);
@@ -180,7 +251,7 @@ extern "C"
     }
     EXPORT int surge_parameter_count(SurgeWebEngine *e)
     {
-        return e ? static_cast<int>(e->synth->storage.getPatch().param_ptr.size()) : 0;
+        return e && !surge_audio_attached(e) ? static_cast<int>(e->synth->storage.getPatch().param_ptr.size()) : 0;
     }
     EXPORT const char *surge_parameter_info(SurgeWebEngine *e, int id)
     {
@@ -204,6 +275,7 @@ extern "C"
     EXPORT int surge_set_parameter(SurgeWebEngine *e, int id, float value)
     {
         return checked([&] {
+            if (e) e->requireOwnership();
             if (!e || id < 0 || id >= surge_parameter_count(e) || !std::isfinite(value) ||
                 value < 0 || value > 1)
                 throw std::runtime_error("Invalid parameter edit");
@@ -215,6 +287,7 @@ extern "C"
     EXPORT int surge_seed_voice_mseg(SurgeWebEngine *e, int scene, int lfo, uint32_t seed)
     {
         return checked([&] {
+            if (e) e->requireOwnership();
             if (!e || scene < 0 || scene >= n_scenes || lfo < 0 || lfo >= n_lfos_voice)
                 throw std::runtime_error("Invalid voice MSEG seed destination");
             auto &synth = *e->synth;
@@ -232,6 +305,7 @@ extern "C"
     EXPORT int surge_seed_storage_rng(SurgeWebEngine *e, uint32_t seed)
     {
         return checked([&] {
+            if (e) e->requireOwnership();
             if (!e) throw std::runtime_error("Missing engine for RNG seed");
             e->synth->storage.rngGen.g.seed(seed);
         });
@@ -239,6 +313,7 @@ extern "C"
     EXPORT int surge_set_oscillator_type(SurgeWebEngine *e, int scene, int oscillator, int type)
     {
         return checked([&] {
+            if (e) e->requireOwnership();
             if (!e || scene < 0 || scene >= n_scenes || oscillator < 0 || oscillator >= n_oscs ||
                 type < 0 || type >= n_osc_types)
                 throw std::runtime_error("Invalid oscillator scene, slot or type");
@@ -251,6 +326,7 @@ extern "C"
     EXPORT int surge_set_effect_type(SurgeWebEngine *e, int slot, int type)
     {
         return checked([&] {
+            if (e) e->requireOwnership();
             if (!e || slot < 0 || slot >= n_fx_slots || type < 0 || type >= n_fx_types)
                 throw std::runtime_error("Invalid effect slot or type");
             auto &synth = *e->synth;
@@ -262,6 +338,7 @@ extern "C"
     EXPORT int surge_set_effect_parameter(SurgeWebEngine *e, int slot, int parameter, float normalized)
     {
         return checked([&] {
+            if (e) e->requireOwnership();
             if (!e || slot < 0 || slot >= n_fx_slots || parameter < 0 || parameter >= n_fx_params ||
                 !std::isfinite(normalized) || normalized < 0 || normalized > 1)
                 throw std::runtime_error("Invalid effect parameter edit");
@@ -286,40 +363,19 @@ extern "C"
     {
         if (!e || status < 0x80 || status > 0xef || a < 0 || a > 127 || b < 0 || b > 127)
             return 0;
-        auto &s = *e->synth;
-        int ch = status & 15;
-        switch (status & 0xf0)
-        {
-        case 0x80:
-            s.releaseNote(ch, a, b);
-            break;
-        case 0x90:
-            if (b)
-                s.playNote(ch, a, b, 0);
-            else
-                s.releaseNote(ch, a, 0);
-            break;
-        case 0xa0:
-            s.polyAftertouch(ch, a, b);
-            break;
-        case 0xb0:
-            s.channelController(ch, a, b);
-            break;
-        case 0xd0:
-            s.channelAftertouch(ch, a);
-            break;
-        case 0xe0:
-            s.pitchBend(ch, (a | (b << 7)) - 8192);
-            break;
-        default:
-            return 0;
-        }
-        return 1;
+        if (surge_audio_attached(e))
+            return e->midi.push(status, a, b, 0);
+        return applyMidi(*e->synth, status, a, b);
     }
     EXPORT int surge_set_transport(SurgeWebEngine *e, double bpm, double ppq)
     {
         if (!e || !std::isfinite(bpm) || bpm <= 0 || !std::isfinite(ppq))
             return 0;
+        if (surge_audio_attached(e))
+        {
+            e->transport.publish({bpm, ppq});
+            return 1;
+        }
         e->synth->time_data.tempo = bpm;
         e->synth->time_data.ppqPos = ppq;
         return 1;
@@ -329,6 +385,7 @@ extern "C"
     {
         static_assert(BLOCK_SIZE == 32, "Update the isolated-effect ABI for a changed block size");
         return checked([&] {
+            if (e) e->requireOwnership();
             if (!e || slot < 0 || slot >= n_fx_slots || !il || !l || !r)
                 throw std::runtime_error("Invalid isolated effect render arguments");
             if (!ir) ir = il;
@@ -365,6 +422,20 @@ extern "C"
             if (++e->cursor == BLOCK_SIZE)
             {
                 auto &s = *e->synth;
+                if (e->attached.load(std::memory_order_relaxed))
+                {
+                    TransportUpdate update;
+                    if (e->transport.consume(update))
+                    {
+                        s.time_data.tempo = update.bpm;
+                        s.time_data.ppqPos = update.ppq;
+                    }
+                    if (e->midi.drain(e->renderedFrames, BLOCK_SIZE, [&](const auto &event, int) {
+                            applyMidi(s, event.bytes[0], event.bytes[1], event.bytes[2]);
+                        }))
+                        s.allSoundOff();
+                    e->renderedFrames += BLOCK_SIZE;
+                }
                 s.process_input = il != nullptr;
                 memcpy(s.input, e->input, sizeof(e->input));
                 s.process();
