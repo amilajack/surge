@@ -266,11 +266,22 @@ parity, nor sustained audio-deadline performance.
 ## Airwindows expansion
 
 `airwindows.json` records all 77 entries from the original streaming registry.
-The report separates 61 active fixtures, the two deliberately silent retired
-placeholders, and 14 pending cases. Its `coverage.pending` entries distinguish
-statistical work and repeatable native/Wasm differences. Nine formerly weak
-fixtures now include source-derived parameter edits; eight pass deterministic
-comparisons and Deck Wrecka needs statistical validation. The report records
+The report separates 73 active fixtures, the two deliberately silent retired
+placeholders, and 2 pending cases. Airwindows effects no longer call libc
+`rand()`: each instance draws from its own portable xorshift32 stream
+(`AirWinBaseClass::portableRand`), seeded from one process-wide source. Products
+seed that source from the clock, as `srand(time)` did; the development engine
+seeds it with a constant in `surge_create`, and `surge_seed_storage_rng` re-seeds
+it. The twelve formerly stochastic entries (including the parameter-edited Deck
+Wrecka) are therefore deterministic and now pass the 1e-5 comparison at both rates.
+
+Dust Bunny and To Tape remain pending as `amplified-upstream-precision`. Each is
+deterministic, and on identical input it matches native exactly (Dust Bunny) or
+within 1.3e-10 (To Tape) (`airwindows-isolated.json`, `isolated-effects.spec.js`).
+At 48 kHz they amplify the roughly 4e-8 native/Wasm difference in the FM2 source
+signal. Dust Bunny zeroes samples by testing float bit patterns; To Tape uses
+`long double` state. Building the native harness with `-ffp-contract=off` leaves
+the difference unchanged, so FMA contraction is not the cause. The report records
 ordered edits and distinguishes `matched-parameter-fixture` from default cases. The
 underlying per-rate measurements and binary digests remain available for review.
 

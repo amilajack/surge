@@ -11,7 +11,8 @@ import {renderEngineFixture} from '../tests/helpers/engine-fixture.js';
 import {airwindowsInventory,airwindowsFixture,airwindowsActiveParameters,summarizeAirwindows} from './airwindows-inventory.mjs';
 const root=fileURLToPath(new URL('../../',import.meta.url));
 const output=resolve(process.argv[2] || '/tmp/surge-effect-survey.json');
-const native=join(root,'build-reference/src/surge-web/surge-engine-reference');
+// SURGE_NATIVE_REFERENCE selects another native harness build (for example a compiler-option experiment).
+const native=process.env.SURGE_NATIVE_REFERENCE || join(root,'build-reference/src/surge-web/surge-engine-reference');
 const fixture=join(root,'resources/data/patches_factory/Templates/Init FM2.fxp');
 const configuration=readFileSync(join(root,'resources/surge-shared/configuration.xml'),'utf8');
 const section=configuration.match(/<fx>([\s\S]*?)<\/fx>/)[1];

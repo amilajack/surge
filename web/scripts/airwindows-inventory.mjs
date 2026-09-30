@@ -48,6 +48,11 @@ export function airwindowsActiveParameters(entry){
   });
 }
 
+// Deterministic on each platform and exact on identical input (isolated-effects.spec.js),
+// but they amplify the ~4e-8 native/Wasm difference of the FM2 source signal at 48 kHz.
+// Disabling FMA contraction in the native build does not remove that difference.
+const amplifiedUpstreamPrecision=new Set(['Dust Bunny','To Tape']);
+
 export function summarizeAirwindows(report){
   const summary={activeFixtures:[],retiredSilence:[],pending:[]};
   for(const entry of report.inventory.filter(entry=>report.selectedFamilies.includes(entry.name))){
@@ -64,7 +69,9 @@ export function summarizeAirwindows(report){
     else{
       const reason=cases.some(item=>item.status==='error')?'render-error':
         cases.some(item=>item.status==='needs-fixture')?'needs-active-fixture':
-        cases.some(item=>item.nativeRepeat?.relativeRMS>=1e-5 || item.wasmRepeat?.relativeRMS>=1e-5)?'needs-statistical-comparison':'native-wasm-mismatch';
+        cases.some(item=>item.nativeRepeat?.relativeRMS>=1e-5 || item.wasmRepeat?.relativeRMS>=1e-5)?'needs-statistical-comparison':
+        amplifiedUpstreamPrecision.has(entry.name) && cases.every(item=>item.nativeRepeat?.error===0 && item.wasmRepeat?.error===0)
+          ?'amplified-upstream-precision':'native-wasm-mismatch';
       summary.pending.push({id:entry.id,name:entry.name,reason});
     }
   }

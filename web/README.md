@@ -301,12 +301,14 @@ entries. The 154-case native/Wasm survey records audio comparisons and native
 and Wasm repeatability at both rates. Regression fixtures cover 61 active effects
 and two retired placeholders; those original placeholders intentionally output
 silence. AD Clip uses its Boost parameter to exercise processing instead of its
-near-dry initial settings. Nine previously weak fixtures now apply source-derived
-parameter edits: eight compare deterministically, while Deck Wrecka needs a
-statistical comparison. Fourteen entries remain open: twelve require statistical
-comparisons, and Dust Bunny and
-To Tape have repeatable numerical differences at 48 kHz. This does not establish
-all parameter, UI or real-time behavior within those effects.
+near-dry initial settings. Nine previously weak fixtures apply source-derived
+parameter edits. Regression fixtures now cover 73 active effects: effects draw
+from portable per-instance random streams instead of libc `rand()`, so the twelve
+formerly stochastic entries compare deterministically (see
+[`parity/README.md`](parity/README.md#airwindows-expansion)). Two entries remain
+open: Dust Bunny and To Tape match native on identical input, but at 48 kHz they
+amplify the upstream FM2 signal difference. This does not establish all parameter,
+UI or real-time behavior within those effects.
 
 Run the expanded diagnostic with:
 
@@ -340,8 +342,8 @@ validation, the complete audio parity/serialization suite passed **197 checks**
 in 3.6 minutes. A separate 12-case diagnostic confirmed the report's active,
 retired-silence, weak-fixture, statistical and numerical-mismatch classifications.
 The later full browser run passed all 422 checks (see verification evidence below). The
-source inventory and whitespace checks pass; the 14 pending Airwindows entries
-and broader migration requirements remain open.
+source inventory and whitespace checks passed at that time. The 14 entries then
+pending are now down to the two described above.
 
 The diagnostic also accepts `--effect-only`. It feeds exact 32-frame stereo
 blocks directly through the existing effect object, without voices, routing,

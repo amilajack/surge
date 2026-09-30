@@ -1,6 +1,7 @@
 {
   "schema": 1,
   "effectOnly": true,
+  "activeParameters": false,
   "scope": "Registered Airwindows effects; AD Clip uses full Boost, others use selected defaults. Isolated 32-frame effect blocks with bit-identical stereo integer-period saws for one second, followed by two seconds of silence; voices, routing and modulation are bypassed. 44.1/48 kHz. Retired NoOp entries deliberately output silence. Diagnostic only, not complete parameter or real-time parity.",
   "selectedFamilies": [
     "AD Clip",
@@ -626,10 +627,10 @@
       "noOp": false
     }
   ],
-  "createdAt": "2026-09-27T17:19:51.213Z",
+  "createdAt": "2026-09-30T07:45:47.339Z",
   "binaries": {
-    "native": "cfba2999964a511e3ce66f8fae88ce44fecb7d0a812aac9162762b3a23c5075e",
-    "wasm": "7b4dead7c458f60e26c34c523268c749938a2c19ae73ea20a0846a4193a284da"
+    "native": "1c788b698c5bfb6fa3fdf63493a7db9de6d0c3dee23280f0aeb176a4317ca6cb",
+    "wasm": "8e08f5c5311eda3b56700a0b8cb1ba644751832693f42c591cf63a5333f853e0"
   },
   "fixture": "30a55236f4b85c4b37978548a9dca70d81b75d5be9787ef6f5675f87b588cf66",
   "configuration": "c366fe1ada120561f7e355a8010b010c8887a11ad0f2d462b9131a322cd40b2a",
@@ -643,6 +644,7 @@
         "index": 1,
         "value": 1
       },
+      "parameters": [],
       "noOp": false,
       "comparison": {
         "energy": 58084.1018717173,
@@ -679,6 +681,7 @@
         "index": 0,
         "value": 0.2236842105263158
       },
+      "parameters": [],
       "noOp": false,
       "comparison": {
         "energy": 5502.999197572865,
@@ -715,28 +718,29 @@
         "index": 0,
         "value": 0.5526315789473685
       },
+      "parameters": [],
       "noOp": false,
       "comparison": {
-        "energy": 10624.628597063193,
-        "peak": 0.7339320778846741,
-        "relativeRMS": 1.5006226480503247e-13,
-        "error": 2.3925264675304916e-22
+        "energy": 10627.650574808076,
+        "peak": 0.7331936359405518,
+        "relativeRMS": 2.6855094360702704e-13,
+        "error": 7.66462007361998e-22
       },
       "dry": {
         "energy": 5792.780792236328,
         "peak": 0.5,
-        "relativeRMS": 1.5151013605371881,
-        "error": 13297.514446275343
+        "relativeRMS": 1.5156645975702583,
+        "error": 13307.402952633433
       },
       "nativeRepeat": {
-        "energy": 10624.628597063193,
-        "peak": 0.7339320778846741,
+        "energy": 10627.650574808076,
+        "peak": 0.7331936359405518,
         "relativeRMS": 0,
         "error": 0
       },
       "wasmRepeat": {
-        "energy": 10624.628597063193,
-        "peak": 0.7339320778846741,
+        "energy": 10627.650574808076,
+        "peak": 0.7331936359405518,
         "relativeRMS": 0,
         "error": 0
       },
@@ -751,6 +755,7 @@
         "index": 1,
         "value": 1
       },
+      "parameters": [],
       "noOp": false,
       "comparison": {
         "energy": 63241.103644266055,
@@ -787,6 +792,7 @@
         "index": 0,
         "value": 0.2236842105263158
       },
+      "parameters": [],
       "noOp": false,
       "comparison": {
         "energy": 5989.785658534826,
@@ -823,28 +829,29 @@
         "index": 0,
         "value": 0.5526315789473685
       },
+      "parameters": [],
       "noOp": false,
       "comparison": {
-        "energy": 12234.912235740043,
-        "peak": 0.7335453033447266,
-        "relativeRMS": 1.0859790712415716e-13,
-        "error": 1.442925039091488e-22
+        "energy": 12239.999953398814,
+        "peak": 0.7334167957305908,
+        "relativeRMS": 1.3468839217103583e-10,
+        "error": 2.2204538609858305e-16
       },
       "dry": {
         "energy": 6304.98796081543,
         "peak": 0.5,
-        "relativeRMS": 1.6675142516502346,
-        "error": 17531.673353272006
+        "relativeRMS": 1.6681735793348096,
+        "error": 17545.539984755396
       },
       "nativeRepeat": {
-        "energy": 12234.912235740043,
-        "peak": 0.7335453033447266,
+        "energy": 12239.999953398814,
+        "peak": 0.7334167957305908,
         "relativeRMS": 0,
         "error": 0
       },
       "wasmRepeat": {
-        "energy": 12234.912235740043,
-        "peak": 0.7335453033447266,
+        "energy": 12239.999953404336,
+        "peak": 0.7334167957305908,
         "relativeRMS": 0,
         "error": 0
       },
@@ -852,7 +859,7 @@
     }
   ],
   "registrySHA256": "e9fb6685c8e90d6c26f4c19bc125d9ccb07d800ba67f795193a0885317667263",
-  "chrome": "153.0.8010.53",
+  "chrome": "154.0.8037.58",
   "complete": true,
   "coverage": {
     "activeFixtures": [
