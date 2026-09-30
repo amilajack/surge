@@ -4700,5 +4700,1120 @@
       "web/tests/patch-menu.spec.js",
       "web/tests/patch-selection.spec.js"
     ]
+  },
+  "src/surge-xt/gui/SurgeGUIEditorValueCallbacks.cpp:menu-call:1b4b0f9d8ebdacbb": {
+    "status": "verified",
+    "sourceDigest": "c570cb3f14c9c4ef042938b5cb92d635134b1a27d0d7bff0db4065568430c9f6",
+    "browserEquivalent": "Macro right-click menu assigns a controller from the CC range submenus; the Clear Learned MIDI entry then names it.",
+    "runtimeExpansion": [
+      "CC 2 (Breath Controller MSB) on Macro 1",
+      "reserved CCs listed disabled (e.g. CC 0 ... - RESERVED)"
+    ],
+    "evidence": [
+      "web/tests/parameter-menus.spec.js"
+    ]
+  },
+  "src/surge-xt/gui/SurgeGUIEditorValueCallbacks.cpp:menu-call:1b4b0f9d8ebdacbb:2": {
+    "status": "verified",
+    "sourceDigest": "c570cb3f14c9c4ef042938b5cb92d635134b1a27d0d7bff0db4065568430c9f6",
+    "browserEquivalent": "Parameter right-click menu assigns a controller; the mapping report lists it, and reserved CCs are listed disabled.",
+    "runtimeExpansion": [
+      "CC 1 (Modulation Wheel MSB) on Global Volume",
+      "CC 70 (Sound Control #1 Sound Variation) on Global Volume",
+      "CC 0 (Bank Select MSB) - RESERVED (disabled)"
+    ],
+    "evidence": [
+      "web/tests/parameter-menus.spec.js",
+      "web/tests/main-menu.spec.js"
+    ]
+  },
+  "src/surge-xt/gui/SurgeGUIEditorValueCallbacks.cpp:menu-call:e6fa457373bd81fc": {
+    "status": "verified",
+    "sourceDigest": "c570cb3f14c9c4ef042938b5cb92d635134b1a27d0d7bff0db4065568430c9f6",
+    "browserEquivalent": "CC range submenus; the range holding the assigned controller is ticked.",
+    "runtimeExpansion": [
+      "0 ... 19",
+      "20 ... 39",
+      "40 ... 59",
+      "60 ... 79",
+      "80 ... 99",
+      "100 ... 119",
+      "120 ... 127"
+    ],
+    "evidence": [
+      "web/tests/parameter-menus.spec.js"
+    ]
+  },
+  "src/surge-xt/gui/SurgeGUIEditorValueCallbacks.cpp:menu-call:776dc4c053a9200a": {
+    "status": "verified",
+    "sourceDigest": "c570cb3f14c9c4ef042938b5cb92d635134b1a27d0d7bff0db4065568430c9f6",
+    "browserEquivalent": "Omni channel for the assignment; restores Omni after a channel choice.",
+    "evidence": [
+      "web/tests/parameter-menus.spec.js"
+    ]
+  },
+  "src/surge-xt/gui/SurgeGUIEditorValueCallbacks.cpp:menu-call:8f8b0fd4c684ae31": {
+    "status": "verified",
+    "sourceDigest": "c570cb3f14c9c4ef042938b5cb92d635134b1a27d0d7bff0db4065568430c9f6",
+    "browserEquivalent": "Channel choice for the assignment; the Clear entry and submenu label show the chosen channel.",
+    "runtimeExpansion": [
+      "Channel 3",
+      "Channel 1",
+      "Channel 2",
+      "Channel 4",
+      "Channel 16"
+    ],
+    "evidence": [
+      "web/tests/parameter-menus.spec.js"
+    ]
+  },
+  "src/surge-xt/gui/SurgeGUIEditorValueCallbacks.cpp:menu-call:6b57f1f695143318": {
+    "status": "verified",
+    "sourceDigest": "c570cb3f14c9c4ef042938b5cb92d635134b1a27d0d7bff0db4065568430c9f6",
+    "browserEquivalent": "Channel submenu label follows the assignment.",
+    "runtimeExpansion": [
+      "MIDI Channel: Omni",
+      "MIDI Channel: 3"
+    ],
+    "evidence": [
+      "web/tests/parameter-menus.spec.js"
+    ]
+  },
+  "src/surge-xt/gui/SurgeGUIEditorValueCallbacks.cpp:menu-call:a02dc1c42ec42068": {
+    "status": "verified",
+    "sourceDigest": "c570cb3f14c9c4ef042938b5cb92d635134b1a27d0d7bff0db4065568430c9f6",
+    "browserEquivalent": "Assign to MIDI CC submenu on parameters and macros.",
+    "evidence": [
+      "web/tests/parameter-menus.spec.js"
+    ]
+  },
+  "src/surge-xt/gui/SurgeGUIEditorValueCallbacks.cpp:menu-call:566e5a01bfb542af": {
+    "status": "verified",
+    "sourceDigest": "c570cb3f14c9c4ef042938b5cb92d635134b1a27d0d7bff0db4065568430c9f6",
+    "browserEquivalent": "MIDI Learn arms learning; the item becomes Abort MIDI Learn, which disarms it; an incoming CC with audio running is learned.",
+    "runtimeExpansion": [
+      "MIDI Learn...",
+      "Abort MIDI Learn"
+    ],
+    "evidence": [
+      "web/tests/parameter-menus.spec.js"
+    ]
+  },
+  "src/surge-xt/gui/SurgeGUIEditorValueCallbacks.cpp:menu-call:78dca9bafd01710a": {
+    "status": "verified",
+    "sourceDigest": "c570cb3f14c9c4ef042938b5cb92d635134b1a27d0d7bff0db4065568430c9f6",
+    "browserEquivalent": "Clears a macro controller assignment.",
+    "runtimeExpansion": [
+      "Clear Learned MIDI (CC 2, Omni)"
+    ],
+    "evidence": [
+      "web/tests/parameter-menus.spec.js"
+    ]
+  },
+  "src/surge-xt/gui/SurgeGUIEditorValueCallbacks.cpp:menu-call:78dca9bafd01710a:2": {
+    "status": "verified",
+    "sourceDigest": "c570cb3f14c9c4ef042938b5cb92d635134b1a27d0d7bff0db4065568430c9f6",
+    "browserEquivalent": "Clears a parameter controller assignment; the mapping report no longer lists it.",
+    "runtimeExpansion": [
+      "Clear Learned MIDI (CC 1, Omni)",
+      "Clear Learned MIDI (CC 1, Channel 3)",
+      "Clear Learned MIDI (CC 21, Channel 1)"
+    ],
+    "evidence": [
+      "web/tests/parameter-menus.spec.js"
+    ]
+  },
+  "src/surge-xt/gui/SurgeGUIEditorValueCallbacks.cpp:menu-call:2ba4775cdb0a62d7": {
+    "status": "verified",
+    "sourceDigest": "c570cb3f14c9c4ef042938b5cb92d635134b1a27d0d7bff0db4065568430c9f6",
+    "browserEquivalent": "VU meter right-click toggles the CPU usage display preference.",
+    "evidence": [
+      "web/tests/parameter-menus.spec.js"
+    ]
+  },
+  "src/surge-xt/gui/SurgeGUIEditorValueCallbacks.cpp:menu-call:868a0cc58c202c20": {
+    "status": "verified",
+    "sourceDigest": "c570cb3f14c9c4ef042938b5cb92d635134b1a27d0d7bff0db4065568430c9f6",
+    "browserEquivalent": "Not present in desktop release builds either: undo/redo history entries are compiled only under DEBUG; the spec asserts the Undo and Redo menus hold only the help header.",
+    "runtimeExpansion": [
+      "None in release builds (DEBUG only)"
+    ],
+    "evidence": [
+      "web/tests/parameter-menus.spec.js"
+    ]
+  },
+  "src/surge-xt/gui/SurgeGUIEditorValueCallbacks.cpp:menu-call:af4cf0f880a99afa": {
+    "status": "verified",
+    "sourceDigest": "c570cb3f14c9c4ef042938b5cb92d635134b1a27d0d7bff0db4065568430c9f6",
+    "browserEquivalent": "Not present in desktop release builds either: undo/redo history entries are compiled only under DEBUG; the spec asserts the Undo and Redo menus hold only the help header.",
+    "runtimeExpansion": [
+      "None in release builds (DEBUG only)"
+    ],
+    "evidence": [
+      "web/tests/parameter-menus.spec.js"
+    ]
+  },
+  "src/surge-xt/gui/SurgeGUIEditorValueCallbacks.cpp:menu-call:77c73d6bccc358dd": {
+    "status": "verified",
+    "sourceDigest": "c570cb3f14c9c4ef042938b5cb92d635134b1a27d0d7bff0db4065568430c9f6",
+    "browserEquivalent": "Copies the current oscillator; pasting into another oscillator reproduces its pitch without routings.",
+    "runtimeExpansion": [
+      "Copy from Osc 1"
+    ],
+    "evidence": [
+      "web/tests/parameter-menus.spec.js"
+    ]
+  },
+  "src/surge-xt/gui/SurgeGUIEditorValueCallbacks.cpp:menu-call:1b4fabe1c7eb0a54": {
+    "status": "verified",
+    "sourceDigest": "c570cb3f14c9c4ef042938b5cb92d635134b1a27d0d7bff0db4065568430c9f6",
+    "browserEquivalent": "Copies the oscillator with its modulation; pasting reproduces the routing.",
+    "runtimeExpansion": [
+      "Copy from Osc 1 with Modulation"
+    ],
+    "evidence": [
+      "web/tests/parameter-menus.spec.js"
+    ]
+  },
+  "src/surge-xt/gui/SurgeGUIEditorValueCallbacks.cpp:menu-call:ada7b43d65b0a802": {
+    "status": "verified",
+    "sourceDigest": "c570cb3f14c9c4ef042938b5cb92d635134b1a27d0d7bff0db4065568430c9f6",
+    "browserEquivalent": "Offered after a copy; pastes into the selected oscillator.",
+    "runtimeExpansion": [
+      "Paste to Osc 2",
+      "Paste to Osc 3"
+    ],
+    "evidence": [
+      "web/tests/parameter-menus.spec.js"
+    ]
+  },
+  "src/surge-xt/gui/SurgeGUIEditorValueCallbacks.cpp:menu-call:b94aa8dad21a950c": {
+    "status": "verified",
+    "sourceDigest": "c570cb3f14c9c4ef042938b5cb92d635134b1a27d0d7bff0db4065568430c9f6",
+    "browserEquivalent": "Copies the current scene.",
+    "evidence": [
+      "web/tests/parameter-menus.spec.js"
+    ]
+  },
+  "src/surge-xt/gui/SurgeGUIEditorValueCallbacks.cpp:menu-call:d6c79a535791d5a0": {
+    "status": "verified",
+    "sourceDigest": "c570cb3f14c9c4ef042938b5cb92d635134b1a27d0d7bff0db4065568430c9f6",
+    "browserEquivalent": "Disabled until a scene is copied; pastes the scene with routings into the other scene, undoable.",
+    "evidence": [
+      "web/tests/parameter-menus.spec.js"
+    ]
+  },
+  "src/surge-xt/gui/SurgeGUIEditorValueCallbacks.cpp:menu-call:b24f6fbac15dc159": {
+    "status": "verified",
+    "sourceDigest": "c570cb3f14c9c4ef042938b5cb92d635134b1a27d0d7bff0db4065568430c9f6",
+    "browserEquivalent": "Sustain modulator toggle; stored in the saved patch (detachSustainPedalFromVoicing).",
+    "evidence": [
+      "web/tests/parameter-menus.spec.js"
+    ]
+  },
+  "src/surge-xt/gui/SurgeGUIEditorValueCallbacks.cpp:menu-call:100a1006a5489185": {
+    "status": "verified",
+    "sourceDigest": "c570cb3f14c9c4ef042938b5cb92d635134b1a27d0d7bff0db4065568430c9f6",
+    "browserEquivalent": "Macro type-in; with the engine running the macro settles at the entered value.",
+    "runtimeExpansion": [
+      "Edit Value: 0.00 %",
+      "Edit Value: 40.00 % (approached by smoothing)"
+    ],
+    "evidence": [
+      "web/tests/parameter-menus.spec.js"
+    ]
+  },
+  "src/surge-xt/gui/SurgeGUIEditorValueCallbacks.cpp:menu-call:c83b0099fc42dc84": {
+    "status": "verified",
+    "sourceDigest": "c570cb3f14c9c4ef042938b5cb92d635134b1a27d0d7bff0db4065568430c9f6",
+    "browserEquivalent": "Toggles the macro polarity; the checkmark follows.",
+    "evidence": [
+      "web/tests/parameter-menus.spec.js"
+    ]
+  },
+  "src/surge-xt/gui/SurgeGUIEditorValueCallbacks.cpp:menu-call:8d98fb70b61e1954": {
+    "status": "verified",
+    "sourceDigest": "c570cb3f14c9c4ef042938b5cb92d635134b1a27d0d7bff0db4065568430c9f6",
+    "browserEquivalent": "Original prompt renames the macro; the button shows the new name.",
+    "evidence": [
+      "web/tests/parameter-menus.spec.js"
+    ]
+  },
+  "src/surge-xt/gui/SurgeGUIEditorValueCallbacks.cpp:menu-call:181aee0556098fd7": {
+    "status": "verified",
+    "sourceDigest": "c570cb3f14c9c4ef042938b5cb92d635134b1a27d0d7bff0db4065568430c9f6",
+    "browserEquivalent": "Switch To lists the other outputs of Voice LFO 1 and changes the displayed output.",
+    "evidence": [
+      "web/tests/parameter-menus.spec.js"
+    ]
+  },
+  "src/surge-xt/gui/SurgeGUIEditorValueCallbacks.cpp:menu-call:ea94341acbeec8a1": {
+    "status": "verified",
+    "sourceDigest": "c570cb3f14c9c4ef042938b5cb92d635134b1a27d0d7bff0db4065568430c9f6",
+    "browserEquivalent": "Original prompt renames the modulator; the button and Add Modulation menus show the new name.",
+    "evidence": [
+      "web/tests/parameter-menus.spec.js"
+    ]
+  },
+  "src/surge-xt/gui/SurgeGUIEditorValueCallbacks.cpp:menu-call:6b51cf7434c6c6dd": {
+    "status": "verified",
+    "sourceDigest": "c570cb3f14c9c4ef042938b5cb92d635134b1a27d0d7bff0db4065568430c9f6",
+    "browserEquivalent": "Copies the LFO; pasting into LFO 2 reproduces its rate without targets.",
+    "evidence": [
+      "web/tests/parameter-menus.spec.js"
+    ]
+  },
+  "src/surge-xt/gui/SurgeGUIEditorValueCallbacks.cpp:menu-call:17be0c55e8f41650": {
+    "status": "verified",
+    "sourceDigest": "c570cb3f14c9c4ef042938b5cb92d635134b1a27d0d7bff0db4065568430c9f6",
+    "browserEquivalent": "Copies the LFO and its targets; pasting into LFO 3 adds its routing.",
+    "evidence": [
+      "web/tests/parameter-menus.spec.js"
+    ]
+  },
+  "src/surge-xt/gui/SurgeGUIEditorValueCallbacks.cpp:menu-call:57893f78e38afb6f": {
+    "status": "verified",
+    "sourceDigest": "c570cb3f14c9c4ef042938b5cb92d635134b1a27d0d7bff0db4065568430c9f6",
+    "browserEquivalent": "Copies only the targets; pasting into LFO 4 adds the routing but keeps its own rate.",
+    "evidence": [
+      "web/tests/parameter-menus.spec.js"
+    ]
+  },
+  "src/surge-xt/gui/SurgeGUIEditorValueCallbacks.cpp:menu-call:17cccdc7a2db964b": {
+    "status": "verified",
+    "sourceDigest": "c570cb3f14c9c4ef042938b5cb92d635134b1a27d0d7bff0db4065568430c9f6",
+    "browserEquivalent": "Pastes the copied LFO, LFO with targets, or targets.",
+    "evidence": [
+      "web/tests/parameter-menus.spec.js"
+    ]
+  },
+  "src/surge-xt/gui/SurgeGUIEditorValueCallbacks.cpp:menu-call:57893f78e38afb6f:2": {
+    "status": "verified",
+    "sourceDigest": "c570cb3f14c9c4ef042938b5cb92d635134b1a27d0d7bff0db4065568430c9f6",
+    "browserEquivalent": "Non-LFO sources copy their targets.",
+    "evidence": [
+      "web/tests/parameter-menus.spec.js"
+    ]
+  },
+  "src/surge-xt/gui/SurgeGUIEditorValueCallbacks.cpp:menu-call:17cccdc7a2db964b:2": {
+    "status": "verified",
+    "sourceDigest": "c570cb3f14c9c4ef042938b5cb92d635134b1a27d0d7bff0db4065568430c9f6",
+    "browserEquivalent": "Non-LFO sources paste copied targets; the routing appears on the target parameter.",
+    "evidence": [
+      "web/tests/parameter-menus.spec.js"
+    ]
+  },
+  "src/surge-xt/gui/SurgeGUIEditorValueCallbacks.cpp:menu-call:955ac6116d9d3d41": {
+    "status": "platform-limitation",
+    "sourceDigest": "c570cb3f14c9c4ef042938b5cb92d635134b1a27d0d7bff0db4065568430c9f6",
+    "capability": "plugin-host",
+    "reason": "Items supplied by a plugin host for the macro (VST3/CLAP host context menus); the browser, like the standalone app, has no host.",
+    "portableAlternative": "Macro menus keep all original Surge items: MIDI assignment, value entry, polarity and rename."
+  },
+  "src/surge-xt/gui/SurgeGUIEditorValueCallbacks.cpp:menu-call:fb2cbcef7e8967a6": {
+    "status": "verified",
+    "sourceDigest": "c570cb3f14c9c4ef042938b5cb92d635134b1a27d0d7bff0db4065568430c9f6",
+    "browserEquivalent": "Straight note values for a tempo-synced parameter; choosing one updates the displayed value.",
+    "runtimeExpansion": [
+      "1/8 note",
+      "whole note"
+    ],
+    "evidence": [
+      "web/tests/parameter-menus.spec.js"
+    ]
+  },
+  "src/surge-xt/gui/SurgeGUIEditorValueCallbacks.cpp:menu-call:540d9f67e368b814": {
+    "status": "verified",
+    "sourceDigest": "c570cb3f14c9c4ef042938b5cb92d635134b1a27d0d7bff0db4065568430c9f6",
+    "browserEquivalent": "Dotted note values; choosing one updates the displayed value.",
+    "runtimeExpansion": [
+      "1/4 dotted"
+    ],
+    "evidence": [
+      "web/tests/parameter-menus.spec.js"
+    ]
+  },
+  "src/surge-xt/gui/SurgeGUIEditorValueCallbacks.cpp:menu-call:8ef1b60f19ab353b": {
+    "status": "verified",
+    "sourceDigest": "c570cb3f14c9c4ef042938b5cb92d635134b1a27d0d7bff0db4065568430c9f6",
+    "browserEquivalent": "Triplet note values; choosing one updates the displayed value.",
+    "runtimeExpansion": [
+      "1/8 triplet"
+    ],
+    "evidence": [
+      "web/tests/parameter-menus.spec.js"
+    ]
+  },
+  "src/surge-xt/gui/SurgeGUIEditorValueCallbacks.cpp:menu-call:9cbb9f89898fd3ba": {
+    "status": "verified",
+    "sourceDigest": "c570cb3f14c9c4ef042938b5cb92d635134b1a27d0d7bff0db4065568430c9f6",
+    "browserEquivalent": "Current synced value shown at the top of the menu; follows each choice.",
+    "runtimeExpansion": [
+      "1/8 note",
+      "1/4 dotted",
+      "1/8 triplet",
+      "whole note"
+    ],
+    "evidence": [
+      "web/tests/parameter-menus.spec.js"
+    ]
+  },
+  "src/surge-xt/gui/SurgeGUIEditorValueCallbacks.cpp:menu-call:037faad060511955": {
+    "status": "verified",
+    "sourceDigest": "c570cb3f14c9c4ef042938b5cb92d635134b1a27d0d7bff0db4065568430c9f6",
+    "browserEquivalent": "Straight submenu.",
+    "evidence": [
+      "web/tests/parameter-menus.spec.js"
+    ]
+  },
+  "src/surge-xt/gui/SurgeGUIEditorValueCallbacks.cpp:menu-call:14f954b96b3a5ff4": {
+    "status": "verified",
+    "sourceDigest": "c570cb3f14c9c4ef042938b5cb92d635134b1a27d0d7bff0db4065568430c9f6",
+    "browserEquivalent": "Dotted submenu.",
+    "evidence": [
+      "web/tests/parameter-menus.spec.js"
+    ]
+  },
+  "src/surge-xt/gui/SurgeGUIEditorValueCallbacks.cpp:menu-call:4baed2747377d068": {
+    "status": "verified",
+    "sourceDigest": "c570cb3f14c9c4ef042938b5cb92d635134b1a27d0d7bff0db4065568430c9f6",
+    "browserEquivalent": "Triplet submenu.",
+    "evidence": [
+      "web/tests/parameter-menus.spec.js"
+    ]
+  },
+  "src/surge-xt/gui/SurgeGUIEditorValueCallbacks.cpp:menu-call:9cbb9f89898fd3ba:2": {
+    "status": "verified",
+    "sourceDigest": "c570cb3f14c9c4ef042938b5cb92d635134b1a27d0d7bff0db4065568430c9f6",
+    "browserEquivalent": "Float type-in via the original editor; the saved patch has the entered value.",
+    "runtimeExpansion": [
+      "Edit Value: 100.00 % (Amp EG Sustain)",
+      "Edit Value on Osc 1 Pitch, LFO 1 Rate and Filter 1 Cutoff"
+    ],
+    "evidence": [
+      "web/tests/parameter-menus.spec.js"
+    ]
+  },
+  "src/surge-xt/gui/SurgeGUIEditorValueCallbacks.cpp:menu-call:d9a634863af228fd": {
+    "status": "verified",
+    "sourceDigest": "c570cb3f14c9c4ef042938b5cb92d635134b1a27d0d7bff0db4065568430c9f6",
+    "browserEquivalent": "Keytrack/Retrigger for all oscillators; all three oscillators change in the saved patch and the label flips.",
+    "runtimeExpansion": [
+      "Disable Keytrack for All Oscillators",
+      "Enable Keytrack for All Oscillators",
+      "Enable Retrigger for All Oscillators",
+      "Disable Retrigger for All Oscillators"
+    ],
+    "evidence": [
+      "web/tests/parameter-menus.spec.js"
+    ]
+  },
+  "src/surge-xt/gui/SurgeGUIEditorValueCallbacks.cpp:menu-call:9cbb9f89898fd3ba:3": {
+    "status": "verified",
+    "sourceDigest": "c570cb3f14c9c4ef042938b5cb92d635134b1a27d0d7bff0db4065568430c9f6",
+    "browserEquivalent": "Split point type-in in Key Split mode; the saved patch has the split key.",
+    "runtimeExpansion": [
+      "Edit Value: (split key)"
+    ],
+    "evidence": [
+      "web/tests/parameter-menus.spec.js"
+    ]
+  },
+  "src/surge-xt/gui/SurgeGUIEditorValueCallbacks.cpp:menu-call:9cbb9f89898fd3ba:4": {
+    "status": "verified",
+    "sourceDigest": "c570cb3f14c9c4ef042938b5cb92d635134b1a27d0d7bff0db4065568430c9f6",
+    "browserEquivalent": "Integer type-in; Polyphony Limit saves the entered value.",
+    "runtimeExpansion": [
+      "Edit Value: 16"
+    ],
+    "evidence": [
+      "web/tests/parameter-menus.spec.js"
+    ]
+  },
+  "src/surge-xt/gui/SurgeGUIEditorValueCallbacks.cpp:menu-call:7957827b434721cd": {
+    "status": "verified",
+    "sourceDigest": "c570cb3f14c9c4ef042938b5cb92d635134b1a27d0d7bff0db4065568430c9f6",
+    "browserEquivalent": "Pitch bend range decimal values toggle; extend_range saved.",
+    "evidence": [
+      "web/tests/parameter-menus.spec.js"
+    ]
+  },
+  "src/surge-xt/gui/SurgeGUIEditorValueCallbacks.cpp:menu-call:8b34d2d2d0adb6d2": {
+    "status": "verified",
+    "sourceDigest": "c570cb3f14c9c4ef042938b5cb92d635134b1a27d0d7bff0db4065568430c9f6",
+    "browserEquivalent": "Filter type entries in the original grouped menu; choosing one changes the type.",
+    "runtimeExpansion": [
+      "Off",
+      "12 dB",
+      "24 dB",
+      "Legacy Ladder",
+      "Vintage Ladder",
+      "K35",
+      "Diode Ladder",
+      "OB-Xd 12 dB",
+      "OB-Xd 24 dB",
+      "Comb +"
+    ],
+    "evidence": [
+      "web/tests/parameter-menus.spec.js"
+    ]
+  },
+  "src/surge-xt/gui/SurgeGUIEditorValueCallbacks.cpp:menu-call:4635a3cd8f67ed82": {
+    "status": "verified",
+    "sourceDigest": "c570cb3f14c9c4ef042938b5cb92d635134b1a27d0d7bff0db4065568430c9f6",
+    "browserEquivalent": "Filter type group submenus; the group holding the current type is ticked.",
+    "runtimeExpansion": [
+      "Lowpass",
+      "Bandpass",
+      "Highpass",
+      "Notch",
+      "Multi",
+      "Effect"
+    ],
+    "evidence": [
+      "web/tests/parameter-menus.spec.js"
+    ]
+  },
+  "src/surge-xt/gui/SurgeGUIEditorValueCallbacks.cpp:menu-call:01f5c51aec26da32": {
+    "status": "verified",
+    "sourceDigest": "c570cb3f14c9c4ef042938b5cb92d635134b1a27d0d7bff0db4065568430c9f6",
+    "browserEquivalent": "Discrete value lists; each value selects with a single checkmark and saves.",
+    "runtimeExpansion": [
+      "Scene Mode: Single, Key Split, Channel Split, Dual",
+      "Play Mode: Poly, Mono, Mono (Single Trigger), Mono (Fingered Portamento), Mono (Single Trigger & Fingered Portamento), Latch (Monophonic)",
+      "Filter subtype: Standard, Driven, Clean; Comb: 50% Wet, 100% Wet",
+      "Filter configuration: Serial 1, Wide"
+    ],
+    "evidence": [
+      "web/tests/parameter-menus.spec.js"
+    ]
+  },
+  "src/surge-xt/gui/SurgeGUIEditorValueCallbacks.cpp:menu-call:37af780c014c2991": {
+    "status": "verified",
+    "sourceDigest": "c570cb3f14c9c4ef042938b5cb92d635134b1a27d0d7bff0db4065568430c9f6",
+    "browserEquivalent": "Comb filter precise tuning toggle (on for new patches).",
+    "evidence": [
+      "web/tests/parameter-menus.spec.js"
+    ]
+  },
+  "src/surge-xt/gui/SurgeGUIEditorValueCallbacks.cpp:menu-call:1424400d27c41289:2": {
+    "status": "verified",
+    "sourceDigest": "c570cb3f14c9c4ef042938b5cb92d635134b1a27d0d7bff0db4065568430c9f6",
+    "browserEquivalent": "Poly same-key voice allocation; saved as polyVoiceRepeatedKeyMode.",
+    "runtimeExpansion": [
+      "Stack Multiple",
+      "Reuse Single"
+    ],
+    "evidence": [
+      "web/tests/parameter-menus.spec.js"
+    ]
+  },
+  "src/surge-xt/gui/SurgeGUIEditorValueCallbacks.cpp:menu-call:1424400d27c41289:3": {
+    "status": "verified",
+    "sourceDigest": "c570cb3f14c9c4ef042938b5cb92d635134b1a27d0d7bff0db4065568430c9f6",
+    "browserEquivalent": "Mono note priority; each option selects and saves.",
+    "runtimeExpansion": [
+      "Last",
+      "High",
+      "Low",
+      "Legacy"
+    ],
+    "evidence": [
+      "web/tests/parameter-menus.spec.js"
+    ]
+  },
+  "src/surge-xt/gui/SurgeGUIEditorValueCallbacks.cpp:menu-call:1424400d27c41289": {
+    "status": "verified",
+    "sourceDigest": "c570cb3f14c9c4ef042938b5cb92d635134b1a27d0d7bff0db4065568430c9f6",
+    "browserEquivalent": "Mono and Latch envelope retrigger choice; saved as monoVoiceEnvelope.",
+    "runtimeExpansion": [
+      "Reset to Zero",
+      "Continue from Current Level"
+    ],
+    "evidence": [
+      "web/tests/parameter-menus.spec.js"
+    ]
+  },
+  "src/surge-xt/gui/SurgeGUIEditorValueCallbacks.cpp:menu-call:81b0ebd0102f418b": {
+    "status": "verified",
+    "sourceDigest": "c570cb3f14c9c4ef042938b5cb92d635134b1a27d0d7bff0db4065568430c9f6",
+    "browserEquivalent": "Sustain Pedal in Mono Mode submenu from the Play Mode menu; both options select.",
+    "evidence": [
+      "web/tests/parameter-menus.spec.js"
+    ]
+  },
+  "src/surge-xt/gui/SurgeGUIEditorValueCallbacks.cpp:menu-call:4fc5da6fc2f9970b": {
+    "status": "verified",
+    "sourceDigest": "c570cb3f14c9c4ef042938b5cb92d635134b1a27d0d7bff0db4065568430c9f6",
+    "browserEquivalent": "Filter type deactivation toggle; deactivated saved and restored.",
+    "evidence": [
+      "web/tests/parameter-menus.spec.js"
+    ]
+  },
+  "src/surge-xt/gui/SurgeGUIEditorValueCallbacks.cpp:menu-call:e160cc9f991660e0": {
+    "status": "verified",
+    "sourceDigest": "c570cb3f14c9c4ef042938b5cb92d635134b1a27d0d7bff0db4065568430c9f6",
+    "browserEquivalent": "Tempo Sync toggle; temposync saved and the synced value menus appear.",
+    "evidence": [
+      "web/tests/parameter-menus.spec.js"
+    ]
+  },
+  "src/surge-xt/gui/SurgeGUIEditorValueCallbacks.cpp:menu-call:5640d774cb776d54": {
+    "status": "verified",
+    "sourceDigest": "c570cb3f14c9c4ef042938b5cb92d635134b1a27d0d7bff0db4065568430c9f6",
+    "browserEquivalent": "Enables and disables tempo sync for every parameter of an envelope or LFO.",
+    "runtimeExpansion": [
+      "Enable Tempo Sync for All Amp EG Parameters",
+      "Disable Tempo Sync for All Amp EG Parameters",
+      "Enable Tempo Sync for All Voice LFO 1 Parameters"
+    ],
+    "evidence": [
+      "web/tests/parameter-menus.spec.js"
+    ]
+  },
+  "src/surge-xt/gui/SurgeGUIEditorValueCallbacks.cpp:menu-call:bc3e90e91e0d9c36": {
+    "status": "verified",
+    "sourceDigest": "c570cb3f14c9c4ef042938b5cb92d635134b1a27d0d7bff0db4065568430c9f6",
+    "browserEquivalent": "Resets Filter 1 cutoff to the keytrack root (saved value -9 semitones from A4) and Combulator center.",
+    "evidence": [
+      "web/tests/parameter-menus.spec.js"
+    ]
+  },
+  "src/surge-xt/gui/SurgeGUIEditorValueCallbacks.cpp:menu-call:47a880bd52d0b977": {
+    "status": "verified",
+    "sourceDigest": "c570cb3f14c9c4ef042938b5cb92d635134b1a27d0d7bff0db4065568430c9f6",
+    "browserEquivalent": "Portamento constant rate; saved.",
+    "evidence": [
+      "web/tests/parameter-menus.spec.js"
+    ]
+  },
+  "src/surge-xt/gui/SurgeGUIEditorValueCallbacks.cpp:menu-call:236dfa32c89d8f2f": {
+    "status": "verified",
+    "sourceDigest": "c570cb3f14c9c4ef042938b5cb92d635134b1a27d0d7bff0db4065568430c9f6",
+    "browserEquivalent": "Portamento glissando; saved.",
+    "evidence": [
+      "web/tests/parameter-menus.spec.js"
+    ]
+  },
+  "src/surge-xt/gui/SurgeGUIEditorValueCallbacks.cpp:menu-call:b933414f2bd35df0": {
+    "status": "verified",
+    "sourceDigest": "c570cb3f14c9c4ef042938b5cb92d635134b1a27d0d7bff0db4065568430c9f6",
+    "browserEquivalent": "Portamento retrigger at scale degrees; saved.",
+    "evidence": [
+      "web/tests/parameter-menus.spec.js"
+    ]
+  },
+  "src/surge-xt/gui/SurgeGUIEditorValueCallbacks.cpp:menu-call:cc166ce9d3281c10": {
+    "status": "verified",
+    "sourceDigest": "c570cb3f14c9c4ef042938b5cb92d635134b1a27d0d7bff0db4065568430c9f6",
+    "browserEquivalent": "Portamento curve logarithmic; single checkmark.",
+    "evidence": [
+      "web/tests/parameter-menus.spec.js"
+    ]
+  },
+  "src/surge-xt/gui/SurgeGUIEditorValueCallbacks.cpp:menu-call:023321cc4cd34cd3": {
+    "status": "verified",
+    "sourceDigest": "c570cb3f14c9c4ef042938b5cb92d635134b1a27d0d7bff0db4065568430c9f6",
+    "browserEquivalent": "Portamento curve linear (default).",
+    "evidence": [
+      "web/tests/parameter-menus.spec.js"
+    ]
+  },
+  "src/surge-xt/gui/SurgeGUIEditorValueCallbacks.cpp:menu-call:5a18da209b7be2f0": {
+    "status": "verified",
+    "sourceDigest": "c570cb3f14c9c4ef042938b5cb92d635134b1a27d0d7bff0db4065568430c9f6",
+    "browserEquivalent": "Portamento curve exponential; saved.",
+    "evidence": [
+      "web/tests/parameter-menus.spec.js"
+    ]
+  },
+  "src/surge-xt/gui/SurgeGUIEditorValueCallbacks.cpp:menu-call:5cbcb6634f6f0446": {
+    "status": "verified",
+    "sourceDigest": "c570cb3f14c9c4ef042938b5cb92d635134b1a27d0d7bff0db4065568430c9f6",
+    "browserEquivalent": "Highpass slope choices; saved as deform_type.",
+    "runtimeExpansion": [
+      "12 dB/oct",
+      "24 dB/oct",
+      "36 dB/oct",
+      "48 dB/oct"
+    ],
+    "evidence": [
+      "web/tests/parameter-menus.spec.js"
+    ]
+  },
+  "src/surge-xt/gui/SurgeGUIEditorValueCallbacks.cpp:menu-call:e3bb2b1428c122d3": {
+    "status": "verified",
+    "sourceDigest": "c570cb3f14c9c4ef042938b5cb92d635134b1a27d0d7bff0db4065568430c9f6",
+    "browserEquivalent": "LFO deform types for the current shape; saved as deform_type.",
+    "runtimeExpansion": [
+      "Type 2",
+      "Type 3 (each selected with a single checkmark; Type 1 is the default)"
+    ],
+    "evidence": [
+      "web/tests/parameter-menus.spec.js"
+    ]
+  },
+  "src/surge-xt/gui/SurgeGUIEditorValueCallbacks.cpp:menu-call:419e000ea0178bb7": {
+    "status": "verified",
+    "sourceDigest": "c570cb3f14c9c4ef042938b5cb92d635134b1a27d0d7bff0db4065568430c9f6",
+    "browserEquivalent": "Alias oscillator mask ramp toggle.",
+    "evidence": [
+      "web/tests/parameter-menus.spec.js"
+    ]
+  },
+  "src/surge-xt/gui/SurgeGUIEditorValueCallbacks.cpp:menu-call:03ae0556e05f4312": {
+    "status": "verified",
+    "sourceDigest": "c570cb3f14c9c4ef042938b5cb92d635134b1a27d0d7bff0db4065568430c9f6",
+    "browserEquivalent": "Tape drive precision choices.",
+    "runtimeExpansion": [
+      "Normal",
+      "Medium",
+      "High",
+      "Very High"
+    ],
+    "evidence": [
+      "web/tests/parameter-menus.spec.js"
+    ]
+  },
+  "src/surge-xt/gui/SurgeGUIEditorValueCallbacks.cpp:menu-call:a2e58516f2bf80bb": {
+    "status": "verified",
+    "sourceDigest": "c570cb3f14c9c4ef042938b5cb92d635134b1a27d0d7bff0db4065568430c9f6",
+    "browserEquivalent": "Delay feedback limiting choices.",
+    "runtimeExpansion": [
+      "Disabled (DANGER!)",
+      "Soft Clip (cubic)",
+      "Soft Clip (tanh)",
+      "Hard Clip at 0 dBFS",
+      "Hard Clip at +18 dBFS"
+    ],
+    "evidence": [
+      "web/tests/parameter-menus.spec.js"
+    ]
+  },
+  "src/surge-xt/gui/SurgeGUIEditorValueCallbacks.cpp:menu-call:00cc65635a2b91da": {
+    "status": "verified",
+    "sourceDigest": "c570cb3f14c9c4ef042938b5cb92d635134b1a27d0d7bff0db4065568430c9f6",
+    "browserEquivalent": "String oscillator exciter and stiffness options.",
+    "runtimeExpansion": [
+      "1x",
+      "2x",
+      "Zero Order Hold",
+      "Linear",
+      "Sinc",
+      "Static",
+      "Keytracked",
+      "Keytracked and Pitch Compensated"
+    ],
+    "evidence": [
+      "web/tests/parameter-menus.spec.js"
+    ]
+  },
+  "src/surge-xt/gui/SurgeGUIEditorValueCallbacks.cpp:menu-call:e54490d4d33d0472": {
+    "status": "verified",
+    "sourceDigest": "c570cb3f14c9c4ef042938b5cb92d635134b1a27d0d7bff0db4065568430c9f6",
+    "browserEquivalent": "Noise mode Mono; offered only in the Wide filter configuration.",
+    "evidence": [
+      "web/tests/parameter-menus.spec.js"
+    ]
+  },
+  "src/surge-xt/gui/SurgeGUIEditorValueCallbacks.cpp:menu-call:d646685c45704d20": {
+    "status": "verified",
+    "sourceDigest": "c570cb3f14c9c4ef042938b5cb92d635134b1a27d0d7bff0db4065568430c9f6",
+    "browserEquivalent": "Noise mode Stereo; offered only in the Wide filter configuration.",
+    "evidence": [
+      "web/tests/parameter-menus.spec.js"
+    ]
+  },
+  "src/surge-xt/gui/SurgeGUIEditorValueCallbacks.cpp:menu-call:2d211990bb744908": {
+    "status": "verified",
+    "sourceDigest": "c570cb3f14c9c4ef042938b5cb92d635134b1a27d0d7bff0db4065568430c9f6",
+    "browserEquivalent": "Noise type Legacy (default).",
+    "evidence": [
+      "web/tests/parameter-menus.spec.js"
+    ]
+  },
+  "src/surge-xt/gui/SurgeGUIEditorValueCallbacks.cpp:menu-call:c78062b93526d85d": {
+    "status": "verified",
+    "sourceDigest": "c570cb3f14c9c4ef042938b5cb92d635134b1a27d0d7bff0db4065568430c9f6",
+    "browserEquivalent": "Noise type Tilt Filter; saved.",
+    "evidence": [
+      "web/tests/parameter-menus.spec.js"
+    ]
+  },
+  "src/surge-xt/gui/SurgeGUIEditorValueCallbacks.cpp:menu-call:40fb5151fa2b0ae5": {
+    "status": "verified",
+    "sourceDigest": "c570cb3f14c9c4ef042938b5cb92d635134b1a27d0d7bff0db4065568430c9f6",
+    "browserEquivalent": "Ring modulator combinator modes, including gradient modes; saved as deform_type.",
+    "runtimeExpansion": [
+      "Ring Modulation",
+      "Continuous XOR",
+      "4 Gradients: Mode 1 ... Mode 6",
+      "9 Gradients: Mode 1 ... Mode 5"
+    ],
+    "evidence": [
+      "web/tests/parameter-menus.spec.js"
+    ]
+  },
+  "src/surge-xt/gui/SurgeGUIEditorValueCallbacks.cpp:menu-call:0cfab7d9978bf41d": {
+    "status": "verified",
+    "sourceDigest": "c570cb3f14c9c4ef042938b5cb92d635134b1a27d0d7bff0db4065568430c9f6",
+    "browserEquivalent": "Informational heading, disabled as on desktop (hidden from accessibility, present in the menu).",
+    "runtimeExpansion": [
+      "Scale-Invariant Linear Modulation:"
+    ],
+    "evidence": [
+      "web/tests/parameter-menus.spec.js"
+    ]
+  },
+  "src/surge-xt/gui/SurgeGUIEditorValueCallbacks.cpp:menu-call:7825994669df2934": {
+    "status": "verified",
+    "sourceDigest": "c570cb3f14c9c4ef042938b5cb92d635134b1a27d0d7bff0db4065568430c9f6",
+    "browserEquivalent": "4 Gradients submenu.",
+    "evidence": [
+      "web/tests/parameter-menus.spec.js"
+    ]
+  },
+  "src/surge-xt/gui/SurgeGUIEditorValueCallbacks.cpp:menu-call:7750ecbf7571c2c8": {
+    "status": "verified",
+    "sourceDigest": "c570cb3f14c9c4ef042938b5cb92d635134b1a27d0d7bff0db4065568430c9f6",
+    "browserEquivalent": "9 Gradients submenu; its chosen mode is ticked.",
+    "evidence": [
+      "web/tests/parameter-menus.spec.js"
+    ]
+  },
+  "src/surge-xt/gui/SurgeGUIEditorValueCallbacks.cpp:menu-call:982e67ad74777be5": {
+    "status": "verified",
+    "sourceDigest": "c570cb3f14c9c4ef042938b5cb92d635134b1a27d0d7bff0db4065568430c9f6",
+    "browserEquivalent": "Bonsai bass boost routing Mono.",
+    "evidence": [
+      "web/tests/parameter-menus.spec.js"
+    ]
+  },
+  "src/surge-xt/gui/SurgeGUIEditorValueCallbacks.cpp:menu-call:704d9942431f445a": {
+    "status": "verified",
+    "sourceDigest": "c570cb3f14c9c4ef042938b5cb92d635134b1a27d0d7bff0db4065568430c9f6",
+    "browserEquivalent": "Bonsai bass boost routing Stereo.",
+    "evidence": [
+      "web/tests/parameter-menus.spec.js"
+    ]
+  },
+  "src/surge-xt/gui/SurgeGUIEditorValueCallbacks.cpp:menu-call:c2ed80daa38c8be0": {
+    "status": "verified",
+    "sourceDigest": "c570cb3f14c9c4ef042938b5cb92d635134b1a27d0d7bff0db4065568430c9f6",
+    "browserEquivalent": "FM feedback type Surge.",
+    "evidence": [
+      "web/tests/parameter-menus.spec.js"
+    ]
+  },
+  "src/surge-xt/gui/SurgeGUIEditorValueCallbacks.cpp:menu-call:0f274647035836ae": {
+    "status": "verified",
+    "sourceDigest": "c570cb3f14c9c4ef042938b5cb92d635134b1a27d0d7bff0db4065568430c9f6",
+    "browserEquivalent": "FM feedback type Vintage FM.",
+    "evidence": [
+      "web/tests/parameter-menus.spec.js"
+    ]
+  },
+  "src/surge-xt/gui/SurgeGUIEditorValueCallbacks.cpp:menu-call:1688cff5dcdaa00b": {
+    "status": "verified",
+    "sourceDigest": "c570cb3f14c9c4ef042938b5cb92d635134b1a27d0d7bff0db4065568430c9f6",
+    "browserEquivalent": "Amp EG release freeze toggle; saved as deform_type.",
+    "evidence": [
+      "web/tests/parameter-menus.spec.js"
+    ]
+  },
+  "src/surge-xt/gui/SurgeGUIEditorValueCallbacks.cpp:menu-call:3866dac4fd07aff0": {
+    "status": "verified",
+    "sourceDigest": "c570cb3f14c9c4ef042938b5cb92d635134b1a27d0d7bff0db4065568430c9f6",
+    "browserEquivalent": "Wavetable morph legacy mode toggle.",
+    "evidence": [
+      "web/tests/parameter-menus.spec.js"
+    ]
+  },
+  "src/surge-xt/gui/SurgeGUIEditorValueCallbacks.cpp:menu-call:1a8e15080045dbe8": {
+    "status": "verified",
+    "sourceDigest": "c570cb3f14c9c4ef042938b5cb92d635134b1a27d0d7bff0db4065568430c9f6",
+    "browserEquivalent": "Extend-range toggle and its type-specific labels.",
+    "runtimeExpansion": [
+      "Extend Range (Osc 1 Pitch, Delay Feedback)",
+      "Randomize Initial Drift Phase",
+      "Continuous Morph",
+      "Modulation Extends into Self-oscillation",
+      "Apply SCL/KBM Tuning to Filter Cutoff (with Apply Tuning After Modulation)",
+      "Pan Main and Auxiliary Signals"
+    ],
+    "evidence": [
+      "web/tests/parameter-menus.spec.js"
+    ]
+  },
+  "src/surge-xt/gui/SurgeGUIEditorValueCallbacks.cpp:menu-call:94803f762edea002": {
+    "status": "verified",
+    "sourceDigest": "c570cb3f14c9c4ef042938b5cb92d635134b1a27d0d7bff0db4065568430c9f6",
+    "browserEquivalent": "Absolute toggle; saved for pitch and unison detune; FM3 ratios and Combulator offsets rename to frequencies.",
+    "runtimeExpansion": [
+      "Absolute (Osc 1 Pitch, Unison Detune, FM3 M1 Ratio, Combulator Offset 2)"
+    ],
+    "evidence": [
+      "web/tests/parameter-menus.spec.js"
+    ]
+  },
+  "src/surge-xt/gui/SurgeGUIEditorValueCallbacks.cpp:menu-call:6f81a059742ea9ff": {
+    "status": "verified",
+    "sourceDigest": "c570cb3f14c9c4ef042938b5cb92d635134b1a27d0d7bff0db4065568430c9f6",
+    "browserEquivalent": "Deactivation toggles with their labels; saved as deactivated.",
+    "runtimeExpansion": [
+      "Enabled (Highpass, Tape Saturation, Twist LPG Decay)",
+      "Mute Scene A",
+      "Link to Left Channel"
+    ],
+    "evidence": [
+      "web/tests/parameter-menus.spec.js"
+    ]
+  },
+  "src/surge-xt/gui/SurgeGUIEditorValueCallbacks.cpp:menu-call:8f24aff1be55970a": {
+    "status": "verified",
+    "sourceDigest": "c570cb3f14c9c4ef042938b5cb92d635134b1a27d0d7bff0db4065568430c9f6",
+    "browserEquivalent": "Modern oscillator waveform choice; the control is renamed after the waveform.",
+    "runtimeExpansion": [
+      "Triangle",
+      "Sine",
+      "Square"
+    ],
+    "evidence": [
+      "web/tests/parameter-menus.spec.js"
+    ]
+  },
+  "src/surge-xt/gui/SurgeGUIEditorValueCallbacks.cpp:menu-call:073eb858f748c926": {
+    "status": "verified",
+    "sourceDigest": "c570cb3f14c9c4ef042938b5cb92d635134b1a27d0d7bff0db4065568430c9f6",
+    "browserEquivalent": "Modern sub-oscillator enable toggle.",
+    "evidence": [
+      "web/tests/parameter-menus.spec.js"
+    ]
+  },
+  "src/surge-xt/gui/SurgeGUIEditorValueCallbacks.cpp:menu-call:0d56c87e7f137c60": {
+    "status": "verified",
+    "sourceDigest": "c570cb3f14c9c4ef042938b5cb92d635134b1a27d0d7bff0db4065568430c9f6",
+    "browserEquivalent": "Modern sub-oscillator two octaves down toggle.",
+    "evidence": [
+      "web/tests/parameter-menus.spec.js"
+    ]
+  },
+  "src/surge-xt/gui/SurgeGUIEditorValueCallbacks.cpp:menu-call:9e82e0c06c9aafdd": {
+    "status": "verified",
+    "sourceDigest": "c570cb3f14c9c4ef042938b5cb92d635134b1a27d0d7bff0db4065568430c9f6",
+    "browserEquivalent": "Modern sub-oscillator hardsync toggle.",
+    "evidence": [
+      "web/tests/parameter-menus.spec.js"
+    ]
+  },
+  "src/surge-xt/gui/SurgeGUIEditorValueCallbacks.cpp:menu-call:3c3351731ebcc8a8": {
+    "status": "verified",
+    "sourceDigest": "c570cb3f14c9c4ef042938b5cb92d635134b1a27d0d7bff0db4065568430c9f6",
+    "browserEquivalent": "Indexed source outputs route modulation through the depth type-in.",
+    "runtimeExpansion": [
+      "Voice LFO 2",
+      "Voice LFO 2 (Raw Waveform)",
+      "Voice LFO 2 (EG Only)",
+      "Sweep (LFO 1) (renamed)",
+      "Random Bipolar (Uniform)",
+      "Random Bipolar (Normal)"
+    ],
+    "evidence": [
+      "web/tests/parameter-menus.spec.js"
+    ]
+  },
+  "src/surge-xt/gui/SurgeGUIEditorValueCallbacks.cpp:menu-call:e9274309eb8d617f": {
+    "status": "verified",
+    "sourceDigest": "c570cb3f14c9c4ef042938b5cb92d635134b1a27d0d7bff0db4065568430c9f6",
+    "browserEquivalent": "Per-source submenus for indexed sources.",
+    "runtimeExpansion": [
+      "Voice LFO 1 ... Voice LFO 6",
+      "Scene LFO 1 ... Scene LFO 6",
+      "Random Bipolar",
+      "Random Unipolar"
+    ],
+    "evidence": [
+      "web/tests/parameter-menus.spec.js"
+    ]
+  },
+  "src/surge-xt/gui/SurgeGUIEditorValueCallbacks.cpp:menu-call:01accba9e15245bf": {
+    "status": "verified",
+    "sourceDigest": "c570cb3f14c9c4ef042938b5cb92d635134b1a27d0d7bff0db4065568430c9f6",
+    "browserEquivalent": "Non-indexed sources route modulation; sources already routed to the parameter are not offered again.",
+    "runtimeExpansion": [
+      "Macro 1 ... Macro 8",
+      "Filter EG",
+      "Amp EG",
+      "Velocity",
+      "Modwheel",
+      "Keytrack and other MIDI sources",
+      "Alternate Bipolar",
+      "Alternate Unipolar"
+    ],
+    "evidence": [
+      "web/tests/parameter-menus.spec.js"
+    ]
+  },
+  "src/surge-xt/gui/SurgeGUIEditorValueCallbacks.cpp:menu-call:d0dd69047b1a618a": {
+    "status": "verified",
+    "sourceDigest": "c570cb3f14c9c4ef042938b5cb92d635134b1a27d0d7bff0db4065568430c9f6",
+    "browserEquivalent": "Macros group.",
+    "evidence": [
+      "web/tests/parameter-menus.spec.js"
+    ]
+  },
+  "src/surge-xt/gui/SurgeGUIEditorValueCallbacks.cpp:menu-call:a993896b3bddac86": {
+    "status": "verified",
+    "sourceDigest": "c570cb3f14c9c4ef042938b5cb92d635134b1a27d0d7bff0db4065568430c9f6",
+    "browserEquivalent": "Voice LFOs group.",
+    "evidence": [
+      "web/tests/parameter-menus.spec.js"
+    ]
+  },
+  "src/surge-xt/gui/SurgeGUIEditorValueCallbacks.cpp:menu-call:0b720907d05633f0": {
+    "status": "verified",
+    "sourceDigest": "c570cb3f14c9c4ef042938b5cb92d635134b1a27d0d7bff0db4065568430c9f6",
+    "browserEquivalent": "Scene LFOs group.",
+    "evidence": [
+      "web/tests/parameter-menus.spec.js"
+    ]
+  },
+  "src/surge-xt/gui/SurgeGUIEditorValueCallbacks.cpp:menu-call:4cda47f872432027": {
+    "status": "verified",
+    "sourceDigest": "c570cb3f14c9c4ef042938b5cb92d635134b1a27d0d7bff0db4065568430c9f6",
+    "browserEquivalent": "Envelopes group.",
+    "evidence": [
+      "web/tests/parameter-menus.spec.js"
+    ]
+  },
+  "src/surge-xt/gui/SurgeGUIEditorValueCallbacks.cpp:menu-call:1550bb22f92e828a": {
+    "status": "verified",
+    "sourceDigest": "c570cb3f14c9c4ef042938b5cb92d635134b1a27d0d7bff0db4065568430c9f6",
+    "browserEquivalent": "MIDI group.",
+    "evidence": [
+      "web/tests/parameter-menus.spec.js"
+    ]
+  },
+  "src/surge-xt/gui/SurgeGUIEditorValueCallbacks.cpp:menu-call:358f767c252e6123": {
+    "status": "verified",
+    "sourceDigest": "c570cb3f14c9c4ef042938b5cb92d635134b1a27d0d7bff0db4065568430c9f6",
+    "browserEquivalent": "Internal group.",
+    "evidence": [
+      "web/tests/parameter-menus.spec.js"
+    ]
+  },
+  "src/surge-xt/gui/SurgeGUIEditorValueCallbacks.cpp:menu-call:8cb81ed4dcec1053": {
+    "status": "verified",
+    "sourceDigest": "c570cb3f14c9c4ef042938b5cb92d635134b1a27d0d7bff0db4065568430c9f6",
+    "browserEquivalent": "Add Modulation from submenu on modulatable parameters.",
+    "evidence": [
+      "web/tests/parameter-menus.spec.js"
+    ]
+  },
+  "src/surge-xt/gui/SurgeGUIEditorValueCallbacks.cpp:menu-call:b20962da170eada7": {
+    "status": "verified",
+    "sourceDigest": "c570cb3f14c9c4ef042938b5cb92d635134b1a27d0d7bff0db4065568430c9f6",
+    "browserEquivalent": "Scene hard clip disabled; single checkmark.",
+    "runtimeExpansion": [
+      "Scene A Hard Clip Disabled"
+    ],
+    "evidence": [
+      "web/tests/parameter-menus.spec.js"
+    ]
+  },
+  "src/surge-xt/gui/SurgeGUIEditorValueCallbacks.cpp:menu-call:214a52abbb2be44a": {
+    "status": "verified",
+    "sourceDigest": "c570cb3f14c9c4ef042938b5cb92d635134b1a27d0d7bff0db4065568430c9f6",
+    "browserEquivalent": "Scene hard clip at 0 dBFS; saved in hardclipmodes.",
+    "runtimeExpansion": [
+      "Scene A Hard Clip at 0 dBFS"
+    ],
+    "evidence": [
+      "web/tests/parameter-menus.spec.js"
+    ]
+  },
+  "src/surge-xt/gui/SurgeGUIEditorValueCallbacks.cpp:menu-call:2d2520253a8eedc3": {
+    "status": "verified",
+    "sourceDigest": "c570cb3f14c9c4ef042938b5cb92d635134b1a27d0d7bff0db4065568430c9f6",
+    "browserEquivalent": "Scene hard clip at +18 dBFS (default).",
+    "runtimeExpansion": [
+      "Scene A Hard Clip at +18 dBFS"
+    ],
+    "evidence": [
+      "web/tests/parameter-menus.spec.js"
+    ]
+  },
+  "src/surge-xt/gui/SurgeGUIEditorValueCallbacks.cpp:menu-call:46a0980ac11ca87a": {
+    "status": "verified",
+    "sourceDigest": "c570cb3f14c9c4ef042938b5cb92d635134b1a27d0d7bff0db4065568430c9f6",
+    "browserEquivalent": "Global hard clip disabled; single checkmark.",
+    "evidence": [
+      "web/tests/parameter-menus.spec.js"
+    ]
+  },
+  "src/surge-xt/gui/SurgeGUIEditorValueCallbacks.cpp:menu-call:81533c7b37e5f96e": {
+    "status": "verified",
+    "sourceDigest": "c570cb3f14c9c4ef042938b5cb92d635134b1a27d0d7bff0db4065568430c9f6",
+    "browserEquivalent": "Global hard clip at 0 dBFS; saved in hardclipmodes.",
+    "evidence": [
+      "web/tests/parameter-menus.spec.js"
+    ]
+  },
+  "src/surge-xt/gui/SurgeGUIEditorValueCallbacks.cpp:menu-call:653a3e3f6814fc6a": {
+    "status": "verified",
+    "sourceDigest": "c570cb3f14c9c4ef042938b5cb92d635134b1a27d0d7bff0db4065568430c9f6",
+    "browserEquivalent": "Global hard clip at +18 dBFS (default).",
+    "evidence": [
+      "web/tests/parameter-menus.spec.js"
+    ]
+  },
+  "src/surge-xt/gui/SurgeGUIEditorValueCallbacks.cpp:menu-call:de7d1b721a1e0632": {
+    "status": "platform-limitation",
+    "sourceDigest": "c570cb3f14c9c4ef042938b5cb92d635134b1a27d0d7bff0db4065568430c9f6",
+    "capability": "udp-osc",
+    "reason": "Shows the parameter's Open Sound Control address when OSC input is listening; browsers cannot open UDP sockets, so OSC input never starts and the entry is absent (asserted).",
+    "portableAlternative": "Parameters remain controllable through MIDI learn and CC assignment."
+  },
+  "src/surge-xt/gui/SurgeGUIEditorValueCallbacks.cpp:menu-call:955ac6116d9d3d41:2": {
+    "status": "platform-limitation",
+    "sourceDigest": "c570cb3f14c9c4ef042938b5cb92d635134b1a27d0d7bff0db4065568430c9f6",
+    "capability": "plugin-host",
+    "reason": "Items supplied by a plugin host for the parameter; the browser, like the standalone app, has no host (asserted absent).",
+    "portableAlternative": "All original parameter menu items remain available."
+  },
+  "src/surge-xt/gui/widgets/ModulationSourceButton.cpp:menu-call:3769e4eaf8c835d2": {
+    "status": "verified",
+    "sourceDigest": "28da47c0106db4d59343f768567687fda9bf70bfa12e4a146bb9180e4681f28a",
+    "browserEquivalent": "The hamburger menu at the left edge of a multi-output modulator opens with the modulator name as its help header.",
+    "runtimeExpansion": [
+      "Voice LFO 1"
+    ],
+    "evidence": [
+      "web/tests/parameter-menus.spec.js"
+    ]
+  },
+  "src/surge-xt/gui/widgets/ModulationSourceButton.cpp:menu-call:a34a928673cefb1d": {
+    "status": "verified",
+    "sourceDigest": "28da47c0106db4d59343f768567687fda9bf70bfa12e4a146bb9180e4681f28a",
+    "browserEquivalent": "Lists each output of the modulator; choosing one changes the displayed output (ticked in the hamburger menu, offered under Switch To in the context menu).",
+    "runtimeExpansion": [
+      "Voice LFO 1",
+      "Voice LFO 1 (Raw Waveform)",
+      "Voice LFO 1 (EG Only)"
+    ],
+    "evidence": [
+      "web/tests/parameter-menus.spec.js"
+    ]
+  },
+  "src/surge-xt/gui/widgets/ModulationSourceButton.cpp:menu-call:5a8d9d8f29986a66": {
+    "status": "verified",
+    "sourceDigest": "28da47c0106db4d59343f768567687fda9bf70bfa12e4a146bb9180e4681f28a",
+    "browserEquivalent": "Toggles whether the LFO amplitude applies to the raw and EG outputs; saved as extraAmplitude and shown ticked.",
+    "runtimeExpansion": [
+      "Amplitude Parameter Applies to Raw and EG Outputs"
+    ],
+    "evidence": [
+      "web/tests/parameter-menus.spec.js"
+    ]
   }
 }
