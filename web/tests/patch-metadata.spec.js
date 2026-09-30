@@ -1,7 +1,13 @@
 import {test,expect} from './fixtures.js';
 const author='Browser Author Ω',comment='Default notes — café';
 const appendLabel='Append Original Author Name to Modified Patches';
-async function ready(page){await expect.poll(()=>page.evaluate(()=>globalThis.Module?._surge_browser_scene?.())).toBe(0);}
+// Wait for the startup patch too: its completion rebuilds the editor, which would
+// close a prompt opened before it.
+async function ready(page){
+  await expect.poll(()=>page.evaluate(()=>globalThis.Module?._surge_browser_scene?.())).toBe(0);
+  await expect.poll(()=>page.evaluate(()=>Module.ccall('surge_browser_patch_name','string',[],[]))).toBe('Init Saw');
+  await expect(page.getByRole('button',{name:'Main Menu',exact:true})).toBeAttached();
+}
 async function menu(page){
   await page.getByRole('button',{name:'Main Menu',exact:true}).dispatchEvent('click');
   await page.getByRole('menuitem',{name:'Patch Settings',exact:true}).dispatchEvent('click');
