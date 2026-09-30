@@ -415,6 +415,14 @@ void SurgeSynthesizer::processEnqueuedPatchIfNeeded()
 void SurgeSynthesizer::loadRaw(const void *data, int size, bool preset)
 {
     halt_engine = true;
+#if !SURGE_WEB
+    {
+        // A table replaced just before this load must not land on the new patch.
+        std::lock_guard<std::mutex> lock(storage.waveTableDataMutex);
+        for (auto &pending : storage.pendingWavetableReplacement)
+            pending.reset();
+    }
+#endif
 #if SURGE_WEB
     browserPatchGeneration.fetch_add(1, std::memory_order_release);
     {

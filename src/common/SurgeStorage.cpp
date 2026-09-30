@@ -1539,6 +1539,23 @@ void SurgeStorage::perform_queued_wtloads()
             // audio thread; catch here so a bad load can't terminate the process.
             try
             {
+#if !SURGE_WEB
+                {
+                    // Adopt a table replaced from the UI thread. The displaced buffers go to the
+                    // retired slot (empty whenever a table is pending), so nothing is freed here.
+                    std::unique_lock<std::mutex> lk(waveTableDataMutex, std::try_to_lock);
+                    const int index = sc * n_oscs + o;
+                    if (lk.owns_lock() && pendingWavetableReplacement[index])
+                    {
+                        auto &wt = patch.scene[sc].osc[o].wt;
+                        wt.swapData(*pendingWavetableReplacement[index]);
+                        std::swap(retiredWavetableReplacement[index],
+                                  pendingWavetableReplacement[index]);
+                        wt.refresh_display = true;
+                        wt.force_refresh_display = true;
+                    }
+                }
+#endif
                 // A queued wavetable load replaces this osc's live wt, so bump wtGenPublishToken
                 // first and any in-progress WT script generate skips its stale publish. The bump
                 // takes its own lock scope because load_wt takes waveTableDataMutex internally.
@@ -2585,6 +2602,10 @@ void SurgeStorage::copyOscillatorWavetable(int scene, int osc, Wavetable &destin
     const std::lock_guard<std::mutex> lock(waveTableDataMutex);
     auto &live = getPatch().scene[scene].osc[osc].wt;
     auto *source = &live;
+#if !SURGE_WEB
+    if (const auto &pending = pendingWavetableReplacement[scene * n_oscs + osc])
+        source = pending.get();
+#endif
 #if SURGE_WEB
     const int index = scene * n_oscs + osc;
     const auto &pending = browserGeneratedWavetables[index];
@@ -2624,7 +2645,14 @@ void SurgeStorage::replaceOscillatorWavetable(int scene, int osc, Wavetable &sou
     }
     else
 #endif
+    {
+#if SURGE_WEB
         live.swapData(*prepared);
+#else
+        retiredWavetableReplacement[index].reset();
+        pendingWavetableReplacement[index] = std::move(prepared);
+#endif
+    }
     live.refresh_display = true;
     live.force_refresh_display = true;
     live.refresh_script_editor = true;

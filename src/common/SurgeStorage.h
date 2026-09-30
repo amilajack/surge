@@ -1862,6 +1862,13 @@ class alignas(16) SurgeStorage
         browserGeneratedWavetables;
 #else
     std::array<uint64_t, n_scenes * n_oscs> wtGenPublishToken{};
+    // Tables replaced from the UI thread (undo/redo, paste) reach the live oscillator at a
+    // block boundary: perform_queued_wtloads swaps the pending table in on the audio thread,
+    // which reads live buffers without a lock. The displaced buffers wait in the retired slot
+    // and are freed by the next UI-thread replacement, never on the audio thread. Both are
+    // protected by waveTableDataMutex; a pending table is only set with its retired slot empty.
+    std::array<std::unique_ptr<Wavetable>, n_scenes * n_oscs> pendingWavetableReplacement;
+    std::array<std::unique_ptr<Wavetable>, n_scenes * n_oscs> retiredWavetableReplacement;
 #endif
 
     // Background wavetable-script generation worker. Declared after _patch and
