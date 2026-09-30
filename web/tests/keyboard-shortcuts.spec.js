@@ -23,11 +23,15 @@ async function bind(page,row,chord){
 test('undo and redo shortcuts reverse and reapply an edit',async({page})=>{
   await start(page);
   const volume=page.getByRole('slider',{name:'Global Volume',exact:true});
-  const before=await volume.getAttribute('aria-valuenow');
-  await volume.focus();await page.keyboard.press('End');
-  await expect(volume).toHaveAttribute('aria-valuenow','1');
-  await press(page,'Control+z');await expect(volume).toHaveAttribute('aria-valuenow',before);
-  await press(page,'Control+y');await expect(volume).toHaveAttribute('aria-valuenow','1');
+  const value=()=>volume.getAttribute('aria-valuenow');
+  // Wait for the loaded Init Saw volume (-2.03 dB), not the startup default.
+  await expect.poll(value).not.toBe('1');const before=await value();
+  // Edit through the slider's own key handling, as a desktop keyboard user does;
+  // JUCE keeps focus on the slider while the canvas holds DOM focus.
+  await volume.focus();await canvas(page).focus();await page.keyboard.press('End');
+  await expect.poll(value).not.toBe(before);const edited=await value();
+  await press(page,'Control+z');await expect.poll(value).toBe(before);
+  await press(page,'Control+y');await expect.poll(value).toBe(edited);
 });
 
 test('save shortcut opens the original dialog instead of the browser save',async({page})=>{
