@@ -245,9 +245,18 @@ bool SurgeSynthesizer::loadPatchByPath(const char *fxpPath, int categoryId, cons
 {
     std::vector<char> data;
     std::string error;
-    if (!Surge::PatchStorage::readValidatedPatch(string_to_path(fxpPath), data, error))
+#if SURGE_WEB
+    // Browser storage may hold files imported before validation or partially written;
+    // reject them before they touch the current patch.
+    const bool read = Surge::PatchStorage::readValidatedPatch(string_to_path(fxpPath), data, error);
+#else
+    // Desktop keeps the loader's own tolerance of partially damaged patches and parses once.
+    const bool read = Surge::PatchStorage::readPatchFile(string_to_path(fxpPath), data, error);
+#endif
+    if (!read)
     {
-        storage.reportError("Unable to load patch: " + error, "Load Error");
+        storage.reportError("Unable to load " + std::string(patchName) + ".fxp: " + error,
+                            "Load Error");
         return false;
     }
     storage.getPatch().dawExtraState.editor.clearAllFormulaStates();

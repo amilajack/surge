@@ -149,6 +149,35 @@ bool readValidatedPatch(const fs::path &path, std::vector<char> &data, std::stri
     }
 }
 
+bool readPatchFile(const fs::path &path, std::vector<char> &data, std::string &error)
+{
+    data.clear();
+    error.clear();
+    std::ifstream file(path, std::ios::binary | std::ios::ate);
+    if (!file) { error = "Unable to open patch file"; return false; }
+    const auto length = file.tellg();
+    sst::io::fxChunkSetCustom header{};
+    file.seekg(0);
+    if (length < std::streamoff(sizeof(header)) ||
+        !file.read(reinterpret_cast<char *>(&header), sizeof(header)) ||
+        mech::endian_read_int32BE(header.chunkMagic) != 'CcnK' ||
+        mech::endian_read_int32BE(header.fxMagic) != 'FPCh' ||
+        mech::endian_read_int32BE(header.fxID) != 'cjs3')
+    {
+        error = "Loaded file has unknown FXP file format. This error usually occurs when you "
+                "attempt to load an .fxp that belongs to another plugin into Surge XT.";
+        return false;
+    }
+    const auto size = mech::endian_read_int32BE(header.chunkSize);
+    if (size <= 0) { error = "Invalid FXP chunk length"; return false; }
+    // As before, a short read still loads what is there; the loader handles missing tails.
+    const auto available = std::uint64_t(length) - sizeof(header);
+    data.resize(std::size_t(std::min<std::uint64_t>(std::uint64_t(size), available)));
+    file.read(data.data(), data.size());
+    data.resize(std::size_t(file.gcount()));
+    return true;
+}
+
 namespace
 {
 bool readAll(const fs::path &path, std::string &contents, std::string &error)
