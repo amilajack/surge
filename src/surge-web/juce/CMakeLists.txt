@@ -99,3 +99,8 @@ configure_file(${CMAKE_SOURCE_DIR}/web/browser/runtime.js ${CMAKE_BINARY_DIR}/we
 configure_file(${CMAKE_SOURCE_DIR}/web/browser/tuning-library.js ${CMAKE_BINARY_DIR}/web/tuning-library.js COPYONLY)
 
 configure_file(${CMAKE_SOURCE_DIR}/web/browser/archive-recovery.js ${CMAKE_BINARY_DIR}/web/archive-recovery.js COPYONLY)
+
+# Browser-only fallback fonts, fetched on demand rather than preloaded.
+foreach(font NotoSansSC-Regular.otf NotoSansKR-Regular.otf NotoEmoji-Regular.ttf)
+  configure_file(${CMAKE_SOURCE_DIR}/resources/fonts-fallback/${font} ${CMAKE_BINARY_DIR}/web/fonts-fallback/${font} COPYONLY)
+endforeach()

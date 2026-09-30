@@ -262,6 +262,25 @@ if (typeof window !== 'undefined') {
         if (!completed) complete([]);
       }
     },
+    fallbackFonts: null,
+    // Fetched only when JUCE meets text none of the bundled fonts can show.
+    requestFallbackFonts() {
+      if (platform.fallbackFonts) return platform.fallbackFonts;
+      const names = ['NotoSansSC-Regular.otf', 'NotoSansKR-Regular.otf', 'NotoEmoji-Regular.ttf'];
+      platform.fallbackFonts = Promise.all(names.map(async name => {
+        const response = await fetch('fonts-fallback/' + name);
+        if (!response.ok) throw Error(`Font download failed (${response.status}): ${name}`);
+        return [name, new Uint8Array(await response.arrayBuffer())];
+      })).then(fonts => {
+        FS.mkdirTree('/fonts/fallback');
+        for (const [name, bytes] of fonts) FS.writeFile('/fonts/fallback/' + name, bytes);
+        Module['_surge_browser_fonts_added']();
+      }).catch(error => {
+        platform.fallbackFonts = null;
+        platform.reportFile('Fallback fonts unavailable; some characters may not display. ' + String(error));
+      });
+      return platform.fallbackFonts;
+    },
     deferred: new Map(),
     // Resolves true when the application finished the export, false if it failed
     // or the user canceled. Nothing is written to the destination in that case.

@@ -100,6 +100,8 @@ def inputs(build):
         add(name)
     for name in ['surge-xt-browser.wasm', 'surge-xt-browser.data', 'library.js']:
         add(name)
+    for path in sorted((build / 'fonts-fallback').glob('*')):
+        add('fonts-fallback/' + path.name)
     # Include any SDK-generated worker sidecars, without diagnostic harnesses.
     for path in sorted(build.glob('surge-xt-browser.*.js')):
         add(path.name)

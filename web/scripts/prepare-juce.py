@@ -48,6 +48,84 @@ edit('juce_data_structures/app_properties/juce_PropertiesFile.cpp', '#elif JUCE_
 edit('juce_core/threads/juce_Thread.h', '#if JUCE_ANDROID || JUCE_LINUX || JUCE_BSD', '#if JUCE_ANDROID || JUCE_LINUX || JUCE_BSD || JUCE_WASM')
 edit('juce_graphics/images/juce_Image.cpp', '#if JUCE_LINUX || JUCE_BSD', '#if JUCE_LINUX || JUCE_BSD || JUCE_WASM')
 edit('juce_audio_processors/utilities/juce_PluginHostType.cpp', '#elif JUCE_ANDROID\n   #else', '#elif JUCE_ANDROID || JUCE_WASM\n   #else')
+# Without fontconfig, JUCE has no font fallback and renders missing glyphs as
+# boxes. In browsers, use the first scanned face that maps the character; if none
+# does, ask the page to fetch the fallback fonts, which rescans /fonts and repaints.
+edit('juce_graphics/native/juce_Fonts_freetype.cpp', 'namespace juce\n{',
+     '#if JUCE_WASM\nextern "C" void surge_browser_request_fallback_fonts();\n#endif\n\nnamespace juce\n{')
+edit('juce_graphics/native/juce_Fonts_freetype.cpp', """    FTFaceWrapper::Ptr createFace (const String& fontName, const String& fontStyle)
+    {""", """   #if JUCE_WASM
+    FTFaceWrapper::Ptr findFaceWithCharacter (juce_wchar character)
+    {
+        // Faces cover whole blocks in practice; reuse a match for its 256-codepoint block.
+        if (auto found = fallbackByBlock.find (character >> 8); found != fallbackByBlock.end()
+            && FT_Get_Char_Index (found->second->face, (FT_ULong) character) != 0)
+            return found->second;
+
+        for (const auto& known : faces)
+            if (auto face = known->create (library))
+                if (FT_Get_Char_Index (face->face, (FT_ULong) character) != 0)
+                    return fallbackByBlock[character >> 8] = face;
+
+        return nullptr;
+    }
+
+    std::map<juce_wchar, FTFaceWrapper::Ptr> fallbackByBlock;
+   #endif
+
+    FTFaceWrapper::Ptr createFace (const String& fontName, const String& fontStyle)
+    {""")
+edit('juce_graphics/native/juce_Fonts_freetype.cpp', """       #else
+        // Font substitution will not work unless fontconfig is enabled.
+        jassertfalse;
+        return nullptr;
+       #endif""", """       #elif JUCE_WASM
+        if (text.isEmpty())
+            return nullptr;
+
+        if (auto face = FTTypefaceList::getInstance()->findFaceWithCharacter (*text.getCharPointer()))
+        {
+            HbFace hbFace { hb_ft_face_create_referenced (face->face), IncrementRef::no };
+            HbFont hb { hb_font_create (hbFace.get()), IncrementRef::no };
+
+            if (hb != nullptr)
+                return new FreeTypeTypeface (DoCache::no, face, std::move (hb), face->face->family_name, face->face->style_name);
+        }
+
+        surge_browser_request_fallback_fonts();
+        return nullptr;
+       #else
+        // Font substitution will not work unless fontconfig is enabled.
+        jassertfalse;
+        return nullptr;
+       #endif""")
+# Shaped text is cached. When fallback fonts arrive, the browser bumps this
+# generation so text shaped with missing-glyph boxes is shaped again.
+edit('juce_graphics/contexts/juce_GraphicsContext.cpp', """namespace
+{
+    template <typename ArrangementArgs>""", """#if JUCE_WASM
+extern "C" { int surge_browser_font_generation = 0; }
+#endif
+
+namespace
+{
+    template <typename ArrangementArgs>""")
+edit('juce_graphics/contexts/juce_GraphicsContext.cpp', """        [[nodiscard]] auto get (ArrangementArgs&& args, ConfigureArrangement&& configureArrangement)
+        {""", """        [[nodiscard]] auto get (ArrangementArgs&& args, ConfigureArrangement&& configureArrangement)
+        {
+           #if JUCE_WASM
+            if (generation != surge_browser_font_generation)
+            {
+                cache.clear();
+                generation = surge_browser_font_generation;
+            }
+           #endif""")
+edit('juce_graphics/contexts/juce_GraphicsContext.cpp', """        LruCache<ArrangementArgs, GlyphArrangement> cache;
+        CriticalSection lock;""", """        LruCache<ArrangementArgs, GlyphArrangement> cache;
+        CriticalSection lock;
+       #if JUCE_WASM
+        int generation = 0;
+       #endif""")
 
 # Chrome clipboard APIs are asynchronous. Adapt editor commands instead of
 # blocking the UI thread or reusing stale cached clipboard text.

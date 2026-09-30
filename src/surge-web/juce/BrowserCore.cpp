@@ -57,3 +57,9 @@ bool DatagramSocket::setEnablePortReuse(bool) { return false; }
 } // namespace juce
 
 // clang-format on
+// Called by the JUCE FreeType overlay when no loaded face has a glyph. The page
+// fetches the fallback fonts once and calls surge_browser_fonts_added.
+extern "C" void surge_browser_request_fallback_fonts()
+{
+    EM_ASM({ globalThis.SurgeBrowser?.requestFallbackFonts?.(); });
+}

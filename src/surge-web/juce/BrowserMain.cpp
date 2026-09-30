@@ -72,6 +72,27 @@ extern "C" EMSCRIPTEN_KEEPALIVE int surge_browser_scene()
 {
     return browserProcessor ? browserProcessor->surge->storage.getPatch().scene_active.val.i : -1;
 }
+// JUCE asks for fallback fonts when no loaded face has a glyph; the page fetches
+// them once, writes them to /fonts/fallback, then calls surge_browser_fonts_added.
+// Diagnostic: shaped glyphs of the text that resolve to the missing glyph (0).
+extern "C" EMSCRIPTEN_KEEPALIVE int surge_browser_missing_glyphs(const char *text)
+{
+    juce::GlyphArrangement arrangement;
+    arrangement.addLineOfText(juce::FontOptions(14.f), juce::String::fromUTF8(text), 0.f, 0.f);
+    int missing = 0;
+    for (int i = 0; i < arrangement.getNumGlyphs(); ++i)
+        if (!arrangement.getGlyph(i).isWhitespace() && arrangement.getGlyph(i).getGlyphIndex() == 0)
+            ++missing;
+    return missing;
+}
+extern "C" int surge_browser_font_generation;
+extern "C" EMSCRIPTEN_KEEPALIVE void surge_browser_fonts_added()
+{
+    juce::Typeface::scanFolderForFonts(juce::File("/fonts/fallback"));
+    ++surge_browser_font_generation; // Reshape text that was drawn with missing-glyph boxes.
+    for (int i = 0; i < juce::ComponentPeer::getNumPeers(); ++i)
+        juce::ComponentPeer::getPeer(i)->getComponent().repaint();
+}
 // The standalone editor is created directly, so it is not the processor's active editor.
 static SurgeSynthEditor *browserEditor{};
 // Loads a factory tuning file through the Tuning menu's own loaders.

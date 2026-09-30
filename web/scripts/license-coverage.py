@@ -88,7 +88,7 @@ def main():
                 dependencies.add(name)
     for name in sorted(dependencies):
         check(name, coverage['rules'])
-    assets = sorted(p.relative_to(root).as_posix() for base in ('resources/data', 'resources/fonts')
+    assets = sorted(p.relative_to(root).as_posix() for base in ('resources/data', 'resources/fonts', 'resources/fonts-fallback')
                     for p in (root / base).rglob('*') if p.is_file() and p.name != '.DS_Store')
     for name in assets:
         check(name, coverage['assets'])

@@ -1986,6 +1986,18 @@
       "source": ".toolchains/emsdk-6.0.10/upstream/emscripten/cache/ports/freetype/freetype-VER-2-14-3/docs/GPLv2.TXT",
       "sha256": "c4120c6752c910c299e3bd9cb3a46ff262c268303ca2069b61f92f10a5656c18",
       "bytes": 17994
+    },
+    {
+      "component": "Noto Sans CJK",
+      "source": "resources/fonts-fallback/LICENSE-NotoSansCJK.txt",
+      "sha256": "6a73f9541c2de74158c0e7cf6b0a58ef774f5a780bf191f2d7ec9cc53efe2bf2",
+      "bytes": 4301
+    },
+    {
+      "component": "Noto Emoji",
+      "source": "resources/fonts-fallback/OFL-NotoEmoji.txt",
+      "sha256": "500bb1ccf43df7bbb522112f9133a52b16e1c35e809632f5d8609b179152de5b",
+      "bytes": 4330
     }
   ],
   "remaining": [],
