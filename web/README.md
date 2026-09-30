@@ -1738,32 +1738,65 @@ workflow tests plus four inventory checks (**7 checks in 27.9 seconds**).
 
 ## Remaining parity work
 
-This branch must not be described as feature complete until these pass:
+Every automatable item is done and verified in Chrome and Node.
+`python3 web/scripts/feature-inventory.py --require-complete` passes: all **736**
+source entry points are reviewed against browser evidence (menus, context menus,
+shortcuts, skin connectors and actions, overlays and editor implementations).
+Platform limitations are limited to the allowed capability types:
 
-- Audit and verify control/audio ownership in the JUCE AudioWorklet bridge;
-  the development C ABI must only be accessed with exclusive engine ownership.
-- Complete off-callback formula preparation for live edits. Browser startup and
-  patch loading now prepare bounded per-modulator compiled chunks under exclusive
-  engine ownership, without executing user code or consuming shared-reset requests.
-  `LFOModulationSource::attackFrom()` still calls `Formula::prepareForEvaluation()`;
-  a source changed after preparation takes its synchronous compilation fallback.
-  The formula editor's separate display state does not prepare the audio state.
-  Live-edit handoffs and first-evaluation allocation/deadline safety remain open.
-- Real-device MIDI/MPE and audio input, full event scheduling coverage, sustained
-  polyphony/expensive-patch profiling, and allocation audit. Basic live playback,
-  patch handoff, failure recovery, and suspension have coverage at 44.1/48 kHz.
-- Complete application-level file workflows, patch round trips, transactional
-  import validation, scripted wavetable supersession/export workflows, and lazy loading for remaining
-  non-patch assets. Patch and skin catalog/selection, browser picker adapters, and persistent
-  filesystem behavior already have automated coverage.
-- Physical IME and clipboard permissions, CJK/emoji font fallback, complete accessibility
-  interfaces and screen-reader workflows, and complete keyboard/focus behavior. Pointer capture and high-DPI rendering have
-  diagnostic coverage; advanced editor interactions still need verification.
-- All desktop controls, menus, advanced editors, undo/redo, Lua extensions,
-  tuning, effect families, skins, and reference audio/screenshot comparisons.
-- Hide desktop-only OSC, native device settings, and host/interprocess actions.
-- Static release pipeline, content hashing, asset licensing notices, and
-  source distribution packaging; retire native product jobs only after parity.
+- native audio/MIDI device selection (`native-driver`);
+- plugin-host menu items (`plugin-host`);
+- OS shell reveal/console actions (`os-shell`);
+- MTS-ESP (`mts-esp`);
+- direct UDP OSC (`udp-osc`).
+
+Items that are absent from the default desktop build as well are recorded as
+verified absences rather than limitations. These are `#if 0` fullscreen items,
+the opt-in Melatonin/instrumentation developer builds, Windows-only entries,
+DEBUG-only undo history, and the unreachable patch database overlay. Each is
+asserted absent by a spec. The completed work also covers:
+
+- engine ownership in the JUCE AudioWorklet bridge and the development C ABI;
+- a callback allocation audit with no system-heap allocations;
+- live formula compilation off the audio callback;
+- portable seeded Airwindows randomness;
+- transactional imports and exports;
+- non-blocking scripted wavetable export;
+- custom data folders;
+- platform exclusions;
+- CJK/emoji fallback fonts;
+- real clipboard permissions;
+- accessible tables and focus, and overlay focus containment;
+- versioned static delivery, license notice coverage and bundled corresponding
+  source;
+- a browser CI workflow (`.github/workflows/build-web.yml`), which has not yet
+  run on GitHub.
+
+What remains needs hardware or a person and is **not** claimed as verified:
+
+- Real MIDI/MPE controllers and audio input devices.
+- Deadline profiling on real hardware with physical output
+  (`web/scripts/audio-profile.mjs`).
+- Physical IME candidate windows.
+- Screen-reader speech (VoiceOver, NVDA).
+- Native desktop reference screenshots captured from a `buildmac` build.
+- The Vercel deployment, and any decision to retire the native product jobs.
+
+Known differences and open questions:
+
+- The JUCE standalone app restores its last processor state on launch. The
+  browser restores preferences and user files, but not the last session's
+  unsaved patch state. The standalone *Save/Load/Reset state* items map to patch
+  save, load from file and Initialize Patch. Restoring the whole session on
+  reload needs a product decision.
+- Airwindows Dust Bunny and To Tape match the native engine only to the
+  precision their upstream feedback amplifies. They are recorded as
+  `amplified-upstream-precision` fixtures, not as exact matches.
+- Patches that reference an impulse response only by file name load the bundled
+  response only when that file is present in the factory or user library.
+- One earlier full run hit a single `file-drop.spec.js` wavetable failure
+  (`page.evaluate: func is not a function`). It did not reproduce in 25 repeats
+  or in the recorded run below.
 
 ## Sources and licensing
 
@@ -1784,6 +1817,17 @@ Audio bridge reference: https://emscripten.org/docs/api_reference/wasm_audio_wor
 Threading/hosting reference: https://emscripten.org/docs/porting/pthreads.html
 
 ## Current verification evidence
+
+The latest complete automated run passed **1105 tests with no failures or flaky
+retries in 67.3 minutes** on stable Chrome 154.0.8037.58. It used
+`SURGE_TEST_SILENT_OUTPUT=1` with a clean worktree at `75fb44f07`.
+[`parity/browser-regression.json`](parity/browser-regression.json) records the
+command, result and 114 test/binary hashes, all unchanged at completion. At that
+revision `feature-inventory.py --require-complete` passes with 736 of 736 entry
+points reviewed, and all Python packaging and licensing tests pass. It does not
+cover the hardware and human checks listed under *Remaining parity work*.
+
+The entries below are the earlier, historical evidence log.
 
 The full Chrome regression suite passed **823 checks in 39.3 minutes** with
 `SURGE_TEST_SILENT_OUTPUT=1 npm test` after the user-file exports, patch metadata,

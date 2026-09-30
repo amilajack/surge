@@ -38,36 +38,36 @@ has passed on the current revision. A release audit must inspect and run the
 evidence, expand dynamic choices, and verify the complete workflows below.
 Compilation of an editor does not count as editor verification.
 
-The latest complete automated browser run passed **970 tests in 52.5 minutes**
-on stable Chrome 153.0.8010.53. [`browser-regression.json`](browser-regression.json)
-records the command, result and 83 test/binary hashes, all unchanged at completion.
-This run used `SURGE_TEST_SILENT_OUTPUT=1` and predates the Tri-pole fix in the
-application binaries. It does not verify physical audio/MIDI devices, deadline
-performance or the unreviewed source entry points (632 at that run; now 623).
+The latest complete automated browser run passed **1105 tests in 67.3 minutes**
+with no failures on stable Chrome 154.0.8037.58, at a clean `75fb44f07`.
+[`browser-regression.json`](browser-regression.json) records the command, result
+and 114 test/binary hashes, all unchanged at completion. `--require-complete`
+passes with all 736 entry points reviewed. This does not verify physical
+audio/MIDI devices, deadline performance on real hardware, physical IME,
+screen-reader speech or native screenshots.
 
 ## Required workflow coverage beyond the source index
 
-| Area | Required evidence before completion | Current gap |
+| Area | Required evidence | Status |
 | --- | --- | --- |
-| DSP and file compatibility | Native/Wasm comparisons across oscillator, filter, effect, modulation, tuning, and scripting families; patch round trips | All 12 oscillator families have template/default comparisons at both rates, using controlled seeds for S&H Noise and String, alongside the effect and MSEG fixtures below; parameter modes and broader family coverage remain |
-| Real-time processing | Actual Chrome worklet playback, callback ownership/allocation audit, patch/edit handoffs, suspension/resumption | Real note playback, patch/download handoffs, suspension and error-event recovery pass at 44.1/48 kHz; full ownership/allocation audit and editor handoffs remain |
-| Performance | Sustained polyphony and expensive patches at 44.1/48 kHz; deadline misses, memory growth, UI response | [Four historical 60-second live-worklet captures](performance.json) cover two patches and both rates; hardware deadlines, allocation/leak audit, interactive editing and broader expensive workloads remain |
-| Performance input | Keyboard, real MIDI/MPE, MIDI learn, audio devices, and transport | Queue/adapters/transport have tests; real devices and full keyboard/MIDI-learn workflows remain |
-| Parameter workflows | Both scenes, all oscillator/filter/effect configurations, routing and modulation, context menus | Existing JUCE implementations are compiled; broad workflow verification remains |
-| Advanced editors | MSEG, step, formula, wavetable scripting, tuning, visualizers, error reporting, and undo/redo | Browser workflows and script-publication safety remain unverified |
-| Interface | Original layout, skins, fonts, zoom, shortcuts, focus, accessibility, IME, clipboard | Basic paint/input/scene/patch, clipboard and EditContext checks exist; real clipboard/IME checks, CJK/emoji font fallback and accessibility remain |
-| User content | Patch, wavetable, tuning and skin import/export; reload persistence; failed imports/storage/downloads preserve edits | Several adapter and patch/wavetable checks pass; all application-level formats/workflows remain |
-| Factory content | Every asset discoverable and usable on demand with cache recovery | Full publication is verified; non-patch/wavetable consumers still need integration |
-| Preferences | Persistent portable settings and faithful browser equivalents for relevant standalone settings | Storage exists; full setting-by-setting verification remains |
-| Platform exclusions | All native-only actions hidden, with portable underlying capabilities retained | OSC settings and selected OS folder/reveal actions are hidden; remaining actions require review |
-| Static delivery | Browser-only supported product, HTTPS/isolation hosting, versioned assets, CI/release jobs | Native jobs retained until parity; browser release pipeline remains |
-| Distribution | Complete dependency notices, licenses and reproducible corresponding-source distribution | Packaging remains |
-| Reference evidence | Native audio and workflow screenshots captured before retiring native products | Native FM2 reference exists; desktop workflow capture remains |
+| DSP and file compatibility | Native/Wasm comparisons across oscillator, filter, effect, modulation, tuning and scripting families; patch round trips | All 12 oscillator families at both rates (seeded where stochastic), filters, effects including every active Airwindows effect (Dust Bunny and To Tape as amplified-upstream-precision fixtures), MSEG and formula fixtures, and patch round trips pass |
+| Real-time processing | Chrome worklet playback, callback ownership and allocation audit, patch and edit handoffs, suspension and resumption | Ownership gate, zero system-heap callback allocations, off-callback live formula compilation, handoffs and suspension pass at 44.1/48 kHz |
+| Performance | Sustained polyphony and expensive patches at 44.1/48 kHz; deadlines, memory growth, UI response | Automated captures in [`performance.json`](performance.json); **hardware deadline profiling remains for a person** |
+| Performance input | Keyboard, MIDI/MPE, MIDI learn, audio devices, transport | Keyboard layouts and shortcuts, MIDI learn and CC assignment, Web MIDI adapters and transport pass; **real controllers and audio input devices remain for a person** |
+| Parameter workflows | Both scenes, oscillator/filter/effect configurations, routing and modulation, context menus | Every parameter, modulator and selector menu, the modulation list and every skin-placed control verified |
+| Advanced editors | MSEG, step, formula, wavetable scripting, tuning, visualizers, errors, undo/redo | Editor workflows, menus, focus and undo/redo verified |
+| Interface | Layout, skins, fonts, zoom, shortcuts, focus, accessibility, IME, clipboard | Skins, zoom, shortcuts, overlay focus containment, accessible tables, real clipboard permissions and CJK/emoji fallback fonts verified; **physical IME and screen-reader speech remain for a person** |
+| User content | Patch, wavetable, tuning and skin import/export; reload persistence; failures preserve edits | Transactional imports and exports, custom data folders and persistence verified |
+| Factory content | Every asset discoverable and usable on demand with cache recovery | Verified, including the tuning library and on-demand fallback fonts |
+| Preferences | Persistent portable settings and browser equivalents for standalone settings | Every main-menu preference verified across reloads; whole-session restore on reload is an open product decision (see `web/README.md`) |
+| Platform exclusions | Native-only actions hidden, portable capabilities retained | OSC, OS reveal/console and device selection excluded with portable alternatives |
+| Static delivery | Browser-only product, isolation hosting, versioned assets, CI/release jobs | Versioned `/v/<digest>/` layout, release gate and CI workflow added; **deployment and retiring native jobs remain for a person** |
+| Distribution | Dependency notices, licenses, corresponding source | Coverage-audited notices and bundled corresponding source in the package |
+| Reference evidence | Native audio and workflow screenshots before retiring native products | Native audio references exist; **desktop screenshot capture remains for a person** |
 
-Examples of portable items that must **not** be hidden merely because their old
-implementation opened a folder: installing a skin and accessing factory tuning
-content. These need browser equivalents and remain unreviewed until implemented
-and verified.
+Portable items were not hidden merely because their old implementation opened a
+folder. Installing a skin and accessing factory tuning content have browser
+equivalents (the directory picker and the factory tuning library).
 
 ## Desktop reference build
 

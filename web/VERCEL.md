@@ -2,7 +2,9 @@
 
 The production app is https://surge-xt-browser.vercel.app, project
 `surge-xt-browser` in `amila-welihindas-projects`. This is the current development
-port, not a declaration that the full migration parity gate has passed.
+port. The branch's automated parity gate now passes, but the deployed app
+predates that until it is redeployed. The hardware and human checks listed in
+`web/README.md` are still outstanding.
 
 Build the browser using `web/scripts/build.sh` and the instructions in
 `web/README.md`. Package and stage the resulting artifacts:
@@ -47,5 +49,8 @@ isolation, startup, factory catalog, keyboard-triggered nonzero audio, patch sea
 and switching, context suspension/resumption, and patch save/reload persistence.
 It writes a screenshot and JSON report to `/tmp/surge-deployment-check` by default.
 Chrome runs with silent physical output: this verifies the real worklet and audio
-samples, not speakers or attached MIDI/audio devices. Full migration parity and
-the complete dependency-notice audit remain separate outstanding requirements.
+samples, not speakers or attached MIDI/audio devices. The feature inventory is
+complete and the dependency notices are coverage-audited (see `web/README.md`).
+A `--release` package additionally requires `feature-inventory.py
+--require-complete` to pass. Hardware checks, the deployment itself and retiring
+the native jobs remain decisions for a person.
