@@ -5030,6 +5030,16 @@ void SurgeSynthesizer::processAudioThreadOpsWhenAudioEngineUnavailable(bool dang
 #endif
     if (!audio_processing_active || dangerMode)
     {
+#if SURGE_WEB
+        // A suspended or failing context may still be finishing a callback.
+        if (!tryAcquireBrowserEngine(2))
+            return;
+        struct Release
+        {
+            SurgeSynthesizer *synth;
+            ~Release() { synth->releaseBrowserEngine(); }
+        } release{this};
+#endif
         processEnqueuedPatchIfNeeded();
 
 #if SURGE_WEB

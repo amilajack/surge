@@ -596,8 +596,25 @@ filesystem work or requests an unavailable monotonic clock in the callback.
 A live patch change fades and halts the engine before publishing a pending load.
 The main thread starts the background loader; the callback outputs silence while
 the loader owns the engine and keeps queued performance events for resumption.
-This handoff has live coverage, but a complete allocation and control/state
-ownership audit is still required.
+This handoff has live coverage.
+
+Engine ownership outside that handoff uses a non-blocking gate
+(`browserEngineGate`: 0 free, 1 audio callback, 2 control work). Each callback
+try-acquires it and renders silence if control work holds it. Control work
+that runs while audio is nominally inactive (synchronous patch loads and
+wavetable publication) try-acquires it and retries on its next pump if a
+callback is still in flight. Suspension, closure and processor errors set
+`browserAudioReleasing`. The callback in flight then clears
+`audio_processing_active` itself after `processBlock` has re-asserted it, so
+control work cannot stall behind a stale flag. A processor that trapped inside
+a callback cannot release the gate; it is reset only after `close()` resolves.
+
+Offline rendering refuses to start while a loader owns the engine or while any
+context exists. Wavetable diagnostics take `waveTableDataMutex`, which the
+callback only try-locks, and they refuse to run while the engine is halted.
+`surge_browser_control_state` reports the gate and the release flag;
+`audio-ownership.spec.js` checks them across suspend, a synchronous load while
+suspended, resume, and a live load.
 
 Restart preparation also waits for the loader before changing sample rate or
 warming up effects. Waiting does not block the browser event loop, and the new

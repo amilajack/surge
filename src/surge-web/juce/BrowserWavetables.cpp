@@ -235,20 +235,35 @@ void surge_poll_wavetables()
                    i, slot.request, slot.prepared->path.c_str());
         }
     }
-    if (!synth->audio_processing_active) surge_publish_wavetables();
+    if (!synth->audio_processing_active && synth->tryAcquireBrowserEngine(2))
+    {
+        surge_publish_wavetables();
+        synth->releaseBrowserEngine();
+    }
 }
 
 extern "C" EMSCRIPTEN_KEEPALIVE int surge_browser_wt_count()
 {
     return synth ? synth->storage.wt_list.size() : 0;
 }
+// Development readers. Audio swaps table data under waveTableDataMutex with a
+// try-lock, so this brief control-thread lock never delays a callback. A loader
+// owns oscillator storage while the engine is halted.
+static bool readable(int index)
+{
+    return synth && index >= 0 && index < slotsCount && !synth->halt_engine.load(std::memory_order_acquire);
+}
 extern "C" EMSCRIPTEN_KEEPALIVE const char *surge_browser_wt_name(int index)
 {
-    return synth && index >= 0 && index < slotsCount ? oscillator(index).wavetable_display_name.c_str() : "";
+    static std::string name;
+    if (!readable(index)) return "";
+    std::lock_guard<std::mutex> lock(synth->storage.waveTableDataMutex);
+    name = oscillator(index).wavetable_display_name;
+    return name.c_str();
 }
 extern "C" EMSCRIPTEN_KEEPALIVE int surge_browser_request_wt(int index, const char *path)
 {
-    if (!synth || index < 0 || index >= slotsCount) return 0;
+    if (!readable(index)) return 0;
     for (int id = 0; id < synth->storage.wt_list.size(); ++id)
         if (synth->storage.wt_list[id].path.u8string() == path)
         {
@@ -259,15 +274,20 @@ extern "C" EMSCRIPTEN_KEEPALIVE int surge_browser_request_wt(int index, const ch
 }
 extern "C" EMSCRIPTEN_KEEPALIVE int surge_browser_wt_size(int index)
 {
-    return synth && index >= 0 && index < slotsCount ? oscillator(index).wt.size : 0;
+    if (!readable(index)) return 0;
+    std::lock_guard<std::mutex> lock(synth->storage.waveTableDataMutex);
+    return oscillator(index).wt.size;
 }
 extern "C" EMSCRIPTEN_KEEPALIVE int surge_browser_wt_frames(int index)
 {
-    return synth && index >= 0 && index < slotsCount ? oscillator(index).wt.n_tables : 0;
+    if (!readable(index)) return 0;
+    std::lock_guard<std::mutex> lock(synth->storage.waveTableDataMutex);
+    return oscillator(index).wt.n_tables;
 }
 extern "C" EMSCRIPTEN_KEEPALIVE float surge_browser_wt_sample(int index, int frame, int sample)
 {
-    if (!synth || index < 0 || index >= slotsCount) return 0.f;
+    if (!readable(index)) return 0.f;
+    std::lock_guard<std::mutex> lock(synth->storage.waveTableDataMutex);
     const auto &table = oscillator(index).wt;
     if (!table.everBuilt || frame < 0 || frame >= table.n_tables || sample < 0 || sample >= table.size)
         return 0.f;
@@ -275,13 +295,13 @@ extern "C" EMSCRIPTEN_KEEPALIVE float surge_browser_wt_sample(int index, int fra
 }
 extern "C" EMSCRIPTEN_KEEPALIVE int surge_browser_request_wt_file(int index, const char *path)
 {
-    if (!synth || index < 0 || index >= slotsCount || !path) return 0;
+    if (!readable(index) || !path) return 0;
     oscillator(index).wt.queue_filename = path;
     return 1;
 }
 extern "C" EMSCRIPTEN_KEEPALIVE int surge_browser_reslice_wt(int index, int size, int frames)
 {
-    if (!synth || index < 0 || index >= slotsCount) return 0;
+    if (!readable(index)) return 0;
     auto &table = oscillator(index).wt;
     table.reslice_size = size;
     table.reslice_frames = frames;

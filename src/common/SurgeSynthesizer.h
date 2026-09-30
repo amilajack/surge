@@ -602,6 +602,19 @@ class alignas(16) SurgeSynthesizer
     // Request in the engine block; publish pending only after the entire JUCE
     // callback has finished touching engine state. The main thread starts the loader.
     std::atomic<bool> browserPatchLoadRequested{false}, browserPatchLoadPending{false};
+    // Mutual exclusion between a browser audio callback (1) and control-thread
+    // engine work while audio is nominally inactive (2). Neither side waits: a
+    // busy callback renders silence and busy control work retries on its next pump.
+    std::atomic<int> browserEngineGate{0};
+    // Set while a context suspends, closes or fails, so an in-flight callback
+    // cannot re-assert audio_processing_active after the control thread cleared it.
+    std::atomic<bool> browserAudioReleasing{false};
+    bool tryAcquireBrowserEngine(int owner)
+    {
+        int expected = 0;
+        return browserEngineGate.compare_exchange_strong(expected, owner, std::memory_order_acquire);
+    }
+    void releaseBrowserEngine() { browserEngineGate.store(0, std::memory_order_release); }
 #endif
 
     // updated in audio thread, read from UI, so have assignments be atomic

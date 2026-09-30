@@ -78,10 +78,12 @@ extern "C" EMSCRIPTEN_KEEPALIVE const char *surge_browser_control_state()
     const auto &s = *browserProcessor->surge;
     std::snprintf(result, sizeof(result),
                   "{\"queued\":%d,\"requested\":%d,\"token\":%d,\"ready\":%d,"
-                  "\"halted\":%d,\"audioActive\":%d,\"loaderRequested\":%d,\"loaderPending\":%d}",
+                  "\"halted\":%d,\"audioActive\":%d,\"loaderRequested\":%d,\"loaderPending\":%d,"
+                  "\"engineGate\":%d,\"audioReleasing\":%d}",
                   s.patchid_queue.load(), requestedPatch, requestToken, s.browserReadyPatch.load(),
                   int(s.halt_engine.load()), int(s.audio_processing_active.load()),
-                  int(s.browserPatchLoadRequested.load()), int(s.browserPatchLoadPending.load()));
+                  int(s.browserPatchLoadRequested.load()), int(s.browserPatchLoadPending.load()),
+                  s.browserEngineGate.load(), int(s.browserAudioReleasing.load()));
     return result;
 }
 extern "C" EMSCRIPTEN_KEEPALIVE int surge_browser_patch_count()

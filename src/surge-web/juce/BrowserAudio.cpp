@@ -121,9 +121,22 @@ bool render(int ni, const AudioSampleFrame *in, int no, AudioSampleFrame *out, i
         else
             std::fill_n(channels[ch], n, 0.f);
     }
+    auto &synth = *processor->surge;
+    if (!synth.tryAcquireBrowserEngine(1))
+    {
+        // Control work owns the engine while audio is suspending or failing.
+        for (auto *channel : channels)
+            std::fill_n(channel, n, 0.f);
+        renderStage.store(0, std::memory_order_relaxed);
+        return true;
+    }
     juce::AudioBuffer<float> buffer(channels, 2, n);
     const auto firstFrame = static_cast<uint64_t>(EM_ASM_DOUBLE({ return currentFrame; }));
     process(buffer, firstFrame);
+    // processBlock marks audio active on every callback. A pending release wins.
+    if (synth.browserAudioReleasing.load(std::memory_order_acquire))
+        synth.audio_processing_active = false;
+    synth.releaseBrowserEngine();
     blocks.fetch_add(1, std::memory_order_relaxed);
     return true;
 }
@@ -146,6 +159,7 @@ void ready(EMSCRIPTEN_WEBAUDIO_T audioContext, bool success, void *)
     options.outputChannelCounts = channelCounts;
     // Reserve processing before the first callback can start. The main event
     // loop must no longer take the synchronous, audio-inactive patch-load path.
+    processor->surge->browserAudioReleasing = false;
     processor->surge->audio_processing_active = true;
     node = emscripten_create_wasm_audio_worklet_node(audioContext, "surge-xt", &options, render,
                                                      nullptr);
@@ -247,7 +261,11 @@ extern "C" EMSCRIPTEN_KEEPALIVE int surge_enable_audio()
     }
     if (context)
     {
-        if (node) processor->surge->audio_processing_active = true;
+        if (node)
+        {
+            processor->surge->browserAudioReleasing = false;
+            processor->surge->audio_processing_active = true;
+        }
         emscripten_resume_audio_context_sync(context);
         return 1;
     }
@@ -280,6 +298,9 @@ extern "C" EMSCRIPTEN_KEEPALIVE void surge_browser_audio_failed(int handle)
 {
     if (!context || handle != context || closing) return;
     processorFailed = true;
+    auto &synth = *processor->surge;
+    synth.browserAudioReleasing = true;
+    synth.audio_processing_active = false;
     performanceEvents.panic();
     report(-1, "The audio processor stopped unexpectedly. Click Enable audio to restart.");
 }
@@ -291,6 +312,7 @@ extern "C" EMSCRIPTEN_KEEPALIVE void surge_browser_audio_changed(int handle)
     {
         initializationPending = false;
         preparationPending = false;
+        processor->surge->browserAudioReleasing = true;
         processor->surge->audio_processing_active = false;
         performanceEvents.panic();
         report(-1, "The audio context closed. Click Enable audio to restart.");
@@ -298,9 +320,13 @@ extern "C" EMSCRIPTEN_KEEPALIVE void surge_browser_audio_changed(int handle)
     else if (node && !processorFailed)
     {
         if (state == AUDIO_CONTEXT_STATE_RUNNING)
+        {
+            processor->surge->browserAudioReleasing = false;
             report(2, "Audio enabled");
+        }
         else
         {
+            processor->surge->browserAudioReleasing = true;
             processor->surge->audio_processing_active = false;
             performanceEvents.panic();
             report(4, "Audio suspended or interrupted. Click Enable audio to resume.");
@@ -327,6 +353,10 @@ extern "C" EMSCRIPTEN_KEEPALIVE void surge_browser_audio_closed(int handle, int 
     EM_ASM({ delete emAudio[$0]; if ($1) delete emAudio[$1]; }, context, node);
     context = node = 0;
     initializationPending = false;
+    // close() has resolved, so no callback can still run. A processor that trapped
+    // inside a callback never released the gate; return it to the control thread.
+    int audioOwned = 1;
+    processor->surge->browserEngineGate.compare_exchange_strong(audioOwned, 0, std::memory_order_acq_rel);
     processor->surge->audio_processing_active = false;
     report(0, "Restarting audio…");
     surge_enable_audio();
@@ -402,6 +432,11 @@ extern "C" EMSCRIPTEN_KEEPALIVE int surge_browser_transport_playing()
 extern "C" EMSCRIPTEN_KEEPALIVE int surge_browser_offline_begin(double rate)
 {
     if (!processor || context || !std::isfinite(rate) || rate < 8000 || rate > 192000) return 0;
+    // A patch loader may still own the engine; offline rendering must not overlap it.
+    std::unique_lock<std::mutex> lock(processor->surge->patchLoadSpawnMutex, std::try_to_lock);
+    if (!lock.owns_lock() || processor->surge->patchLoadThread ||
+        processor->surge->halt_engine.load(std::memory_order_acquire))
+        return 0;
     audioSampleRate = rate;
     offlineFrame = 0;
     performanceEvents.panic();
