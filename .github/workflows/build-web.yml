@@ -1,0 +1,72 @@
+name: "Build browser"
+on:
+  pull_request:
+    paths: ['web/**', 'src/**', 'cmake/**', 'libs/**', 'resources/**', 'CMakeLists.txt', '.github/workflows/build-web.yml']
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+defaults:
+  run:
+    shell: bash
+
+jobs:
+  browser:
+    name: Browser build, parity suite and package
+    # The native reference harness is compared with Wasm at 1e-5; the recorded
+    # evidence was produced on arm64 macOS, so CI uses the same architecture.
+    runs-on: macos-15
+    timeout-minutes: 240
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v6
+        with:
+          submodules: recursive
+
+      - name: Cache pinned Emscripten SDK
+        uses: actions/cache@v4
+        with:
+          path: .toolchains
+          key: emsdk-6.0.10-a2b92777574c2feda07994cd4f1079a3dfc151f8-${{ runner.os }}-${{ runner.arch }}
+
+      - name: Build the browser application
+        run: SURGE_BUILD_JOBS=4 bash web/scripts/build.sh
+
+      - name: Build the native reference harness
+        run: |
+          cmake -S . -B build-reference -DSURGE_ENGINE_ONLY=ON -DSURGE_BUILD_TESTRUNNER=OFF -DENABLE_LTO=OFF \
+            -DSURGE_SKIP_WERROR=ON -DCMAKE_EXPORT_COMPILE_COMMANDS=ON
+          cmake --build build-reference --parallel 4 --target surge-engine-reference \
+            surge-convolution-worker-check surge-effect-retirement-check surge-effect-binding-check \
+            surge-airwindows-selection-check surge-airwindows-lifecycle-check surge-fx-modulation-check \
+            surge-control-snapshot-check surge-oscillator-extra-configuration-check
+
+      - name: Packaging, notice and source tests
+        run: |
+          for test in web/tests/*.test.py; do python3 "$test"; done
+          python3 web/scripts/license-coverage.py
+          python3 web/scripts/feature-inventory.py
+
+      - name: Browser regression suite
+        run: |
+          npm ci --prefix web
+          python3 web/scripts/serve.py &
+          until curl -sf http://127.0.0.1:8080/surge-xt-browser.html > /dev/null; do sleep 1; done
+          SURGE_TEST_SILENT_OUTPUT=1 npm test --prefix web -- --max-failures=10
+
+      - name: Package the static distribution
+        run: python3 web/scripts/package-static.py --output web/dist
+
+      - name: Upload the distribution
+        uses: actions/upload-artifact@v4
+        with:
+          name: surge-xt-browser
+          path: web/dist/
+          if-no-files-found: error
+
+      - name: Upload test results
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-results
+          path: web/test-results/
