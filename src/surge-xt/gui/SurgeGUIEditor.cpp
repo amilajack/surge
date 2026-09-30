@@ -3274,7 +3274,7 @@ void SurgeGUIEditor::savePatchBackup(bool quiet)
      * 8 GB/s for this. That is the difference between the hash doubling the cost of a backup and
      * it being a tenth of it.
      */
-    size_t hash{0xcbf29ce484222325ULL};
+    uint64_t hash{0xcbf29ce484222325ULL};
     const auto *bytes = (const unsigned char *)data;
     unsigned int i = 0;
 

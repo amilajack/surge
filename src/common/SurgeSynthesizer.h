@@ -109,7 +109,7 @@ class alignas(16) SurgeSynthesizer
      * Message thread only - the editor idle is the only thing that touches these.
      */
     std::chrono::steady_clock::time_point lastPatchBackupTime{std::chrono::steady_clock::now()};
-    size_t lastPatchBackupHash{0};
+    uint64_t lastPatchBackupHash{0};
     bool anyPatchBackupWritten{false};
     bool patchBackupsFailed{false};
 
