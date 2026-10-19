@@ -1,0 +1,49 @@
+#!/usr/bin/env bash
+# Fast CI checks before each commit, in verification mode (nothing is rewritten).
+# Enable once per clone:  git config core.hooksPath .githooks
+#
+# Mirrors .github/workflows/code-checks.yml (clang-format 21.1.8 via uv) and the
+# non-browser steps of .github/workflows/build-web.yml. The Emscripten build and
+# the Playwright suite take far too long for a commit hook; CI runs them.
+set -uo pipefail
+root=$(git rev-parse --show-toplevel)
+cd "$root" || exit 1
+failed=()
+
+# clang-format, on the lines this commit changes under src/. The tree predates
+# the formatting gate in places, so whole files are not reformatted here.
+if command -v uvx >/dev/null 2>&1; then
+  output=$(uvx --quiet --from clang-format==21.1.8 git-clang-format --staged --diff -- src 2>&1)
+  status=$?
+  case "$output" in
+    *"no modified files to format"*|*"did not modify any files"*) ;;
+    *) [[ $status -eq 0 && -z "$output" ]] || { printf '%s\n' "$output"; failed+=("clang-format (fix: uvx --from clang-format==21.1.8 git-clang-format --staged)"); } ;;
+  esac
+else
+  failed+=("clang-format: install uv (https://docs.astral.sh/uv/) to run the pinned clang-format 21.1.8")
+fi
+
+# Packaging, notice and source tests; license coverage; UI feature inventory.
+for test in web/tests/*.test.py; do
+  python3 "$test" >/dev/null 2>&1 || failed+=("$test")
+done
+if [[ -d build-web ]]; then
+  python3 web/scripts/license-coverage.py >/dev/null || failed+=("web/scripts/license-coverage.py")
+else
+  failed+=("web/scripts/license-coverage.py needs build-web (bash web/scripts/build.sh)")
+fi
+python3 web/scripts/feature-inventory.py >/dev/null || failed+=("web/scripts/feature-inventory.py")
+
+# Native lock-free queue tests (also run by the browser suite).
+scratch=$(mktemp -d)
+trap 'rm -rf "$scratch"' EXIT
+for test in midi-queue wam-event-queue; do
+  { c++ -std=c++17 -pthread "web/tests/$test.cpp" -o "$scratch/$test" && "$scratch/$test"; } >/dev/null 2>&1 ||
+    failed+=("web/tests/$test.cpp")
+done
+
+if ((${#failed[@]})); then
+  printf 'pre-commit: failed checks:\n' >&2
+  printf '  - %s\n' "${failed[@]}" >&2
+  exit 1
+fi
