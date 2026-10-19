@@ -12,6 +12,7 @@ import importlib.util
 import io
 import json
 import os
+import re
 import shutil
 import subprocess
 import tarfile
@@ -55,9 +56,12 @@ def source_identity():
     commit = git('rev-parse', 'HEAD')
     dirty = bool(git('status', '--porcelain', '--untracked-files=no'))
     submodules = []
-    for line in git('submodule', 'status', '--recursive').splitlines():
-        sha, path = line[1:].split()[:2]
-        submodules.append((path, sha))
+    status = subprocess.run(['git', 'submodule', 'status', '--recursive'], cwd=ROOT, check=True,
+                            capture_output=True, text=True).stdout
+    for line in status.splitlines():
+        match = re.match(r'^[ +U-]?([0-9a-f]{40}) (\S+)', line)
+        if match:
+            submodules.append((match[2], match[1]))
     return commit, dirty, submodules, int(git('log', '-1', '--format=%ct'))
 
 

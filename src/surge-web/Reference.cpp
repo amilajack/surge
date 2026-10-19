@@ -16,9 +16,94 @@
 #include <vector>
 #include <thread>
 #include <atomic>
+#include <algorithm>
+#include <chrono>
 int checkLuaCompilation(const char *resources);
+
+#if defined(__APPLE__)
+#include <malloc/malloc.h>
+static size_t heapInUse()
+{
+    malloc_statistics_t stats{};
+    malloc_zone_statistics(nullptr, &stats);
+    return stats.size_in_use;
+}
+#elif defined(__GLIBC__)
+#include <malloc.h>
+static size_t heapInUse() { return mallinfo2().uordblks; }
+#else
+static size_t heapInUse() { return 0; }
+#endif
+
+// --bench INSTANCES BLOCKS FRAMES DATA_DIR PATCH.fxp...: the per-instance cost of
+// many engines in one process, for comparison with the WCLAP benchmark
+// (web/scripts/wclap-bench.mjs): instance i loads patch i modulo the list and
+// holds a three-note chord; every block renders each instance once. Prints JSON.
+static int bench(int argc, char **argv)
+{
+    if (argc < 7)
+        return 2;
+    const int instances = std::atoi(argv[2]), blocks = std::atoi(argv[3]),
+              frames = std::atoi(argv[4]);
+    const char *data = argv[5];
+    std::vector<const char *> patches(argv + 6, argv + argc);
+    if (instances < 1 || blocks < 1 || frames < 1 || frames > 4096 || patches.empty())
+        return 2;
+    const auto before = heapInUse();
+    std::vector<SurgeWebEngine *> engines;
+    for (int i = 0; i < instances; ++i)
+    {
+        auto *engine = surge_create(48000, data);
+        if (!engine || !surge_load_patch(engine, patches[size_t(i) % patches.size()]))
+        {
+            fprintf(stderr, "%s\n", surge_error());
+            return 1;
+        }
+        engines.push_back(engine);
+    }
+    const auto created = heapInUse();
+    for (int i = 0; i < instances; ++i)
+        for (int k : {0, 4, 7})
+            surge_midi(engines[size_t(i)], 0x90, 48 + i % 12 + k, 100);
+    std::vector<float> left(static_cast<size_t>(frames)), right(static_cast<size_t>(frames));
+    // Warm up: voices start, effects settle.
+    for (int b = 0; b < 32; ++b)
+        for (auto *engine : engines)
+            surge_render(engine, nullptr, nullptr, left.data(), right.data(), frames);
+    const auto playing = heapInUse();
+    std::vector<double> samples;
+    samples.reserve(size_t(blocks) * size_t(instances));
+    double total = 0;
+    for (int b = 0; b < blocks; ++b)
+        for (auto *engine : engines)
+        {
+            const auto start = std::chrono::steady_clock::now();
+            surge_render(engine, nullptr, nullptr, left.data(), right.data(), frames);
+            const auto micros =
+                std::chrono::duration<double, std::micro>(std::chrono::steady_clock::now() - start)
+                    .count();
+            samples.push_back(micros);
+            total += micros;
+        }
+    std::sort(samples.begin(), samples.end());
+    const auto at = [&](double q) {
+        return samples[std::min(samples.size() - 1, size_t(q * samples.size()))];
+    };
+    printf("{\"instances\":%d,\"blocks\":%d,\"frames\":%d,\"heapPerInstanceCreated\":%.0f,"
+           "\"heapPerInstancePlaying\":%.0f,\"microsPerInstanceBlock\":{\"mean\":%.3f,\"p50\":%.3f,"
+           "\"p95\":%.3f,\"p99\":%.3f,\"max\":%.3f},\"realtimeFraction\":%.5f}\n",
+           instances, blocks, frames, double(created - before) / instances,
+           double(playing - before) / instances, total / samples.size(), at(0.5), at(0.95),
+           at(0.99), samples.back(), total / blocks / (frames * 1e6 / 48000.));
+    for (auto *engine : engines)
+        surge_destroy(engine);
+    return 0;
+}
+
 int main(int argc, char **argv)
 {
+    if (argc >= 2 && std::string(argv[1]) == "--bench")
+        return bench(argc, argv);
     if (argc == 3 && std::string(argv[1]) == "--check-lua-compilation")
         return checkLuaCompilation(argv[2]);
     if (argc == 3 && std::string(argv[1]) == "--check-formula-contexts")

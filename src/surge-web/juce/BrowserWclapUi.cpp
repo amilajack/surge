@@ -107,14 +107,13 @@ class Bridge final : public juce::AudioProcessorParameter::Listener,
             if (!frames || !synth().storage.audioOut.subscribed())
                 return;
             std::vector<float> left(frames), right(frames);
-            const auto *samples = reinterpret_cast<const float *>(frame.rest());
             for (size_t i = 0; i < frames; ++i)
             {
                 std::memcpy(&left[i], frame.rest() + i * 8, 4);
                 std::memcpy(&right[i], frame.rest() + i * 8 + 4, 4);
             }
-            (void)samples;
             synth().storage.audioOut.push(left.data(), right.data(), frames);
+            scopeFrames += frames;
             break;
         }
         default:
@@ -168,6 +167,7 @@ class Bridge final : public juce::AudioProcessorParameter::Listener,
     }
 
     float meter(int channel) { return synth().vu_peak[channel]; }
+    double scopeFrames{0};
     bool isConnected() const { return connected; }
 
   private:
@@ -422,12 +422,16 @@ void surge_wclap_ui_pump()
         Bridge::instance->pump(emscripten_get_now());
 }
 
-// Diagnostics for the test host: the meter level the editor shows, and whether
-// it has the plug-in's snapshot.
+// Diagnostics for the test host: the meter level the editor shows, oscilloscope
+// frames received, and whether it has the plug-in's snapshot.
 extern "C" EMSCRIPTEN_KEEPALIVE float surge_wclap_ui_meter()
 {
     return Bridge::instance ? std::max(Bridge::instance->meter(0), Bridge::instance->meter(1))
                             : 0.f;
+}
+extern "C" EMSCRIPTEN_KEEPALIVE double surge_wclap_ui_scope_frames()
+{
+    return Bridge::instance ? Bridge::instance->scopeFrames : 0;
 }
 extern "C" EMSCRIPTEN_KEEPALIVE int surge_wclap_ui_connected()
 {

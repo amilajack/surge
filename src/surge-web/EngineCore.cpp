@@ -4,6 +4,7 @@
 #include "PatchFileValidation.h"
 #include "dsp/effects/airwindows/AirWindowsEffect.h"
 #include "sst/basic-blocks/mechanics/endian-ops.h"
+#include "tinyxml/tinyxml.h"
 #include <cstring>
 #include <stdexcept>
 
@@ -54,6 +55,48 @@ bool EngineCore::loadState(const void *data, size_t size)
     synth->processAudioThreadOpsWhenAudioEngineUnavailable(true);
     resolveAirwindowsSelection();
     return true;
+}
+
+namespace
+{
+// The XML of a raw state without the view-only parts of its DAW extra state, and
+// the binary data after it (wavetables, extensions).
+bool soundOf(const uint8_t *data, size_t size, std::string &xml, std::string &rest)
+{
+    sst::io::patch_header header{};
+    if (size < sizeof(header) || std::memcmp(data, "sub3", 4) != 0)
+        return false;
+    std::memcpy(&header, data, sizeof(header));
+    const size_t length = sst::basic_blocks::mechanics::endian_read_int32LE(header.xmlsize);
+    if (length > size - sizeof(header))
+        return false;
+    const std::string text(reinterpret_cast<const char *>(data) + sizeof(header), length);
+    rest.assign(reinterpret_cast<const char *>(data) + sizeof(header) + length,
+                size - sizeof(header) - length);
+    TiXmlDocument document;
+    document.Parse(text.c_str(), nullptr, TIXML_ENCODING_LEGACY);
+    auto *patch = document.FirstChildElement("patch");
+    if (document.Error() || !patch)
+        return false;
+    if (auto *extra = patch->FirstChildElement("dawExtraState"))
+        for (const char *name : {"editor", "instanceZoomFactor", "isDirty", "lastLoadedPath"})
+            while (auto *child = extra->FirstChildElement(name))
+                extra->RemoveChild(child);
+    TiXmlPrinter printer;
+    printer.SetStreamPrinting();
+    document.Accept(&printer);
+    xml = printer.CStr();
+    return true;
+}
+} // namespace
+
+bool EngineCore::holdsState(const void *data, size_t size)
+{
+    const auto current = saveState();
+    std::string ours, oursRest, theirs, theirsRest;
+    return soundOf(current.data(), current.size(), ours, oursRest) &&
+           soundOf(static_cast<const uint8_t *>(data), size, theirs, theirsRest) &&
+           ours == theirs && oursRest == theirsRest;
 }
 
 bool EngineCore::loadPatchFile(const void *data, size_t size, const std::string &name,

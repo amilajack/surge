@@ -98,3 +98,30 @@ for (const mode of parityModes) for (const rate of [44100, 48000]) {
     }
   });
 }
+
+test('WCLAP state bytes are the native engine state bytes', async () => {
+  test.skip(!ready, 'Build the native reference harness and the WCLAP module first.');
+  const temporary = fs.mkdtempSync(path.join(os.tmpdir(), 'surge-wclap-state-'));
+  try {
+    const save = patch => {
+      const state = path.join(temporary, path.basename(patch) + '.bin');
+      execFileSync(harness, ['--save-state', state, data, patch, '48000', path.join(temporary, 'x.f32')], {timeout: 60000});
+      return fs.readFileSync(state);
+    };
+    // A native state loaded through clap.state saves back byte for byte.
+    const fm2 = save(parityFixture);
+    const plugin = createPlugin(module, 48000);
+    expect(plugin.loadState(new Uint8Array(fm2))).toBe(true);
+    expect(Buffer.compare(Buffer.from(plugin.saveState()), fm2)).toBe(0);
+    plugin.destroy();
+    // A new instance holds the native default patch; only the path the patch was
+    // loaded from (machine-specific) differs.
+    const fresh = createPlugin(module, 48000);
+    const strip = bytes => Buffer.from(bytes).toString('latin1').slice(8).replace(/<lastLoadedPath v="[^"]*" \/>/, '');
+    const native = save(path.join(data, 'patches_factory/Templates/Init Saw.fxp'));
+    expect(strip(fresh.saveState())).toBe(strip(native));
+    fresh.destroy();
+  } finally {
+    fs.rmSync(temporary, {recursive: true, force: true});
+  }
+});

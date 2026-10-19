@@ -92,6 +92,19 @@ test('notes play through the DSP and the editor shows meters, voices and keys', 
   await expect.poll(() => frame.evaluate(() => Module._surge_browser_active_voices()), {timeout: 15000}).toBe(0);
 });
 
+test('the oscilloscope streams the plug-in output while it is open', async () => {
+  const frame = await editor();
+  const before = await frame.evaluate(() => Module._surge_wclap_ui_scope_frames());
+  await frame.locator('canvas').first().focus();
+  await page.keyboard.press('Alt+o');
+  await expect(frame.getByRole('group', {name: 'Oscilloscope', exact: true})).toBeAttached();
+  await call('note', {key: 64, velocity: 0.8, on: true});
+  await expect.poll(() => frame.evaluate(() => Module._surge_wclap_ui_scope_frames()), {timeout: 10000}).toBeGreaterThan(before + 4800);
+  await call('note', {key: 64, on: false});
+  await page.keyboard.press('Alt+o');
+  await expect(frame.getByRole('group', {name: 'Oscilloscope', exact: true})).toHaveCount(0);
+});
+
 test('dragging a knob in the editor changes the DSP and reaches the host as automation', async () => {
   const frame = await editor();
   await call('stats');

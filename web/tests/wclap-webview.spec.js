@@ -214,3 +214,21 @@ test('process returns silence as a constant output and asks to sleep when quiet'
     expect(playing.constantMask).toBe(0n);
   } finally { plugin.destroy(); }
 });
+
+test('a page state the engine already holds changes only the editor view, without a reload', () => {
+  const {plugin, host} = withPage();
+  try {
+    plugin.webviewReceive(frame(T.Hello, v => v.setUint32(4, 1, true), 4));
+    const current = new TextDecoder('latin1').decode(plugin.saveState());
+    // The page's state: the same patch, another editor view and dirty flag.
+    const edited = current.replace(/<editor current_scene="\d+"/, '<editor current_scene="1"');
+    expect(edited).not.toBe(current);
+    const bytes = Uint8Array.from(edited, c => c.charCodeAt(0));
+    new DataView(bytes.buffer).setUint32(4, new DataView(bytes.buffer).getUint32(4, true) + 0, true);
+    const rescans = host.rescans.length, dirty = host.dirty;
+    expect(plugin.webviewReceive(frame(T.State, v => new Uint8Array(v.buffer).set(bytes, 4), bytes.length))).toBe(true);
+    expect(host.rescans.length, 'no reload').toBe(rescans);
+    expect(host.dirty).toBe(dirty);
+    expect(new TextDecoder('latin1').decode(plugin.saveState())).toMatch(/<editor current_scene="1"/);
+  } finally { plugin.destroy(); }
+});

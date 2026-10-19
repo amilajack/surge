@@ -35,6 +35,10 @@ class EngineCore : public SurgeSynthesizer::PluginLayer
     // The desktop plug-in's setStateInformation, applied immediately. Held notes
     // are retriggered on the new patch. Returns false for data that is not a patch.
     bool loadState(const void *data, size_t size);
+    // True when a raw state holds the patch this engine has, apart from the
+    // editor's view, the dirty flag and the path the patch was loaded from: a
+    // mirror of this engine (a WCLAP editor) made no edit the engine lacks.
+    bool holdsState(const void *data, size_t size);
     // A complete .fxp file, as a factory patch load (name and category as given).
     bool loadPatchFile(const void *data, size_t size, const std::string &name,
                        const std::string &category);

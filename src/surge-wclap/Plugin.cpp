@@ -12,6 +12,7 @@
 #include "Protocol.h"
 #include "Random.h"
 #include "dsp/SurgeVoice.h"
+#include "PatchFileHeaderStructs.h"
 #include "tinyxml/tinyxml.h"
 #include <clap/ext/draft/webview.h>
 #include <cmrc/cmrc.hpp>
@@ -579,11 +580,12 @@ class SurgeWclap final : public Surge::Web::EngineCore::Listener
             output.constant_mask = (uint64_t(1) << output.channel_count) - 1;
         else
             output.constant_mask = 0;
-        if (pageOpen && framesSinceTelemetry >= uint32_t(s.storage.samplerate / 30))
+        if (pageOpen && guiVisible && framesSinceTelemetry >= uint32_t(s.storage.samplerate / 30))
             requestCallback();
         // A silent instrument may sleep until its next event: hosts with many
-        // tracks skip idle instances. Effects tails and drones are not silent.
-        return CLAP_PROCESS_CONTINUE_IF_NOT_QUIET;
+        // tracks skip idle instances (effect tails and drones are not silent).
+        // While its editor is open it stays awake, so its meters keep running.
+        return pageOpen ? CLAP_PROCESS_CONTINUE : CLAP_PROCESS_CONTINUE_IF_NOT_QUIET;
     }
 
     void paramsFlush(const clap_input_events_t *in, const clap_output_events_t *out)
@@ -630,7 +632,7 @@ class SurgeWclap final : public Surge::Web::EngineCore::Listener
                     hostParams->rescan(host, CLAP_PARAM_RESCAN_VALUES | CLAP_PARAM_RESCAN_TEXT |
                                                  CLAP_PARAM_RESCAN_INFO);
             }
-            if (pageOpen)
+            if (pageOpen && guiVisible)
                 sendTelemetry();
         });
     }
@@ -844,6 +846,13 @@ class SurgeWclap final : public Surge::Web::EngineCore::Listener
         }
         case Protocol::State:
         {
+            // Most edits already arrived as parameter and modulation frames: then
+            // only the editor's view changed, and reloading would retrigger notes.
+            if (engine->holdsState(frame.rest(), frame.remaining()))
+            {
+                applyEditorView(frame.rest(), frame.remaining());
+                return true;
+            }
             if (!engine->loadState(frame.rest(), frame.remaining()))
                 return false;
             // The page made this patch: it already shows its values.
@@ -936,6 +945,30 @@ class SurgeWclap final : public Surge::Web::EngineCore::Listener
         default:
             return false;
         }
+    }
+
+    // The editor view (zoom, tabs, overlays) of a raw state, without loading it.
+    void applyEditorView(const uint8_t *data, size_t size)
+    {
+        sst::io::patch_header header{};
+        if (size < sizeof(header))
+            return;
+        std::memcpy(&header, data, sizeof(header));
+        const size_t length = header.xmlsize; // little-endian (wasm32)
+        if (length > size - sizeof(header))
+            return;
+        const std::string text(reinterpret_cast<const char *>(data) + sizeof(header), length);
+        TiXmlDocument document;
+        document.Parse(text.c_str(), nullptr, TIXML_ENCODING_LEGACY);
+        auto *patch = document.FirstChildElement("patch");
+        auto *extra = patch ? patch->FirstChildElement("dawExtraState") : nullptr;
+        if (!extra)
+            return;
+        auto &dawExtra = synth().storage.getPatch().dawExtraState;
+        dawExtra.isPopulated = true;
+        if (auto *zoom = extra->FirstChildElement("instanceZoomFactor"))
+            zoom->QueryIntAttribute("v", &dawExtra.editor.instanceZoomFactor);
+        synth().storage.getPatch().loadEditorStateXml(extra, true);
     }
 
     bool getResource(const char *path, char *mime, uint32_t capacity, const clap_ostream_t *stream)

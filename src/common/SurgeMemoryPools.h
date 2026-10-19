@@ -42,9 +42,15 @@ struct SurgeMemoryPools
     static constexpr int maxosc = n_scenes * n_oscs * (MAX_VOICES + 8);
 
     /*
-     * The string needs 2 delay lines per oscillator
+     * The string needs 2 delay lines per oscillator. A WCLAP hosts many engines in
+     * one 4 GiB module: it allocates these (520 kB) only when a patch uses String.
      */
-    MemoryPool<SSESincDelayLine<16384>, 8, 4, 2 * maxosc + 100> stringDelayLines;
+#if SURGE_WCLAP
+    static constexpr size_t stringPreAlloc = 0;
+#else
+    static constexpr size_t stringPreAlloc = 8;
+#endif
+    MemoryPool<SSESincDelayLine<16384>, stringPreAlloc, 4, 2 * maxosc + 100> stringDelayLines;
     void resetAllPools(SurgeStorage *storage) { resetOscillatorPools(storage); }
     void resetOscillatorPools(SurgeStorage *storage)
     {
