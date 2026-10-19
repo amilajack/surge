@@ -58,7 +58,8 @@ async function wclap(count) {
   const created = module.memoryBytes();
   const chord = i => [0, 4, 7].map(k => ({type: EVENT.MIDI, time: 0, data: [0x90, 48 + i % 12 + k, 100]}));
   plugins.forEach((plugin, i) => plugin.process(frames, {events: chord(i)}));
-  for (let b = 0; b < 31; ++b) for (const plugin of plugins) plugin.process(frames);
+  // Two seconds of warm-up: voices start and the Wasm engine tiers up hot code.
+  for (let b = 0; b < 1500; ++b) for (const plugin of plugins) plugin.process(frames);
   const playing = module.memoryBytes();
   const samples = new Float64Array(blocks * count);
   let n = 0, total = 0;

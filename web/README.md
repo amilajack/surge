@@ -987,6 +987,26 @@ no network request.
 loads one of eight factory patches through `clap.state` and holds a three-note
 chord, and every 64-frame block processes each instance once.
 
+Measured on an Apple Silicon Mac shared with other heavy jobs (load average about
+5), Node 26, after two seconds of warm-up, 1,500 measured blocks
+(`web/parity/wclap-performance.json`):
+
+| Instances | WCLAP µs per instance per block (mean / p50 / p99) | Native µs (mean / p50 / p99) | CPU ratio (mean) | WCLAP memory per instance | Native heap per instance |
+|---:|---|---|---:|---:|---:|
+| 1 | 9.7 / 9.0 / 28.3 | 5.5 / 5.3 / 9.9 | 1.74 | in the 32 MiB base | 26.7 MiB |
+| 2 | 9.8 / 9.2 / 25.1 | 6.6 / 6.3 / 13.7 | 1.49 | in the 32 MiB base | 26.7 MiB |
+| 16 | 17.5 / 15.0 / 47.1 | 12.7 / 11.3 / 32.7 | 1.38 | 7.9 MiB (8.2 playing) | 28.4 MiB |
+| 100 | 23.0 / 19.8 / 60.6 | 17.8 / 15.2 / 51.5 | 1.29 | 8.6 MiB (9.0 playing) | 28.3 MiB |
+
+A 64-frame block lasts 1,333 µs at 48 kHz. 100 instances holding chords take
+1.73 cores as a WCLAP and 1.34 natively, so a host spreads them over several DSP
+threads (one module instance per thread). The module's linear memory for 100
+playing instances is 894 MiB of its 4 GiB. An instance is created in about 11 ms.
+Per-instance memory is about a third of native mainly because voices are
+allocated as they are played; the remaining 6.6 MiB of an idle engine is the
+patch model (766 parameters with their names, oscillator wavetable tables,
+MSEG and LFO storage), the synthesizer's FX copies and the storage's tables.
+
 ## Factory asset delivery
 
 The `surge-factory-library` build target publishes all 5,756 files under
