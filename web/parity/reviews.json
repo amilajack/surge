@@ -6324,7 +6324,7 @@
   },
   "src/surge-xt/gui/SurgeGUIEditor.cpp:menu-call:357c81ba4121447a": {
     "status": "verified",
-    "sourceDigest": "e88f2989d67587f72f9cab50706b5eef1185227f8cbf704c453845d5a146d593",
+    "sourceDigest": "885afa4282332785298bc841176b180d95386e7db604a7124eebe19db5d5cda3",
     "browserEquivalent": "FX grid scene label menu: disables the scene hard clip; saved in hardclipmodes.",
     "runtimeExpansion": [
       "Scene A Hard Clip Disabled",
@@ -6336,7 +6336,7 @@
   },
   "src/surge-xt/gui/SurgeGUIEditor.cpp:menu-call:00e3728fe45e291e": {
     "status": "verified",
-    "sourceDigest": "e88f2989d67587f72f9cab50706b5eef1185227f8cbf704c453845d5a146d593",
+    "sourceDigest": "885afa4282332785298bc841176b180d95386e7db604a7124eebe19db5d5cda3",
     "browserEquivalent": "FX grid scene label menu: 0 dBFS scene hard clip; saved.",
     "runtimeExpansion": [
       "Scene A Hard Clip at 0 dBFS",
@@ -6348,7 +6348,7 @@
   },
   "src/surge-xt/gui/SurgeGUIEditor.cpp:menu-call:0a0ab00d530aaffc": {
     "status": "verified",
-    "sourceDigest": "e88f2989d67587f72f9cab50706b5eef1185227f8cbf704c453845d5a146d593",
+    "sourceDigest": "885afa4282332785298bc841176b180d95386e7db604a7124eebe19db5d5cda3",
     "browserEquivalent": "FX grid scene label menu: +18 dBFS scene hard clip (default).",
     "runtimeExpansion": [
       "Scene A Hard Clip at +18 dBFS",
@@ -6360,7 +6360,7 @@
   },
   "src/surge-xt/gui/SurgeGUIEditor.cpp:menu-call:74b6804ae0202d94": {
     "status": "verified",
-    "sourceDigest": "e88f2989d67587f72f9cab50706b5eef1185227f8cbf704c453845d5a146d593",
+    "sourceDigest": "885afa4282332785298bc841176b180d95386e7db604a7124eebe19db5d5cda3",
     "browserEquivalent": "Opens the oscilloscope from the Workflow menu (shortcut shown), toggling the overlay.",
     "runtimeExpansion": [
       "Oscilloscope..."
