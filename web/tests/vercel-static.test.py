@@ -26,7 +26,9 @@ class VercelStageTests(unittest.TestCase):
         build.mkdir()
         for name, content in {'surge-xt-browser.html': '<html><head><title>t</title></head><body><script src="surge-xt-browser.js"></script></body></html>',
                               'surge-xt-browser.js': 'wasm startup', 'surge-xt-browser.wasm': 'wasm',
-                              'surge-xt-browser.data': 'fonts', 'library.js': 'catalog'}.items():
+                              'surge-xt-browser.data': 'fonts', 'library.js': 'catalog',
+                              'wam/index.js': 'plugin', 'wam/descriptor.json': '{"name": "Surge XT"}'}.items():
+            (build / name).parent.mkdir(parents=True, exist_ok=True)
             (build / name).write_text(content)
         (build / 'library/objects').mkdir(parents=True)
         objects = []
@@ -57,6 +59,13 @@ class VercelStageTests(unittest.TestCase):
         self.assertEqual(headers['/v/(.*)']['Cache-Control'], 'public, max-age=31536000, immutable')
         self.assertEqual(headers['/(.*)']['Cache-Control'], 'public, max-age=0, must-revalidate')
         self.assertEqual(headers['/(.*)']['Cross-Origin-Embedder-Policy'], 'require-corp')
+        self.assertEqual(headers['/(.*)']['Cross-Origin-Resource-Policy'], 'same-origin')
+        for source in ('/v/(.*)', '/wam/(.*)'):
+            self.assertEqual(headers[source]['Cross-Origin-Resource-Policy'], 'cross-origin')
+            self.assertEqual(headers[source]['Access-Control-Allow-Origin'], '*')
+        # A stable plugin URL re-exports the immutable version.
+        self.assertEqual((stage / 'public/wam/index.js').read_text(), f"export {{default}} from '/v/{version}/wam/index.js';\n")
+        self.assertEqual((stage / 'public/wam/descriptor.json').read_text(), '{"name": "Surge XT"}')
 
 
 if __name__ == '__main__':

@@ -29,7 +29,7 @@ target_link_options(surge-juce-browser-check PRIVATE --profiling-funcs -sALLOW_M
   --preload-file ${CMAKE_SOURCE_DIR}/resources/fonts@/fonts
   --shell-file ${CMAKE_SOURCE_DIR}/web/juce-shell.html
   "SHELL:--pre-js ${CMAKE_SOURCE_DIR}/web/browser/platform.js" -lidbfs.js
-  "-sEXPORTED_RUNTIME_METHODS=['ccall','FS','stringToNewUTF8']")
+  "-sEXPORTED_RUNTIME_METHODS=['ccall','FS','stringToNewUTF8','specialHTMLTargets']")
 set_target_properties(surge-juce-browser-check PROPERTIES SUFFIX .html RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/web)
 
 # Build exactly the same processor, editor, widgets, and overlays as desktop.
@@ -50,8 +50,8 @@ target_include_directories(surge-xt-browser-editor PUBLIC
 target_compile_definitions(surge-xt-browser-editor PUBLIC
   JucePlugin_Name="Surge\ XT" BUILD_IS_RELEASE=1 HAS_CLAP_JUCE_EXTENSIONS=0)
 target_link_libraries(surge-xt-browser-editor PUBLIC surge-common surge-platform surge-juce-browser sst-filters-extras)
-add_executable(surge-xt-browser BrowserMain.cpp BrowserAudio.cpp BrowserWavetables.cpp BrowserAudioThread.c
-  BrowserAllocationAudit.c)
+add_executable(surge-xt-browser BrowserMain.cpp BrowserAudio.cpp BrowserWam.cpp BrowserWavetables.cpp
+  BrowserAudioThread.c BrowserAllocationAudit.c)
 target_link_libraries(surge-xt-browser PRIVATE surge-xt-browser-editor)
 # Isolated, version-checked retirement shim for the pinned SDK's hybrid worklet.
 set_source_files_properties(BrowserAudioThread.c PROPERTIES INCLUDE_DIRECTORIES
@@ -61,7 +61,10 @@ target_link_options(surge-xt-browser PRIVATE "SHELL:--pre-js ${CMAKE_SOURCE_DIR}
   --preload-file ${CMAKE_SOURCE_DIR}/resources/fonts@/fonts
   --shell-file ${CMAKE_SOURCE_DIR}/web/juce-shell.html
   "SHELL:--pre-js ${CMAKE_SOURCE_DIR}/web/browser/platform.js" -lidbfs.js
-  "-sEXPORTED_RUNTIME_METHODS=['ccall','FS','stringToNewUTF8']")
+  "-sEXPORTED_RUNTIME_METHODS=['ccall','FS','stringToNewUTF8','specialHTMLTargets','HEAPU8','HEAPU16','HEAPF32']"
+  # A Web Audio Module host on another origin cannot construct workers from our
+  # URL; CROSS_ORIGIN starts pthread workers from a blob that imports the script.
+  -sCROSS_ORIGIN=1)
 # Observe every heap operation made inside the audio callback (BrowserAllocationAudit.c).
 foreach(function malloc calloc realloc free posix_memalign aligned_alloc memalign)
   target_link_options(surge-xt-browser PRIVATE -Wl,--wrap=${function})
@@ -99,6 +102,11 @@ configure_file(${CMAKE_SOURCE_DIR}/web/browser/runtime.js ${CMAKE_BINARY_DIR}/we
 configure_file(${CMAKE_SOURCE_DIR}/web/browser/tuning-library.js ${CMAKE_BINARY_DIR}/web/tuning-library.js COPYONLY)
 
 configure_file(${CMAKE_SOURCE_DIR}/web/browser/archive-recovery.js ${CMAKE_BINARY_DIR}/web/archive-recovery.js COPYONLY)
+
+# Web Audio Module entry point and descriptor, served next to the application.
+foreach(file index.js descriptor.json)
+  configure_file(${CMAKE_SOURCE_DIR}/web/wam/${file} ${CMAKE_BINARY_DIR}/web/wam/${file} COPYONLY)
+endforeach()
 
 # Browser-only fallback fonts, fetched on demand rather than preloaded.
 foreach(font NotoSansSC-Regular.otf NotoSansKR-Regular.otf NotoEmoji-Regular.ttf)

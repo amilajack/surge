@@ -14,7 +14,7 @@
     if(state){peers.delete(id);state.element.editContext=null;}
   }
   function create(id,generation,model) {
-    const element=document.getElementById(`juce-${id}`);
+    const element=globalThis.SurgeHost?SurgeHost.canvas(`juce-${id}`):document.getElementById(`juce-${id}`);
     if(!element || typeof EditContext==='undefined')return;
     const context=new EditContext({text:model.text,selectionStart:utf16(model.text,model.start),selectionEnd:utf16(model.text,model.end)});
     const state={element,context,generation,model:model.text,composing:false};

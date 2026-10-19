@@ -12,6 +12,13 @@
   };
   const utf16=(text,offset)=>Array.from(text).slice(0,offset).join('').length;
   const announcements=new Map();
+  // As a Web Audio Module the application lives in a host container, possibly in
+  // a shadow root: mirror nodes join that container, follow its position on the
+  // page, and only keys aimed at the plugin are handled.
+  const host=()=>globalThis.SurgeHost;
+  const active=()=>host()?host().activeElement():document.activeElement;
+  const origin=()=>host()?host().origin():{x:0,y:0};
+  const overlayParent=()=>host()?host().overlayParent():document.body;
   globalThis.SurgeAccessibility={
     announce(text,priority){
       if(!text)return;
@@ -24,7 +31,7 @@
         region.setAttribute('aria-live',urgency);
         region.setAttribute('aria-atomic','true');
         region.style.cssText='position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%);white-space:nowrap';
-        document.body.append(region);
+        overlayParent().append(region);
         state={region,timer:null};announcements.set(urgency,state);
       }
       clearTimeout(state.timer);
@@ -39,11 +46,11 @@
       root.style.cssText='position:absolute;left:0;top:0;pointer-events:none';
       const ring=document.createElement('div');ring.setAttribute('aria-hidden','true');
       ring.style.cssText='position:fixed;pointer-events:none;outline:2px solid #ffb347;z-index:3000;display:none';
-      document.body.append(root,ring);
+      overlayParent().append(root,ring);
       const nodes=new Map();
       const drawRing=data=>{
-        const [x,y,width,height]=data.bounds;
-        Object.assign(ring.style,{display:'block',left:x+'px',top:y+'px',width:width+'px',height:height+'px'});
+        const [x,y,width,height]=data.bounds,{x:left,y:top}=origin();
+        Object.assign(ring.style,{display:'block',left:x+left+'px',top:y+top+'px',width:width+'px',height:height+'px'});
       };
       const update=()=>{
         const tree=JSON.parse(module.ccall('surge_accessibility_snapshot','string',[],[]));
@@ -74,7 +81,7 @@
             if(node instanceof HTMLTextAreaElement){
               node.spellcheck=false;
               const commit=commitText=()=>{
-                if(document.activeElement!==node)return;
+                if(active()!==node)return;
                 // A native commit callback can release JUCE focus while this
                 // DOM editor remains focused. A new user edit owns focus again.
                 act(2);
@@ -88,7 +95,7 @@
                 const d=node.juceData;
                 if(scalar(node.value,node.selectionStart)!==d.selectionStart||scalar(node.value,node.selectionEnd)!==d.selectionEnd)commit();
               });
-              node.addEventListener('compositionstart',()=>{if(nodes.get(data.id)===node&&document.activeElement===node)module._surge_accessibility_composition(data.id,1);});
+              node.addEventListener('compositionstart',()=>{if(nodes.get(data.id)===node&&active()===node)module._surge_accessibility_composition(data.id,1);});
               node.addEventListener('compositionend',()=>{if(nodes.get(data.id)===node)module._surge_accessibility_composition(data.id,0);});
               node.addEventListener('beforeinput',event=>{
                 // A typed delimiter uses the original Lua pairing rules.
@@ -101,7 +108,7 @@
                   }
                 }
                 if(event.inputType==='historyUndo'||event.inputType==='historyRedo'){
-                  if(document.activeElement===node)act(2);
+                  if(active()===node)act(2);
                   event.preventDefault();module._surge_accessibility_key(data.id,90,event.inputType==='historyRedo'?9:8);update();
                 }
               });
@@ -115,7 +122,7 @@
               if(event.target!==node)return;
               const d=node.juceData;
               if(node instanceof HTMLTextAreaElement && event.isComposing)return;
-              if(node instanceof HTMLTextAreaElement && document.activeElement===node)act(2);
+              if(node instanceof HTMLTextAreaElement && active()===node)act(2);
               if(node instanceof HTMLTextAreaElement && d.codeEditorKeys)commitText();
               // Learning a shortcut owns the next chord even when focus stays
               // on the accessible Learn button. Modifier transitions are not
@@ -197,7 +204,7 @@
             // Do not erase a native selection whose select event has not yet
             // reached JUCE (for example select-all immediately after focus).
             const selectionChanged=!previous||previous.selectionStart!==data.selectionStart||previous.selectionEnd!==data.selectionEnd;
-            if(document.activeElement!==node||valueChanged||selectionChanged)
+            if(active()!==node||valueChanged||selectionChanged)
               if(node.selectionStart!==start||node.selectionEnd!==end)node.setSelectionRange(start,end);
           }
           if(node.parentNode!==parent)parent.append(node);
@@ -222,16 +229,16 @@
             node.setAttribute('aria-readonly',String(data.readonly));
           else node.removeAttribute('aria-readonly');
           node.tabIndex=!data.disabled&&(node instanceof HTMLTextAreaElement||data.nativeKeys||data.press||data.toggle||data.menu||Number.isFinite(data.value))?0:-1;
-          const [x,y,width,height]=data.bounds;
-          Object.assign(node.style,{left:x+'px',top:y+'px',width:width+'px',height:height+'px'});
-          if(document.activeElement===node)drawRing(data);
+          const [x,y,width,height]=data.bounds,{x:left,y:top}=origin();
+          Object.assign(node.style,{left:x+left+'px',top:y+top+'px',width:width+'px',height:height+'px'});
+          if(active()===node)drawRing(data);
           for(const child of data.children)visit(child,node);
         };
         for(const data of tree)visit(data,root);
         // Keyboard input stays on the canvas; point assistive technology at the
         // control JUCE has focused there, so focus changes made from the canvas
         // (shortcuts, clicks, Tab) are announced.
-        for(const canvas of document.querySelectorAll('canvas')){
+        for(const canvas of (host()?.container()||document).querySelectorAll('canvas')){
           const focused=[...nodes.values()].find(n=>n.juceData.focused&&n.dataset.jucePeer===canvas.id);
           if(focused){
             if(!focused.id)focused.id='juce-accessible-'+focused.juceData.id;
@@ -239,7 +246,7 @@
           }else canvas.removeAttribute('aria-activedescendant');
         }
         for(const [id,node]of nodes)if(!seen.has(id)){
-          if(document.activeElement===node)ring.style.display='none';
+          if(active()===node)ring.style.display='none';
           node.remove();nodes.delete(id);
         }
       };
@@ -247,6 +254,8 @@
       const menuKey=event=>{
         const code={Enter:13,' ':32,ArrowLeft:37,ArrowUp:38,ArrowRight:39,ArrowDown:40}[event.key];
         if(event.key!=='Escape' && (!code || event.ctrlKey || event.metaKey || event.altKey || event.target instanceof HTMLTextAreaElement))return;
+        // A plugin never takes keys aimed at the rest of the host page.
+        if(host() && !host().owns(event) && active() && active()!==document.body)return;
         // Opening a submenu may remove the old focused accessible node. Route
         // navigation from the document through a current JUCE popup, even when the
         // browser focus has consequently fallen back to body.

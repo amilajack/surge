@@ -98,7 +98,8 @@ def inputs(build):
         raise ValueError('Application HTML does not load surge-xt-browser.js')
     for name in parser.sources:
         add(name)
-    for name in ['surge-xt-browser.wasm', 'surge-xt-browser.data', 'library.js']:
+    # wam/index.js loads the same application as a Web Audio Module plugin.
+    for name in ['surge-xt-browser.wasm', 'surge-xt-browser.data', 'library.js', 'wam/index.js', 'wam/descriptor.json']:
         add(name)
     for path in sorted((build / 'fonts-fallback').glob('*')):
         add('fonts-fallback/' + path.name)
@@ -184,7 +185,11 @@ def package(build, output, provenance, source_archive=None, build_receipt=None, 
             (stage / 'source').mkdir()
             shutil.copyfile(source_archive, stage / provenance['archive'])
             shutil.copyfile(build_receipt, stage / 'build-receipt.json')
-        (stage / '_headers').write_text('/*\n  Cross-Origin-Opener-Policy: same-origin\n  Cross-Origin-Embedder-Policy: require-corp\n  Cross-Origin-Resource-Policy: same-origin\n  Cache-Control: public, max-age=31536000, immutable\n')
+        # Cross-origin readable so isolated Web Audio Module hosts on other origins
+        # can load wam/index.js and the application files it starts.
+        (stage / '_headers').write_text('/*\n  Cross-Origin-Opener-Policy: same-origin\n  Cross-Origin-Embedder-Policy: require-corp\n'
+                                        '  Cross-Origin-Resource-Policy: cross-origin\n  Access-Control-Allow-Origin: *\n'
+                                        '  Cache-Control: public, max-age=31536000, immutable\n')
         (stage / 'DISTRIBUTION.md').write_text(
             ('# Surge XT browser release\n\n'
                'Every desktop entry point has a browser parity review and every compiled file and asset has notice coverage.\n\n'

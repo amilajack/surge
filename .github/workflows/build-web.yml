@@ -50,8 +50,11 @@ jobs:
       - name: Browser regression suite
         run: |
           npm ci --prefix web
-          python3 web/scripts/serve.py &
+          # --cors and the second origin let web/tests/wam.spec.js load the Web Audio Module cross-origin.
+          python3 web/scripts/serve.py --cors &
+          python3 web/scripts/serve.py --port 8081 --directory web/tests/wam-host &
           until curl -sf http://127.0.0.1:8080/surge-xt-browser.html > /dev/null; do sleep 1; done
+          until curl -sf http://127.0.0.1:8081/ > /dev/null; do sleep 1; done
           SURGE_TEST_SILENT_OUTPUT=1 npm test --prefix web -- --max-failures=10
 
       - name: Package the static distribution

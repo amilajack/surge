@@ -622,6 +622,16 @@ class alignas(16) SurgeSynthesizer
         return browserEngineGate.compare_exchange_strong(expected, owner, std::memory_order_acquire);
     }
     void releaseBrowserEngine() { browserEngineGate.store(0, std::memory_order_release); }
+    // Web Audio Module state: serials of the last raw load enqueued and the last one
+    // completed, so a host's setState resolves once its patch is in place and
+    // getState never reads a patch that a pending load is about to replace.
+    std::atomic<uint32_t> browserRawLoadSerial{0}, browserRawLoadCompleted{0};
+    uint32_t browserEnqueuedLoadSerial{0}; // guarded by rawLoadQueueMutex
+    // A queued patchid_file that carries Web Audio Module state: its serial, consumed
+    // with has_patchid_file. The load then also applies the streamed DAW extra state,
+    // as a raw state load does, and completes the serial.
+    std::atomic<uint32_t> browserStateFileSerial{0};
+    void completeBrowserStateLoad(uint32_t serial);
 #endif
 
     // updated in audio thread, read from UI, so have assignments be atomic

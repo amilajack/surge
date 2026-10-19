@@ -1,6 +1,75 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 // Emscripten --pre-js: evaluated in the browser and skipped in workers/worklets.
 if (typeof window !== 'undefined') {
+  // Where the application lives in the page. The standalone page owns the whole
+  // document. As a Web Audio Module (Module.surgeWam, set by wam/index.js), every
+  // canvas, overlay and resource URL belongs to the plugin's own container and
+  // base URL, so a host page's DOM, keyboard and other canvases stay untouched.
+  const host = globalThis.SurgeHost = {
+    wam: Module['surgeWam'] || null,
+    canvases: new Map(),
+    container() { return host.wam ? host.wam.container : document.body; },
+    // Document or ShadowRoot that holds the container.
+    root() { return host.wam ? host.container().getRootNode() : document; },
+    url(path) { return new URL(path, host.wam ? host.wam.baseUrl : document.baseURI).href; },
+    mainCanvas: null,
+    register(canvas, temporary) {
+      host.canvases.set(canvas.id, canvas);
+      // The first lasting window is the editor (BrowserMain.cpp creates it first).
+      if (!temporary && !host.mainCanvas) host.mainCanvas = canvas;
+      // The standalone shell's canvas rule, inline for host pages without it.
+      canvas.style.position = 'absolute'; canvas.style.touchAction = 'none';
+      // Emscripten resolves '#id' selectors here before document.querySelector,
+      // so events still register for canvases outside the document tree.
+      Module['specialHTMLTargets']['#' + canvas.id] = canvas;
+      host.container().appendChild(canvas);
+    },
+    unregister(id) {
+      const canvas = host.canvases.get(id);
+      host.canvases.delete(id);
+      delete Module['specialHTMLTargets']['#' + id];
+      canvas?.remove();
+    },
+    canvas(id) { return host.canvases.get(id) || document.getElementById(id); },
+    activeElement() {
+      let active = document.activeElement;
+      while (active?.shadowRoot?.activeElement) active = active.shadowRoot.activeElement;
+      return active;
+    },
+    // Client coordinates of desktop (0, 0). Peer bounds are container-relative.
+    origin() {
+      if (!host.wam) return {x: 0, y: 0};
+      const container = host.container(), bounds = container.getBoundingClientRect();
+      return {x: bounds.left + container.clientLeft, y: bounds.top + container.clientTop};
+    },
+    elementFromPoint(x, y) {
+      const origin = host.origin();
+      return host.root().elementFromPoint(x + origin.x, y + origin.y);
+    },
+    // The visible viewport in desktop coordinates, so menus stay on screen.
+    reportedArea: '',
+    displayArea() {
+      const origin = host.origin();
+      const area = [Math.round(-origin.x), Math.round(-origin.y), innerWidth, innerHeight];
+      host.reportedArea = area.join();
+      return area;
+    },
+    // As a plugin the container moves with the host's layout: true when JUCE's
+    // display area is out of date (checked before a click opens a menu).
+    displaysStale() {
+      if (!host.wam) return false;
+      const origin = host.origin();
+      return [Math.round(-origin.x), Math.round(-origin.y), innerWidth, innerHeight].join() !== host.reportedArea;
+    },
+    // True when a document-level event concerns the application.
+    owns(event) { return !host.wam || event.composedPath().includes(host.container()); },
+    // Status lines: page elements in the standalone page, host callbacks as a plugin.
+    status(kind, message, code) {
+      if (host.wam) { host.wam.onStatus?.(kind, message, code); return null; }
+      return document.getElementById(kind);
+    },
+    overlayParent() { return host.wam ? host.container() : document.body; }
+  };
   const platform = globalThis.SurgeBrowser = {
     storageState: 'loading',
     storageError: null,
@@ -10,13 +79,13 @@ if (typeof window !== 'undefined') {
     pendingFlush: null,
     flushTimer: null,
     report(message) {
-      const element = document.getElementById('storage-status');
+      const element = host.status('storage-status', message);
       if (element) element.textContent = message;
-      const retry = document.getElementById('retry-storage');
+      const retry = host.wam ? null : document.getElementById('retry-storage');
       if (retry) retry.hidden = platform.storageState !== 'error';
     },
     reportFile(message) {
-      const element = document.getElementById('file-status');
+      const element = host.status('file-status', message);
       if (element) element.textContent = message;
     },
     changed() {
@@ -268,7 +337,7 @@ if (typeof window !== 'undefined') {
       if (platform.fallbackFonts) return platform.fallbackFonts;
       const names = ['NotoSansSC-Regular.otf', 'NotoSansKR-Regular.otf', 'NotoEmoji-Regular.ttf'];
       platform.fallbackFonts = Promise.all(names.map(async name => {
-        const response = await fetch('fonts-fallback/' + name);
+        const response = await fetch(host.url('fonts-fallback/' + name));
         if (!response.ok) throw Error(`Font download failed (${response.status}): ${name}`);
         return [name, new Uint8Array(await response.arrayBuffer())];
       })).then(fonts => {
@@ -299,7 +368,7 @@ if (typeof window !== 'undefined') {
         platform.deferred.set(token, finish);
         platform.reportFile('Preparing export…');
         cancel.onclick = () => finish(false, 'Export canceled. No file was written.');
-        document.body.append(cancel);
+        host.overlayParent().append(cancel);
       });
     },
     deferredDone(token, ok, message) {
@@ -329,7 +398,8 @@ if (typeof window !== 'undefined') {
       });
     });
   });
-  window.addEventListener('beforeunload', event => {
+  // A plugin must not hold the host page open; the host owns unload prompts.
+  if (!host.wam) window.addEventListener('beforeunload', event => {
     if (platform.generation > platform.savedGeneration || platform.storageState === 'error') {
       event.preventDefault(); event.returnValue = '';
     }

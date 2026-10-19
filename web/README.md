@@ -57,7 +57,8 @@ For controlled stochastic comparisons, the reference harness accepts
 `surge_seed_storage_rng` development API reseeds only the storage RNG before
 notes; it does not change normal application seeding or seed every DSP generator.
 
-`python3 web/scripts/serve.py` serves `build-web/web` on localhost:8080.
+`python3 web/scripts/serve.py` serves `build-web/web` on localhost:8080 (`--cors`
+also lets a Web Audio Module host on another origin load it).
 The diagnostic is `/surge-juce-browser-check.html`; the application is
 `/surge-xt-browser.html`. This server is for local development only.
 Production static hosting must serve HTTPS with these response headers on HTML,
@@ -759,6 +760,86 @@ Offline sessions are rejected once an AudioContext exists, preventing concurrent
 access with a worklet. This is a development verification interface, not an audio
 export workflow. Tests verify the original JUCE processor at 44.1 and 48 kHz;
 live worklet scheduling remains unverified.
+
+## Web Audio Module
+
+The same build loads as a [Web Audio Module 2.0](https://www.webaudiomodules.com/)
+instrument. A host imports `wam/index.js` next to the application files (on
+Vercel, the stable `/wam/index.js` re-exports the current `/v/<digest>/` version)
+and calls the default export's `createInstance(groupId, audioContext, state)`.
+There is no runtime JavaScript dependency; the host provides the WAM environment
+and group in its AudioWorklet (`initializeWamHost`).
+
+Host requirements:
+
+- The host page is cross-origin isolated (`Cross-Origin-Opener-Policy: same-origin`,
+  `Cross-Origin-Embedder-Policy: require-corp`). Surge runs on shared-memory
+  threads; elsewhere `createInstance` rejects with that explanation.
+- One Surge instance per page, on a realtime `AudioContext`. A second instance,
+  an `OfflineAudioContext`, a page that already defines `globalThis.Module`, or a
+  missing WAM group are rejected with a clear error. A destroyed instance cannot be
+  recreated without reloading, because the worklet thread belongs to the context.
+- No other Emscripten AudioWorklet module on the same context: Emscripten's
+  bootstrap processor name and port polyfill are global to the context's worklet.
+- Application files are served with `Access-Control-Allow-Origin: *` and
+  `Cross-Origin-Resource-Policy: cross-origin` (the static package, the Vercel
+  `/v/` and `/wam/` paths, and `serve.py --cors`). The build links with
+  `-sCROSS_ORIGIN=1`, so pthread workers start from a same-origin blob.
+
+Plugin mode (`Module.surgeWam`, set by the loader) keeps the standalone code
+paths and changes only where the application meets the page:
+
+- **Audio:** Surge's own Emscripten worklet node is the WAM node (it adopts the
+  `SurgeXTNode` prototype), so host audio on input 0 reaches the input bus exactly
+  as the standalone audio input does, with no extra latency. The host connects
+  output 0. Surge never creates, resumes, closes or connects the host's context.
+- **Events:** `wam-midi`/`wam-mpe` are sample-accurate at their AudioContext time,
+  in any scheduling order. `WamEventQueue.h` has one lock-free ring for the main
+  thread (`scheduleEvents`, `setParameterValues`) and one for the audio thread
+  (events from other WAMs through the group, via an object registered with
+  `emscripten_audio_worklet_post_function`), drained into a time-sorted pending
+  list; overflow drops and counts, never panics. `clearEvents` drops scheduled
+  events only. `wam-automation` applies at the start of its 128-frame block, as
+  the CLAP path applies parameter events. Effect types change only from the
+  control thread, as the editor changes them, so their automation is applied on
+  the main thread at the event's time. `wam-transport` sets play state, meter,
+  tempo (which then wins over patch tempo recall) and position, derived from the
+  bar and the time it started. Sysex and OSC are ignored.
+- **Parameters:** the desktop plugin's parameter list (8 macros and every Surge
+  parameter, without bypass), with storage-name IDs, normalized 0..1 values,
+  Surge's own defaults and display strings.
+- **State:** `{format: 'surge-xt-patch', version: 1, data: base64}`, the desktop
+  plugin's raw state, safe to JSON-serialize. `setState` validates the data,
+  writes it as an `.fxp` and loads it like a dropped patch, so the patch loader
+  thread parses it while audio fades; streamed name, category and DAW extra state
+  (tuning, MPE, ...) are restored. It resolves once that load completes. `getState`
+  waits while a loader owns the patch.
+- **GUI:** `createGui()` returns an element holding the full JUCE editor, sized
+  to the editor. Canvases, the accessibility mirror and status overlays live in
+  the plugin's container (shadow roots work); menus stay within the viewport.
+  Before the first and after `destroyGui`, the editor stays alive in a parked,
+  offscreen container. The standalone page's audio, MIDI, transport, audio input
+  and user-file controls are not added; document-level keyboard handling only
+  takes keys aimed at the plugin, and there is no `beforeunload` prompt.
+  User files persist in the host origin's IndexedDB.
+
+`web/tests/wam-host/index.html` is a minimal test host that implements the WAM
+environment and group inline and runs on another origin than the plugin:
+
+```sh
+python3 web/scripts/serve.py --cors &
+python3 web/scripts/serve.py --port 8081 --directory web/tests/wam-host &
+cd web && npx playwright test tests/wam.spec.js
+```
+
+`wam.spec.js` covers cross-origin loading and the descriptor, host-scheduled and
+out-of-order timed MIDI at 44.1/48 kHz, MIDI and automation from an upstream WAM
+on the audio thread, parameters (including while suspended), transport, state
+round trips during playback and at creation, host audio input, zero system-heap
+calls in the callback for WAM events, automation and live state loads, GUI
+mount/park/remount in a shadow root with real mouse input, host keyboard
+isolation, the single-instance and destroy rules, and the error paths. The
+event queue also has a native unit test (`tests/wam-event-queue.cpp`).
 
 ## Factory asset delivery
 

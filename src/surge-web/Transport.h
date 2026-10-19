@@ -35,6 +35,12 @@ class Transport
     }
     // Audio thread, or exclusive offline ownership only.
     double position() const { return ppq; }
+    // Audio thread only: a host transport (Web Audio Module) sets the position.
+    void locate(double position)
+    {
+        if (std::isfinite(position) && position >= 0)
+            ppq = position;
+    }
     void advance(unsigned samples, double sampleRate, double bpm)
     {
         if (current.playing && sampleRate > 0 && bpm > 0 && std::isfinite(bpm))

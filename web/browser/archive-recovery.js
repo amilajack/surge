@@ -28,7 +28,7 @@
     if(!button){
       button=document.createElement('button');button.id='archive-recovery';button.textContent='Recover archive files';
       button.style.cssText='position:fixed;right:8px;bottom:190px;z-index:1000';
-      button.onclick=()=>SurgeArchiveRecovery.show();document.body.append(button);
+      button.onclick=()=>SurgeArchiveRecovery.show();(globalThis.SurgeHost?.overlayParent() || document.body).append(button);
     }
     button.hidden=files.length===0&&problems.length===0;
   },show(){

@@ -4952,6 +4952,9 @@ void loadPatchInBackgroundThread(SurgeSynthesizer *sy)
     {
         ppath = string_to_path(synth->patchid_file);
         const auto asPreset = synth->patchid_file_isPreset.exchange(true);
+#if SURGE_WEB
+        const auto stateSerial = synth->browserStateFileSerial.exchange(0);
+#endif
         synth->has_patchid_file = false;
         had_patchid_file = true;
         synth->stopSound();
@@ -4976,6 +4979,14 @@ void loadPatchInBackgroundThread(SurgeSynthesizer *sy)
             synth->loadPatchByPath(synth->patchid_file, -1, path_to_string(ppath.stem()).c_str(),
                                    asPreset);
         }
+#if SURGE_WEB
+        if (stateSerial)
+        {
+            synth->loadFromDawExtraState();
+            synth->rawLoadNeedsUIDawExtraState = true;
+            synth->completeBrowserStateLoad(stateSerial);
+        }
+#endif
     }
 
     synth->storage.getPatch().isDirty = false;
@@ -5090,6 +5101,9 @@ void SurgeSynthesizer::processAudioThreadOpsWhenAudioEngineUnavailable(bool dang
             auto p(string_to_path(patchid_file));
             auto s = path_to_string(p.stem());
             const auto asPreset = patchid_file_isPreset.exchange(true);
+#if SURGE_WEB
+            const auto stateSerial = browserStateFileSerial.exchange(0);
+#endif
             has_patchid_file = false;
 
             int ptid = -1, ct = 0;
@@ -5112,6 +5126,14 @@ void SurgeSynthesizer::processAudioThreadOpsWhenAudioEngineUnavailable(bool dang
                 loadPatchByPath(patchid_file, -1, s.c_str(), asPreset);
                 storage.lastLoadedPatch = p;
             }
+#if SURGE_WEB
+            if (stateSerial)
+            {
+                loadFromDawExtraState();
+                rawLoadNeedsUIDawExtraState = true;
+                completeBrowserStateLoad(stateSerial);
+            }
+#endif
             patchid_file[0] = 0;
         }
 

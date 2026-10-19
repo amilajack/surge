@@ -15,6 +15,7 @@ extern "C" void surge_dispatch_messages();
 void surge_attach_audio(SurgeSynthProcessor *);
 void surge_poll_audio_startup();
 void surge_attach_wavetables(SurgeSynthProcessor *);
+void surge_attach_wam(SurgeSynthProcessor *);
 void surge_poll_wavetables();
 static SurgeSynthProcessor *browserProcessor{};
 extern "C" EMSCRIPTEN_KEEPALIVE double surge_browser_formula_live_compilations()
@@ -286,6 +287,7 @@ int main()
     browserProcessor = &processor;
     surge_attach_audio(&processor);
     surge_attach_wavetables(&processor);
+    surge_attach_wam(&processor);
     static std::unique_ptr<juce::AudioProcessorEditor> editor(processor.createEditor());
     browserEditor = dynamic_cast<SurgeSynthEditor *>(editor.get());
     editor->addToDesktop(0);

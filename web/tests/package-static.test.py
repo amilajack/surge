@@ -25,7 +25,9 @@ class PackageTests(unittest.TestCase):
                               'surge-xt-browser.js': 'wasm startup', 'runtime.js': 'runtime',
                               'surge-xt-browser.wasm': 'wasm', 'surge-xt-browser.data': 'fonts',
                               'library.js': 'catalog', 'surge-xt-browser.worker.js': 'worker',
+                              'wam/index.js': 'plugin', 'wam/descriptor.json': '{}',
                               'surge-juce-browser-check.js': 'do not ship', 'secret.txt': 'do not ship'}.items():
+            (self.build / name).parent.mkdir(parents=True, exist_ok=True)
             (self.build / name).write_text(content)
         library = self.build / 'library'
         (library / 'objects').mkdir(parents=True)
@@ -49,6 +51,12 @@ class PackageTests(unittest.TestCase):
         self.assertEqual(manifest['status'], 'development')
         self.assertEqual((first / 'index.html').read_bytes(), (self.build / 'surge-xt-browser.html').read_bytes())
         self.assertIn('surge-xt-browser.worker.js', manifest['files'])
+        self.assertIn('wam/index.js', manifest['files'])
+        self.assertIn('wam/descriptor.json', manifest['files'])
+        headers = (first / '_headers').read_text()
+        self.assertIn('Cross-Origin-Embedder-Policy: require-corp', headers)
+        self.assertIn('Cross-Origin-Resource-Policy: cross-origin', headers)
+        self.assertIn('Access-Control-Allow-Origin: *', headers)
         self.assertNotIn('secret.txt', manifest['files'])
         self.assertNotIn('surge-juce-browser-check.js', manifest['files'])
         for notice in ('Lua-LICENSE.txt', 'BitOp-LICENSE.txt'):

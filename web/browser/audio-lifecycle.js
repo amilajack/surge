@@ -17,6 +17,8 @@
       });
     },
     watchProcessor(context, node, onError) {
+      // A Web Audio Module host owns its context, so guard() never wrapped it.
+      if(!contexts.has(context)) contexts.set(context,{retired:false});
       const state=contexts.get(context);
       state.processorCleanup?.();
       node.addEventListener('processorerror',onError);

@@ -73,6 +73,11 @@ def stage_package(package, destination, commit):
     if html.count('<head>') != 1 or '<base ' in html:
         raise ValueError('Unexpected application HTML head')
     (public / 'index.html').write_text(html.replace('<head>', f'<head><base href="/v/{version}/">'))
+    # A stable Web Audio Module URL for hosts: /wam/index.js re-exports the current
+    # version, whose files resolve against their own immutable /v/ path.
+    (public / 'wam').mkdir()
+    (public / 'wam/index.js').write_text(f"export {{default}} from '/v/{version}/wam/index.js';\n")
+    shutil.copyfile(package / 'wam/descriptor.json', public / 'wam/descriptor.json')
     shutil.copyfile(__file__, destination / 'build.py')
     (destination / '.vercelignore').write_text(
         f'public/v/{version}/library/objects/*\n!public/v/{version}/{index}\n.env*\n')
@@ -118,8 +123,14 @@ def stage_package(package, destination, commit):
                 {'key': 'Cross-Origin-Embedder-Policy', 'value': 'require-corp'},
                 {'key': 'Cross-Origin-Resource-Policy', 'value': 'same-origin'},
                 {'key': 'Cache-Control', 'value': 'public, max-age=0, must-revalidate'}]},
+            # Web Audio Module hosts on other origins load these files (later rules win).
             {'source': '/v/(.*)', 'headers': [
-                {'key': 'Cache-Control', 'value': 'public, max-age=31536000, immutable'}]},
+                {'key': 'Cache-Control', 'value': 'public, max-age=31536000, immutable'},
+                {'key': 'Cross-Origin-Resource-Policy', 'value': 'cross-origin'},
+                {'key': 'Access-Control-Allow-Origin', 'value': '*'}]},
+            {'source': '/wam/(.*)', 'headers': [
+                {'key': 'Cross-Origin-Resource-Policy', 'value': 'cross-origin'},
+                {'key': 'Access-Control-Allow-Origin', 'value': '*'}]},
             {'source': '/(.*).wasm', 'headers': [
                 {'key': 'Content-Type', 'value': 'application/wasm'}]}
         ]}, indent=2) + '\n')

@@ -2,6 +2,7 @@
 #include "SurgeSynthProcessor.h"
 #include "../MidiQueue.h"
 #include "../Transport.h"
+#include "../WamEventQueue.h"
 #include "dsp/modulators/FormulaModulationHelper.h"
 #include <emscripten.h>
 #include <emscripten/webaudio.h>
@@ -16,6 +17,11 @@ extern "C" void surge_browser_audio_failed(int);
 extern "C" void surge_retire_audio_thread(void *);
 extern "C" thread_local int surge_audio_callback_depth;
 extern "C" int surge_browser_audio_pool_reserve(size_t);
+// BrowserWam.cpp: the Web Audio Module parameter list (fixed before audio starts).
+std::vector<juce::AudioProcessorParameter *> &surge_wam_parameter_list();
+bool surge_wam_apply_parameter_now(int index, float value);
+bool surge_wam_parameter_control_thread(int index);
+bool surge_wam_apply_control_parameter(int index, float value);
 namespace
 {
 SurgeSynthProcessor *processor{};
@@ -28,6 +34,17 @@ std::atomic<unsigned> requestedTempo{0};
 double audioSampleRate = 48000.;
 bool offlineActive = false;
 uint64_t offlineFrame = 0;
+// Web Audio Module mode: the host owns the AudioContext and the node's output.
+// wamMode is set on the main thread before the worklet starts.
+bool wamMode = false;
+std::atomic<bool> wamDestroyed{false};
+Surge::Web::WamEventQueue wamEvents;
+double hostTempo = 0;                 // audio thread
+std::atomic<double> blockPosition{0}; // transport position at the last block start
+// UTF-16 identifiers written by wam/index.js; the worklet has no TextDecoder.
+std::array<char16_t, 256> wamGroupId{}, wamInstanceId{};
+int wamGroupLength = 0, wamInstanceLength = 0;
+std::array<char16_t, 512> wamParameterScratch{}; // audio thread only
 class BrowserPlayhead : public juce::AudioPlayHead
 {
   public:
@@ -57,7 +74,46 @@ void report(int value, const char *message)
     status.store(value);
     if (value < 0)
         EM_ASM({ globalThis.SurgeAudioInput?.input?.audioFailed(UTF8ToString($0)); }, message);
-    EM_ASM({ document.getElementById('status').textContent = UTF8ToString($0); }, message);
+    // clang-format off
+    EM_ASM({
+        const message = UTF8ToString($1);
+        const element = SurgeHost.status('status', message, $0);
+        if (element) element.textContent = message;
+    }, value, message);
+    // clang-format on
+}
+void applyWamEvents(uint64_t firstFrame, int frames)
+{
+    auto &parameters = surge_wam_parameter_list();
+    wamEvents.drain(
+        firstFrame, frames, [&](const Surge::Web::WamEventQueue::Event &event, int offset) {
+            switch (event.kind)
+            {
+            case Surge::Web::WamEventQueue::Midi:
+                midi.addEvent(event.bytes.data(), event.length, offset);
+                break;
+            case Surge::Web::WamEventQueue::Automation:
+                // Applied at the block start, as CLAP parameter events are applied
+                // before the processor renders (SurgeSynthProcessor.cpp).
+                if (event.parameter < int(parameters.size()))
+                    parameters[event.parameter]->setValue(event.value);
+                break;
+            case Surge::Web::WamEventQueue::Transport:
+            {
+                transport.configure(event.playing, event.numerator, event.denominator);
+                // WAM transport data has no position in beats: derive it from the
+                // bar and the AudioContext time at which that bar started.
+                const double beatsPerBar = event.numerator * 4. / event.denominator;
+                const double now = double(firstFrame) / audioSampleRate;
+                transport.locate(event.bar * beatsPerBar +
+                                 std::max(0., now - event.barStarted) * event.tempo / 60.);
+                hostTempo = event.tempo;
+                break;
+            }
+            default:
+                break;
+            }
+        });
 }
 void process(juce::AudioBuffer<float> &buffer, uint64_t firstFrame)
 {
@@ -80,8 +136,11 @@ void process(juce::AudioBuffer<float> &buffer, uint64_t firstFrame)
             midi.addEvent(juce::MidiMessage::controllerEvent(channel, 120, 0), 0);
             midi.addEvent(juce::MidiMessage::controllerEvent(channel, 123, 0), 0);
         }
+    if (wamMode)
+        applyWamEvents(firstFrame, buffer.getNumSamples());
     renderStage.store(3, std::memory_order_relaxed);
     playhead.state = transport.beginBlock();
+    blockPosition.store(playhead.state.ppq, std::memory_order_relaxed);
     if (const auto tempo = requestedTempo.exchange(0, std::memory_order_acq_rel))
     {
         processor->standaloneTempo.store(tempo / 100.f);
@@ -91,6 +150,9 @@ void process(juce::AudioBuffer<float> &buffer, uint64_t firstFrame)
     // Respect the original preference for recalling a patch's standalone tempo.
     if (processor->surge->storage.unstreamedTempo > 0)
         processor->standaloneTempo.store(processor->surge->storage.unstreamedTempo);
+    // A Web Audio Module host's tempo wins over the patch's, even after a load.
+    if (wamMode && hostTempo > 0)
+        processor->standaloneTempo.store(float(hostTempo));
     renderStage.store(4, std::memory_order_relaxed);
     surge_publish_wavetables();
     renderStage.store(5, std::memory_order_relaxed);
@@ -116,6 +178,13 @@ bool render(int ni, const AudioSampleFrame *in, int no, AudioSampleFrame *out, i
 }
 bool renderCallback(int ni, const AudioSampleFrame *in, int no, AudioSampleFrame *out)
 {
+    if (wamDestroyed.load(std::memory_order_acquire))
+    {
+        // A destroyed plugin outputs silence and lets the browser stop the processor.
+        for (int i = 0; i < no; ++i)
+            std::fill_n(out[i].data, out[i].samplesPerChannel * out[i].numberOfChannels, 0.f);
+        return false;
+    }
     callbacks.fetch_add(1, std::memory_order_relaxed);
     renderStage.store(1, std::memory_order_relaxed);
     renderOutputs.store(no > 0 ? out[0].numberOfChannels : 0, std::memory_order_relaxed);
@@ -150,6 +219,84 @@ bool renderCallback(int ni, const AudioSampleFrame *in, int no, AudioSampleFrame
     blocks.fetch_add(1, std::memory_order_relaxed);
     return true;
 }
+void wamRegistered(int ok)
+{
+    // clang-format off
+    EM_ASM({ SurgeHost.wam.registered($0 !== 0); }, ok);
+    // clang-format on
+}
+// Runs on the audio worklet thread. Emscripten keeps Module private to its own
+// worklet module, so the WAM group gets a plain object whose scheduleEvents calls
+// straight into Wasm. WamEnv and WamGroup only read groupId and instanceId and
+// call scheduleEvents/clearEvents on it.
+// clang-format off
+void registerWam()
+{
+    const int ok = EM_ASM_INT({
+        const env = globalThis.webAudioModules;
+        if (!env) return 0;
+        const text = (pointer, length) =>
+            String.fromCharCode.apply(null, HEAPU16.subarray(pointer >> 1, (pointer >> 1) + length));
+        // EM_ASM splits its code at top-level commas: keep them inside parentheses.
+        const scratch = $4;
+        const scratchLength = $5;
+        const indices = new Map();
+        const parameterIndex = id => {
+            const key = String(id);
+            let index = indices.get(key);
+            if (index !== undefined) return index;
+            if (key.length > scratchLength) return -1;
+            for (let i = 0; i < key.length; ++i) HEAPU16[(scratch >> 1) + i] = key.charCodeAt(i);
+            index = Module._surge_wam_parameter_index(scratch, key.length);
+            indices.set(key, index);
+            return index;
+        };
+        // WAM event times are AudioContext seconds; no time means as soon as possible.
+        const frameOf = event =>
+            typeof event.time === 'number' && Number.isFinite(event.time) ? event.time * sampleRate : 0;
+        const wam = ({
+            groupId: text($0, $1),
+            instanceId: text($2, $3),
+            moduleId: 'com.surge-synth-team.surge-xt',
+            scheduleEvents(...events) {
+                for (const event of events) {
+                    const data = event && event.data;
+                    if (!data) continue;
+                    if (event.type === 'wam-midi' || event.type === 'wam-mpe') {
+                        const bytes = data.bytes;
+                        if (bytes) Module._surge_wam_midi(1, bytes[0] | 0, bytes[1] | 0, bytes[2] | 0, frameOf(event));
+                    } else if (event.type === 'wam-automation') {
+                        const index = parameterIndex(data.id);
+                        if (index >= 0) Module._surge_wam_automation(1, index, Number(data.value), frameOf(event));
+                    } else if (event.type === 'wam-transport') {
+                        Module._surge_wam_transport(1, data.playing ? 1 : 0, data.timeSigNumerator | 0,
+                            data.timeSigDenominator | 0, Number(data.currentBar),
+                            Number(data.currentBarStarted), Number(data.tempo), frameOf(event));
+                    }
+                }
+            },
+            clearEvents() { Module._surge_wam_clear(1); },
+            emitEvents() {},
+            getCompensationDelay() { return 0; }
+        });
+        try { env.addWam(wam); } catch (error) { return 0; }
+        Module.surgeWamProcessor = wam;
+        return 1;
+    }, wamGroupId.data(), wamGroupLength, wamInstanceId.data(), wamInstanceLength,
+       wamParameterScratch.data(), int(wamParameterScratch.size()));
+    emscripten_audio_worklet_post_function_vi(EMSCRIPTEN_AUDIO_MAIN_THREAD, wamRegistered, ok);
+}
+// clang-format on
+void unregisterWam()
+{
+    // clang-format off
+    EM_ASM({
+        const wam = Module.surgeWamProcessor;
+        Module.surgeWamProcessor = null;
+        try { if (wam) globalThis.webAudioModules.removeWam(wam); } catch (error) {}
+    });
+    // clang-format on
+}
 void ready(EMSCRIPTEN_WEBAUDIO_T audioContext, bool success, void *)
 {
     if (audioContext != context || closing || !initializationPending)
@@ -181,8 +328,21 @@ void ready(EMSCRIPTEN_WEBAUDIO_T audioContext, bool success, void *)
             () => Module._surge_browser_audio_failed(handle));
     }, audioContext, node);
     // clang-format on
-    emscripten_audio_node_connect(node, audioContext, 0, 0);
-    EM_ASM({ globalThis.SurgeAudioInput?.input?.setGraph(emscriptenGetAudioObject($0), emscriptenGetAudioObject($1)); }, audioContext, node);
+    if (wamMode)
+    {
+        // The host connects the node; register the plugin in its WAM group first.
+        // clang-format off
+        EM_ASM({ SurgeHost.wam.nodeReady(emscriptenGetAudioObject($0)); }, node);
+        // clang-format on
+        emscripten_audio_worklet_post_function_v(audioContext, registerWam);
+    }
+    else
+    {
+        emscripten_audio_node_connect(node, audioContext, 0, 0);
+        // clang-format off
+        EM_ASM({ globalThis.SurgeAudioInput?.input?.setGraph(emscriptenGetAudioObject($0), emscriptenGetAudioObject($1)); }, audioContext, node);
+        // clang-format on
+    }
     surge_browser_audio_changed(audioContext);
 }
 void started(EMSCRIPTEN_WEBAUDIO_T audioContext, bool success, void *)
@@ -238,7 +398,8 @@ void prepareAndStart()
     preparationPending = false;
     startupDeadline = emscripten_get_now() + 15000;
     report(1, "Starting audio…");
-    emscripten_resume_audio_context_sync(context);
+    if (!wamMode) // A Web Audio Module host decides when its context runs.
+        emscripten_resume_audio_context_sync(context);
     initializationPending = true;
     audioThreadInitialized = true;
     emscripten_start_wasm_audio_worklet_thread_async(context, audioStack.data(), audioStack.size(),
@@ -253,7 +414,7 @@ void surge_attach_audio(SurgeSynthProcessor *p)
 }
 extern "C" EMSCRIPTEN_KEEPALIVE int surge_enable_audio()
 {
-    if (!processor)
+    if (!processor || wamMode)
         return 0;
     if (closing) return 0;
     if (context && status.load() < 0)
@@ -322,7 +483,9 @@ extern "C" EMSCRIPTEN_KEEPALIVE void surge_browser_audio_failed(int handle)
     synth.browserAudioReleasing = true;
     synth.audio_processing_active = false;
     performanceEvents.panic();
-    report(-1, "The audio processor stopped unexpectedly. Click Enable audio to restart.");
+    report(-1, wamMode
+                   ? "The audio processor stopped unexpectedly. Reload the plugin to restart."
+                   : "The audio processor stopped unexpectedly. Click Enable audio to restart.");
 }
 extern "C" EMSCRIPTEN_KEEPALIVE void surge_browser_audio_changed(int handle)
 {
@@ -335,7 +498,8 @@ extern "C" EMSCRIPTEN_KEEPALIVE void surge_browser_audio_changed(int handle)
         processor->surge->browserAudioReleasing = true;
         processor->surge->audio_processing_active = false;
         performanceEvents.panic();
-        report(-1, "The audio context closed. Click Enable audio to restart.");
+        report(-1, wamMode ? "The host closed the audio context."
+                           : "The audio context closed. Click Enable audio to restart.");
     }
     else if (node && !processorFailed)
     {
@@ -349,7 +513,8 @@ extern "C" EMSCRIPTEN_KEEPALIVE void surge_browser_audio_changed(int handle)
             processor->surge->browserAudioReleasing = true;
             processor->surge->audio_processing_active = false;
             performanceEvents.panic();
-            report(4, "Audio suspended or interrupted. Click Enable audio to resume.");
+            report(4, wamMode ? "The host suspended the audio context."
+                              : "Audio suspended or interrupted. Click Enable audio to resume.");
         }
     }
 }
@@ -380,6 +545,128 @@ extern "C" EMSCRIPTEN_KEEPALIVE void surge_browser_audio_closed(int handle, int 
     processor->surge->audio_processing_active = false;
     report(0, "Restarting audio…");
     surge_enable_audio();
+}
+// ---- Web Audio Module entry points (wam/index.js) ----
+// Identifier buffers: 0 group id, 1 instance id. Written as UTF-16 before attach.
+extern "C" EMSCRIPTEN_KEEPALIVE char16_t *surge_wam_id_buffer(int which, int length)
+{
+    if (wamMode || length < 0 || length > int(wamGroupId.size()))
+        return nullptr;
+    (which ? wamInstanceLength : wamGroupLength) = length;
+    return which ? wamInstanceId.data() : wamGroupId.data();
+}
+// Attach to the host's AudioContext (Module.surgeWam.context). The host owns the
+// context: Surge never resumes, closes or connects it to the destination.
+extern "C" EMSCRIPTEN_KEEPALIVE int surge_wam_attach()
+{
+    if (!processor || context || offlineActive || closing || wamMode || !wamGroupLength ||
+        !wamInstanceLength)
+        return 0;
+    wamMode = true;
+    surge_wam_parameter_list(); // fixed before any callback reads it
+    // clang-format off
+    context = EM_ASM_INT({ return emscriptenRegisterAudioObject(SurgeHost.wam.context); });
+    EM_ASM({
+        const handle = $0;
+        emscriptenGetAudioObject(handle).addEventListener('statechange', () => Module._surge_browser_audio_changed(handle));
+    }, context);
+    // clang-format on
+    processorFailed = false;
+    performanceEvents.panic();
+    preparationPending = true;
+    report(1, "Waiting for patch preparation before starting audio…");
+    prepareAndStart();
+    return 1;
+}
+static void applyControlParameter(double index, double value)
+{
+    if (!wamMode || wamDestroyed.load(std::memory_order_acquire))
+        return;
+    if (status.load() == 2)
+        surge_wam_apply_control_parameter(int(index), float(value));
+    else
+        surge_wam_apply_parameter_now(int(index), float(value));
+}
+// Event producers: rt 0 is the browser main thread, rt 1 the audio worklet thread.
+// Frames are absolute AudioContext frames; 0 means as soon as possible.
+static bool wamProducerReady(int rt)
+{
+    if (!wamMode || wamDestroyed.load(std::memory_order_acquire))
+        return false;
+    // A suspended context renders nothing; queued notes would play late on resume.
+    return rt || status.load() == 2;
+}
+extern "C" EMSCRIPTEN_KEEPALIVE int surge_wam_midi(int rt, int statusByte, int first, int second,
+                                                   double frame)
+{
+    Surge::Web::WamEventQueue::Event event;
+    if (!wamProducerReady(rt) ||
+        !Surge::Web::WamEventQueue::makeMidi(event, statusByte, first, second, frame))
+        return 0;
+    return wamEvents.push(rt ? wamEvents.realtime : wamEvents.control, event);
+}
+extern "C" EMSCRIPTEN_KEEPALIVE int surge_wam_automation(int rt, int index, double value,
+                                                         double frame)
+{
+    if (!wamMode || wamDestroyed.load(std::memory_order_acquire) || index < 0 ||
+        index >= int(surge_wam_parameter_list().size()) || !std::isfinite(value))
+        return 0;
+    const float normalized = float(std::clamp(value, 0., 1.));
+    // Effect types change from the control thread only (see BrowserWam.cpp). From
+    // the worklet, hand the change to the main thread rather than constructing
+    // an effect on the audio thread.
+    if (surge_wam_parameter_control_thread(index))
+    {
+        if (rt)
+        {
+            emscripten_audio_worklet_post_function_vdd(EMSCRIPTEN_AUDIO_MAIN_THREAD,
+                                                       applyControlParameter, index, normalized);
+            return 1;
+        }
+        return status.load() == 2 ? surge_wam_apply_control_parameter(index, normalized)
+                                  : surge_wam_apply_parameter_now(index, normalized);
+    }
+    // Without rendering, nothing would drain the queue: apply on this thread.
+    if (!rt && status.load() != 2)
+        return surge_wam_apply_parameter_now(index, normalized);
+    Surge::Web::WamEventQueue::Event event;
+    Surge::Web::WamEventQueue::makeAutomation(event, index, value, frame);
+    return wamEvents.push(rt ? wamEvents.realtime : wamEvents.control, event);
+}
+extern "C" EMSCRIPTEN_KEEPALIVE int surge_wam_transport(int rt, int playing, int numerator,
+                                                        int denominator, double bar,
+                                                        double barStarted, double tempo,
+                                                        double frame)
+{
+    Surge::Web::WamEventQueue::Event event;
+    if (!wamMode || wamDestroyed.load(std::memory_order_acquire) ||
+        !Surge::Web::WamEventQueue::makeTransport(event, playing != 0, numerator, denominator, bar,
+                                                  barStarted, tempo, frame))
+        return 0;
+    return wamEvents.push(rt ? wamEvents.realtime : wamEvents.control, event);
+}
+extern "C" EMSCRIPTEN_KEEPALIVE void surge_wam_clear(int rt)
+{
+    if (wamMode)
+        wamEvents.push(rt ? wamEvents.realtime : wamEvents.control,
+                       Surge::Web::WamEventQueue::makeClear());
+}
+extern "C" EMSCRIPTEN_KEEPALIVE unsigned surge_wam_dropped_events()
+{
+    return wamEvents.droppedCount();
+}
+// Stop rendering and leave the WAM group. A destroyed plugin is not restarted:
+// the worklet thread and its stack belong to the host's context until it closes.
+extern "C" EMSCRIPTEN_KEEPALIVE void surge_wam_destroy()
+{
+    if (!wamMode || wamDestroyed.exchange(true, std::memory_order_acq_rel))
+        return;
+    performanceEvents.panic();
+    processor->surge->browserAudioReleasing = true;
+    processor->surge->audio_processing_active = false;
+    if (context && node)
+        emscripten_audio_worklet_post_function_v(context, unregisterWam);
+    report(0, "Destroyed");
 }
 extern "C" EMSCRIPTEN_KEEPALIVE int surge_browser_audio_status() { return status.load(); }
 extern "C" EMSCRIPTEN_KEEPALIVE unsigned surge_browser_audio_blocks() { return blocks.load(); }
@@ -439,6 +726,11 @@ extern "C" EMSCRIPTEN_KEEPALIVE double surge_browser_transport_bpm()
 {
     const auto pending = requestedTempo.load(std::memory_order_acquire);
     return pending ? pending / 100. : processor ? processor->standaloneTempo.load() : 120.;
+}
+// Diagnostic: the transport position (quarter notes) when the last block started.
+extern "C" EMSCRIPTEN_KEEPALIVE double surge_browser_transport_position()
+{
+    return blockPosition.load(std::memory_order_relaxed);
 }
 extern "C" EMSCRIPTEN_KEEPALIVE int surge_browser_transport_playing()
 {

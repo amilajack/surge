@@ -2,7 +2,8 @@
 // Asset preparation runs on the browser task queue, never inside the audio callback.
 export class FactoryLibrary {
   static async open(url = './library/manifest.json', report = () => {}) {
-    const location = new URL(url, document.baseURI);
+    // As a Web Audio Module, resolve against the plugin's URL, not the host page.
+    const location = new URL(globalThis.SurgeHost ? SurgeHost.url(url) : new URL(url, document.baseURI));
     const response = await fetch(location);
     if (!response.ok) throw Error(`Factory index download failed (${response.status})`);
     return new FactoryLibrary(await response.json(), location, report);

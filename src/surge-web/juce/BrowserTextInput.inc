@@ -27,8 +27,10 @@
     }
     void syncInput()
     {
-        const bool nativeText = EM_ASM_INT({ return document.activeElement?.dataset.jucePeer === UTF8ToString($0)
-            && document.activeElement instanceof HTMLTextAreaElement; }, canvasId.toRawUTF8());
+        // clang-format off
+        const bool nativeText = EM_ASM_INT({ const active = SurgeHost.activeElement();
+            return active?.dataset.jucePeer === UTF8ToString($0) && active instanceof HTMLTextAreaElement; }, canvasId.toRawUTF8());
+        // clang-format on
         auto *target = isFocused() && !nativeText ? findCurrentTextInputTarget() : nullptr;
         auto *focused = Component::getCurrentlyFocusedComponent();
         if (target && target->getKeyboardType() == TextInputTarget::passwordKeyboard)

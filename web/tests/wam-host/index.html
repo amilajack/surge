@@ -1,0 +1,117 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><link rel="icon" href="data:,"><title>WAM test host</title>
+<style>body{margin:0;font:14px sans-serif;background:#eee}#host-ui{padding:8px}#host-input{width:120px}#gui{margin:8px;display:inline-block}</style>
+</head><body>
+<!-- Test-only Web Audio Module 2.0 host. Served from another origin than the
+     plugin (see web/tests/wam.spec.js) so loading is exercised cross-origin. -->
+<div id="host-ui"><label>Host field <input id="host-input"></label> <span id="host-log"></span></div>
+<div id="gui"></div>
+<script type="module">
+// The WAM 2.0 environment and group, as a host creates them in the AudioWorklet
+// (the API's initializeWamEnv/initializeWamGroup), written out for the test.
+function initializeWamEnv(apiVersion) {
+  if (!globalThis.AudioWorkletProcessor || globalThis.webAudioModules) return;
+  const groups = new Map(), scopes = new Map();
+  globalThis.webAudioModules = {
+    apiVersion,
+    getModuleScope(id) { if (!scopes.has(id)) scopes.set(id, {}); return scopes.get(id); },
+    getGroup(id, key) { const group = groups.get(id); if (group.validate(key)) return group; throw 'Invalid key'; },
+    addGroup(group) { if (!groups.has(group.groupId)) groups.set(group.groupId, group); },
+    removeGroup(group) { groups.delete(group.groupId); },
+    addWam(wam) { groups.get(wam.groupId).addWam(wam); },
+    removeWam(wam) { groups.get(wam.groupId).removeWam(wam); },
+    connectEvents(groupId, from, to, output = 0) { groups.get(groupId).connectEvents(from, to, output); },
+    disconnectEvents(groupId, from, to, output) { groups.get(groupId).disconnectEvents(from, to, output); },
+    emitEvents(from, ...events) { groups.get(from.groupId).emitEvents(from, ...events); }
+  };
+}
+function initializeWamGroup(groupId, groupKey) {
+  if (!globalThis.AudioWorkletProcessor) return;
+  const processors = new Map(), graph = new Map();
+  globalThis.webAudioModules.addGroup({
+    groupId,
+    processors,
+    validate: key => key === groupKey,
+    addWam(wam) { processors.set(wam.instanceId, wam); },
+    removeWam(wam) { graph.delete(wam); for (const set of graph.values()) set.delete(wam); processors.delete(wam.instanceId); },
+    connectEvents(from, to) {
+      const source = processors.get(from);
+      if (!graph.has(source)) graph.set(source, new Set());
+      graph.get(source).add(processors.get(to));
+    },
+    disconnectEvents(from, to) { graph.get(processors.get(from))?.delete(processors.get(to)); },
+    emitEvents(from, ...events) { for (const wam of graph.get(from) || []) wam.scheduleEvents(...events); }
+  });
+}
+// An upstream WAM in the same group that emits MIDI from the audio thread, the
+// way sequencer plugins route events to an instrument with connectEvents.
+function registerSequencer(groupId) {
+  class Sequencer extends AudioWorkletProcessor {
+    constructor() {
+      super();
+      this.wam = {groupId, instanceId: 'test-sequencer', moduleId: 'test-sequencer', scheduleEvents() {}, clearEvents() {}};
+      globalThis.webAudioModules.addWam(this.wam);
+      this.port.onmessage = ({data}) => {
+        if (data.connect) globalThis.webAudioModules.connectEvents(groupId, 'test-sequencer', data.connect);
+        if (data.events) globalThis.webAudioModules.emitEvents(this.wam,
+          ...data.events.map(event => ({...event, time: currentTime + (event.delay ?? 0)})));
+        if (data.ask) this.port.postMessage({currentTime});
+      };
+    }
+    process() { return true; }
+  }
+  registerProcessor('test-sequencer', Sequencer);
+}
+const addFunctionModule = (worklet, fn, ...args) => worklet.addModule(URL.createObjectURL(
+  new Blob([`(${fn})(${args.map(arg => JSON.stringify(arg)).join(',')});`], {type: 'text/javascript'})));
+
+const pluginUrl = new URLSearchParams(location.search).get('plugin') || 'http://127.0.0.1:8080/wam/index.js';
+const host = globalThis.wamHost = {
+  context: null, plugin: null, analyser: null, groupId: null, sequencer: null, error: null,
+  async start({sampleRate, initializeGroup = true, state} = {}) {
+    const context = host.context = new AudioContext(sampleRate ? {sampleRate} : {});
+    host.groupId = 'test-host-' + Math.random().toString(36).slice(2);
+    await addFunctionModule(context.audioWorklet, initializeWamEnv, '2.0.0');
+    if (initializeGroup) {
+      await addFunctionModule(context.audioWorklet, initializeWamGroup, host.groupId, 'secret');
+      await addFunctionModule(context.audioWorklet, registerSequencer, host.groupId);
+    }
+    const {default: Plugin} = await import(pluginUrl);
+    host.Plugin = Plugin;
+    host.plugin = await Plugin.createInstance(host.groupId, context, state);
+    // Plugin output -> analyser -> silent gain -> destination, so the graph renders.
+    host.analyser = new AnalyserNode(context, {fftSize: 2048});
+    const silent = new GainNode(context, {gain: 0});
+    host.plugin.audioNode.connect(host.analyser).connect(silent).connect(context.destination);
+    if (initializeGroup) {
+      host.sequencer = new AudioWorkletNode(context, 'test-sequencer');
+      host.sequencer.connect(silent);
+      host.sequencer.port.postMessage({connect: host.plugin.instanceId});
+    }
+    await context.resume();
+    return host.plugin.descriptor;
+  },
+  async peak(ms = 300) {
+    const data = new Float32Array(host.analyser.fftSize);
+    let peak = 0;
+    const end = performance.now() + ms;
+    while (performance.now() < end) {
+      host.analyser.getFloatTimeDomainData(data);
+      for (const value of data) peak = Math.max(peak, Math.abs(value));
+      await new Promise(resolve => setTimeout(resolve, 20));
+    }
+    return peak;
+  },
+  async mountGui(target = document.getElementById('gui')) {
+    const gui = host.gui = await host.plugin.createGui();
+    target.append(gui);
+    return gui.getBoundingClientRect().toJSON();
+  },
+  unmountGui() {
+    host.gui.remove();
+    host.plugin.destroyGui(host.gui);
+    host.gui = null;
+  }
+};
+</script>
+</body></html>

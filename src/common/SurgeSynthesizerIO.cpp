@@ -387,10 +387,26 @@ void SurgeSynthesizer::enqueuePatchForLoad(const void *data, int size)
         enqueuedLoadData.reset(new char[size]);
         memcpy(enqueuedLoadData.get(), data, size);
         enqueuedLoadSize = size;
+#if SURGE_WEB
+        browserEnqueuedLoadSerial =
+            browserRawLoadSerial.fetch_add(1, std::memory_order_acq_rel) + 1;
+#endif
         rawLoadEnqueued = true;
         rawLoadNeedsUIDawExtraState = false;
     }
 }
+
+#if SURGE_WEB
+void SurgeSynthesizer::completeBrowserStateLoad(uint32_t serial)
+{
+    // Raw and file state loads may finish out of order; completion only advances.
+    auto completed = browserRawLoadCompleted.load(std::memory_order_acquire);
+    while (completed < serial && !browserRawLoadCompleted.compare_exchange_weak(
+                                     completed, serial, std::memory_order_acq_rel))
+    {
+    }
+}
+#endif
 
 void SurgeSynthesizer::processEnqueuedPatchIfNeeded()
 {
@@ -410,6 +426,9 @@ void SurgeSynthesizer::processEnqueuedPatchIfNeeded()
 
         loadRaw(enqueuedLoadData.get(), enqueuedLoadSize);
         loadFromDawExtraState();
+#if SURGE_WEB
+        completeBrowserStateLoad(browserEnqueuedLoadSerial);
+#endif
 
         if (retriggerArmed)
         {

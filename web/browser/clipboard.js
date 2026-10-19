@@ -1,11 +1,12 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 (() => {
+  let status=null;
   function report(message) {
-    let status=document.getElementById('clipboard-status');
     if(!status) {
       status=document.createElement('div');status.id='clipboard-status';status.setAttribute('role','alert');
       Object.assign(status.style,{position:'fixed',left:'8px',bottom:'110px',zIndex:2100,background:'#202328',padding:'8px',maxWidth:'600px'});
-      document.body.append(status);
+      // As a Web Audio Module, status stays inside the plugin's container.
+      (globalThis.SurgeHost?.overlayParent() || document.body).append(status);
     }
     status.textContent=message;
   }

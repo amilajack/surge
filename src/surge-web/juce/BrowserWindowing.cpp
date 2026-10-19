@@ -71,10 +71,15 @@ class BrowserPeer final : public ComponentPeer
         auto &p = *static_cast<BrowserPeer *>(ctx);
         const auto modifiers = mouseModifiers(*event);
         ModifierKeys::currentModifiers = modifiers;
-        browserMouse = {float(event->clientX), float(event->clientY)};
+        // Desktop coordinates are relative to the application's container.
+        browserMouse = {float(event->clientX) - float(EM_ASM_DOUBLE({ return SurgeHost.origin().x; })),
+                        float(event->clientY) - float(EM_ASM_DOUBLE({ return SurgeHost.origin().y; }))};
+        // A plugin's container may have moved since the last display refresh.
+        if (type == EMSCRIPTEN_EVENT_MOUSEDOWN && EM_ASM_INT({ return SurgeHost.displaysStale(); }))
+            const_cast<Displays &>(Desktop::getInstance().getDisplays()).refresh();
         if (type == EMSCRIPTEN_EVENT_MOUSEDOWN &&
             (p.getStyleFlags() & windowIgnoresKeyPresses) == 0)
-            EM_ASM({ document.getElementById(UTF8ToString($0)).focus(); }, p.canvasId.toRawUTF8());
+            EM_ASM({ SurgeHost.canvas(UTF8ToString($0)).focus(); }, p.canvasId.toRawUTF8());
         p.handleMouseEvent(MouseInputSource::InputSourceType::mouse,
                            {float(event->targetX), float(event->targetY)}, modifiers,
                            MouseInputSource::invalidPressure, MouseInputSource::invalidOrientation,
@@ -95,7 +100,7 @@ class BrowserPeer final : public ComponentPeer
             p.handleKeyUpOrDown(false);
             // Moving between a canvas and its accessible DOM controls retains
             // the same JUCE peer. In particular, do not close type-ahead editors.
-            if (!EM_ASM_INT({ const c=document.getElementById(UTF8ToString($0));
+            if (!EM_ASM_INT({ const c=SurgeHost.canvas(UTF8ToString($0));
                 return c.surgeFocusDestination === c.id; }, p.canvasId.toRawUTF8()))
                 p.handleFocusLoss();
         }
@@ -165,7 +170,7 @@ class BrowserPeer final : public ComponentPeer
                 c.style.zIndex = $3 ? 2000 : 0;
                 if (!$2) c.tabIndex = 0;
                 c.setAttribute('aria-label', UTF8ToString($1));
-                document.body.appendChild(c);
+                SurgeHost.register(c, $3);
                 c.addEventListener('blur', event => { c.surgeFocusDestination=event.relatedTarget?.dataset.jucePeer || ""; }, true);
                 c.addEventListener('contextmenu', e => e.preventDefault());
                 SurgeBrowser.attachFileDrop(c, $4);
@@ -200,21 +205,21 @@ class BrowserPeer final : public ComponentPeer
         emscripten_set_wheel_callback(selector.toRawUTF8(), nullptr, true, nullptr);
         emscripten_set_focus_callback(selector.toRawUTF8(), nullptr, true, nullptr);
         emscripten_set_blur_callback(selector.toRawUTF8(), nullptr, true, nullptr);
-        EM_ASM({ document.getElementById(UTF8ToString($0)).remove(); }, canvasId.toRawUTF8());
+        EM_ASM({ SurgeHost.unregister(UTF8ToString($0)); }, canvasId.toRawUTF8());
     }
     void *getNativeHandle() const override { return const_cast<BrowserPeer *>(this); }
     void setVisible(bool value) override
     {
         visible = value;
         EM_ASM(
-            { document.getElementById(UTF8ToString($0)).style.display = $1 ? 'block' : 'none'; },
+            { SurgeHost.canvas(UTF8ToString($0)).style.display = $1 ? 'block' : 'none'; },
             canvasId.toRawUTF8(), value);
     }
     void setTitle(const String &title) override
     {
         EM_ASM(
             {
-                document.getElementById(UTF8ToString($0))
+                SurgeHost.canvas(UTF8ToString($0))
                     .setAttribute('aria-label', UTF8ToString($1));
             },
             canvasId.toRawUTF8(), title.toRawUTF8());
@@ -232,7 +237,7 @@ class BrowserPeer final : public ComponentPeer
         }
         EM_ASM(
             {
-                const c = document.getElementById(UTF8ToString($0));
+                const c = SurgeHost.canvas(UTF8ToString($0));
                 c.width = $5;
                 c.height = $6;
                 c.style.width = $3 + 'px';
@@ -265,8 +270,8 @@ class BrowserPeer final : public ComponentPeer
         if (!bounds.withPosition(0, 0).contains(p))
             return false;
         return EM_ASM_INT({
-            const canvas = document.getElementById(UTF8ToString($0));
-            return document.elementFromPoint($1, $2) === canvas;
+            const canvas = SurgeHost.canvas(UTF8ToString($0));
+            return SurgeHost.elementFromPoint($1, $2) === canvas;
         }, canvasId.toRawUTF8(), p.x + bounds.getX(), p.y + bounds.getY());
     }
     OptionalBorderSize getFrameSizeIfPresent() const override
@@ -277,7 +282,7 @@ class BrowserPeer final : public ComponentPeer
     bool setAlwaysOnTop(bool b) override
     {
         EM_ASM(
-            { document.getElementById(UTF8ToString($0)).style.zIndex = $2 ? 2000 : ($1 ? 100 : 0); },
+            { SurgeHost.canvas(UTF8ToString($0)).style.zIndex = $2 ? 2000 : ($1 ? 100 : 0); },
             canvasId.toRawUTF8(), b, (getStyleFlags() & windowIsTemporary) != 0);
         return true;
     }
@@ -285,7 +290,7 @@ class BrowserPeer final : public ComponentPeer
     {
         EM_ASM(
             {
-                const c = document.getElementById(UTF8ToString($0));
+                const c = SurgeHost.canvas(UTF8ToString($0));
                 c.parentNode.appendChild(c);
             },
             canvasId.toRawUTF8());
@@ -296,7 +301,7 @@ class BrowserPeer final : public ComponentPeer
     {
         EM_ASM(
             {
-                const c = document.getElementById(UTF8ToString($0));
+                const c = SurgeHost.canvas(UTF8ToString($0));
                 c.parentNode.prepend(c);
             },
             canvasId.toRawUTF8());
@@ -305,14 +310,15 @@ class BrowserPeer final : public ComponentPeer
     bool isFocused() const override
     {
         return EM_ASM_INT(
-            { return document.activeElement === document.getElementById(UTF8ToString($0)) ||
-                       document.activeElement?.dataset.jucePeer === UTF8ToString($0); },
+            { const active = SurgeHost.activeElement();
+              return active === SurgeHost.canvas(UTF8ToString($0)) ||
+                       active?.dataset.jucePeer === UTF8ToString($0); },
             canvasId.toRawUTF8());
     }
     void grabFocus() override
     {
         if ((getStyleFlags() & windowIgnoresKeyPresses) == 0 && !isFocused())
-            EM_ASM({ document.getElementById(UTF8ToString($0)).focus(); }, canvasId.toRawUTF8());
+            EM_ASM({ SurgeHost.canvas(UTF8ToString($0)).focus(); }, canvasId.toRawUTF8());
     }
     void repaint(const Rectangle<int> &) override { dirty = true; }
     void performAnyPendingRepaintsNow() override
@@ -344,7 +350,7 @@ class BrowserPeer final : public ComponentPeer
             }
         EM_ASM(
             {
-                const c = document.getElementById(UTF8ToString($0));
+                const c = SurgeHost.canvas(UTF8ToString($0));
                 const image = c.getContext('2d').createImageData(c.width, c.height);
                 image.data.set(HEAPU8.subarray($1, $1 + c.width * c.height * 4));
                 c.getContext('2d').putImageData(image, 0, 0);
@@ -354,7 +360,7 @@ class BrowserPeer final : public ComponentPeer
     void setAlpha(float alpha) override
     {
         EM_ASM(
-            { document.getElementById(UTF8ToString($0)).style.opacity = $1; }, canvasId.toRawUTF8(),
+            { SurgeHost.canvas(UTF8ToString($0)).style.opacity = $1; }, canvasId.toRawUTF8(),
             alpha);
     }
     StringArray getAvailableRenderingEngines() override { return {"JUCE software renderer"}; }
@@ -382,6 +388,11 @@ extern "C" EMSCRIPTEN_KEEPALIVE int surge_browser_file_drop(int id, const char *
     }
     info.position = {x, y};
     return peer->handleDragDrop(info) ? 1 : 0;
+}
+// The application's container moved or the viewport changed (Web Audio Module GUI).
+extern "C" EMSCRIPTEN_KEEPALIVE void surge_browser_displays_changed()
+{
+    const_cast<Displays &>(Desktop::getInstance().getDisplays()).refresh();
 }
 extern "C" EMSCRIPTEN_KEEPALIVE void surge_text_update(int id, int generation, int start, int end, char *data, int a, int b)
 {
@@ -452,7 +463,9 @@ void Displays::findDisplays(const Desktop &desktop)
     d.isMain = true;
     d.scale = desktop.getGlobalScaleFactor();
     d.dpi = 96;
-    d.totalArea = {0, 0, EM_ASM_INT({ return innerWidth; }), EM_ASM_INT({ return innerHeight; })};
+    // The visible viewport, in container-relative desktop coordinates.
+    d.totalArea = {EM_ASM_INT({ return SurgeHost.displayArea()[0]; }), EM_ASM_INT({ return SurgeHost.displayArea()[1]; }),
+                   EM_ASM_INT({ return SurgeHost.displayArea()[2]; }), EM_ASM_INT({ return SurgeHost.displayArea()[3]; })};
     d.userArea = d.totalArea;
     displays.add(d);
 }
@@ -477,7 +490,7 @@ struct MouseCursor::PlatformSpecificHandle
                           : type == PointingHandCursor ? "pointer"
                           : type == DraggingHandCursor ? "grabbing"
                                                        : "default";
-        EM_ASM({ document.body.style.cursor = UTF8ToString($0); }, css);
+        EM_ASM({ SurgeHost.container().style.cursor = UTF8ToString($0); }, css);
     }
 };
 namespace
