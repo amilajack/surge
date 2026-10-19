@@ -402,3 +402,37 @@ test('embedded patch tuning, user MIDI mappings and the MPE timbre context menu'
   expect(await isChecked(page,['MPE Settings','MPE Timbre Value Range'],'Bipolar')).toBe(true);
   await choose(page,['MPE Settings'],'Disable MPE');
 });
+
+test('retrigger held notes on patch load keeps held keys sounding through a patch change',async({page})=>{
+  test.setTimeout(120000);
+  await start(page);
+  await page.getByRole('button',{name:'Enable audio',exact:true}).click();
+  await expect.poll(()=>page.evaluate(()=>Module._surge_browser_audio_status())).toBe(2);
+  const voices=()=>page.evaluate(()=>Module._surge_browser_active_voices());
+  const load=async name=>{
+    await page.evaluate(path=>Module.ccall('surge_browser_request_patch','number',['string'],[path]),`/factory/patches_factory/Templates/${name}.fxp`);
+    await expect.poll(()=>page.evaluate(()=>Module.ccall('surge_browser_patch_name','string',[],[]))).toBe(name);
+    const blocks=await page.evaluate(()=>Module._surge_browser_audio_blocks());
+    await expect.poll(()=>page.evaluate(()=>Module._surge_browser_audio_blocks())).toBeGreaterThan(blocks+40);
+  };
+  // Off (the default): a patch change silences the held key, as before.
+  expect(await isChecked(page,['Workflow'],'Retrigger Held Notes on Patch Load')).toBe(false);
+  await closeMenus(page);
+  await page.evaluate(()=>Module._surge_browser_midi(0x90,60,100,0));
+  await expect.poll(voices).toBeGreaterThan(0);
+  await load('Init Sine');
+  await expect.poll(voices).toBe(0);
+  await page.evaluate(()=>Module._surge_browser_midi(0x80,60,0,0));
+  // On: the held key starts again in the new patch.
+  await choose(page,['Workflow'],'Retrigger Held Notes on Patch Load');
+  await page.evaluate(()=>Module._surge_browser_midi(0x90,62,100,0));
+  await expect.poll(voices).toBeGreaterThan(0);
+  await page.evaluate(()=>Module._surge_browser_audio_allocations_reset());
+  await load('Init Square');
+  await expect.poll(voices).toBeGreaterThan(0);
+  // The replay runs in the audio callback and stays off the system heap.
+  expect(await page.evaluate(()=>Module._surge_browser_audio_allocations()+Module._surge_browser_audio_releases())).toBe(0);
+  await page.evaluate(()=>Module._surge_browser_midi(0x80,62,0,0));
+  await expect.poll(voices).toBe(0);
+  await choose(page,['Workflow'],'Retrigger Held Notes on Patch Load');
+});

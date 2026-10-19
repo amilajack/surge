@@ -5463,8 +5463,12 @@ void SurgeSynthesizer::process()
         if (masterfade < 0.0001f)
         {
 #if SURGE_WEB
-            stopSound();
+            // Halt first, as below, so that stopSound() spares the held keys for the
+            // retrigger on the far side of the load. The loader still starts only after
+            // this whole callback has finished (browserPatchLoadRequested/Pending).
+            beginPatchChangeNoteRetrigger();
             halt_engine.store(true, std::memory_order_release);
+            stopSound();
             browserPatchLoadRequested.store(true, std::memory_order_release);
 #else
             std::lock_guard<std::mutex> mg(patchLoadSpawnMutex);
