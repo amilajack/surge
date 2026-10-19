@@ -1739,9 +1739,16 @@ workflow tests plus four inventory checks (**7 checks in 27.9 seconds**).
 ## Remaining parity work
 
 Every automatable item is done and verified in Chrome and Node.
-`python3 web/scripts/feature-inventory.py --require-complete` passes: all **736**
+`python3 web/scripts/feature-inventory.py --require-complete` passes: all **754**
 source entry points are reviewed against browser evidence (menus, context menus,
 shortcuts, skin connectors and actions, overlays and editor implementations).
+The 18 added since the 736-entry review come from upstream desktop features: patch
+backups, retriggering held notes on patch load (whose browser patch handoff now arms
+the retrigger as desktop does), scale rotate/invert in the tuning editor, scene LFO
+Retrigger on New Note, delay line modes, unison voices as a sample loop count and
+renamed menu items. The Unison Voices/Sample Loop Count items of the parameter menu
+are unreachable on desktop too (they are built only for float parameters) and are
+recorded as verified absences.
 Platform limitations are limited to the allowed capability types:
 
 - native audio/MIDI device selection (`native-driver`);

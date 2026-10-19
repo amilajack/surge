@@ -203,3 +203,39 @@ test('MSEG segment menu value entry and split',async({page})=>{
   await expect(page.getByRole('menu')).toHaveCount(0);
   expect(Number((await mseg()).activeSegments)).toBe(segments+1);
 });
+
+test('unison voices play a oneshot sample a number of times',async({page})=>{
+  test.setTimeout(120000);
+  await start(page,factoryPatch('Templates/Init Wavetable'));
+  const display=[75,130],unison=page.locator('#juce-accessibility').getByRole('slider',{name:/^Scene A Osc 1 (Unison Voices|Loop Count)$/});
+  const deform=async()=>tag(await save(page),'a_osc1_param6')?.deform_type??'0';
+  // A wavetable always runs the count as unison voices, so the display offers no choice.
+  expect(await context(page,display)).not.toContain('Use Unison Voices as Loop Count');
+  await pick(page,display,[],'Play as Oneshot Sample');
+  // Playback changes reslice the table off the audio thread; wait until it is a sample.
+  await expect.poll(async()=>{const l=await context(page,display);await closeMenus(page);return l.includes('Play as Oneshot Sample (Checked)');}).toBe(true);
+  // The display offers the choice next to the playback modes, as one toggle, and the
+  // patch stores it as the Unison Voices parameter's deform type.
+  expect(await context(page,display)).toContain('Use Unison Voices as Loop Count');
+  await pick(page,display,[],'Use Unison Voices as Loop Count');
+  expect(await context(page,display)).toContain('Use Unison Voices as Loop Count (Checked)');
+  await closeMenus(page);
+  expect(await deform()).toBe('1');
+  // As on desktop, the parameter's own menu does not list Unison Voices / Sample Loop
+  // Count: that section is only built for float parameters, and the count is an integer.
+  // The count now reads as a loop count, and unison detune no longer applies.
+  await expect(unison).toHaveAttribute('aria-label','Scene A Osc 1 Loop Count');
+  await expect(node(page,'Scene A Osc 1 N/A')).toBeAttached();
+  const own=await context(page,unison);
+  expect(own.length).toBeGreaterThan(16);
+  expect(own.filter(l=>/^(MODE|Unison Voices|Sample Loop Count)( \(Checked\))?$/.test(l))).toEqual([]);
+  await closeMenus(page);
+  await pick(page,display,[],'Use Unison Voices as Loop Count');
+  await expect(unison).toHaveAttribute('aria-label','Scene A Osc 1 Unison Voices');
+  expect(await deform()).toBe('0');
+  // A looping sample ignores the count, so the display no longer offers it.
+  await pick(page,display,[],'Play as Looped Sample');
+  await expect.poll(async()=>{const l=await context(page,display);await closeMenus(page);return l.includes('Play as Looped Sample (Checked)');}).toBe(true);
+  expect(await context(page,display)).not.toContain('Use Unison Voices as Loop Count');
+  await closeMenus(page);
+});

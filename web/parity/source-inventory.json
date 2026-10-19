@@ -7,11 +7,11 @@
     "src/common/SkinModel.cpp": "506b383cb3ec48d4d9214cbe49bcbaf45debfbd3bc0c348e12ff113d40cea611",
     "src/common/SkinModel.h": "a6bb57c2118c83920f8821bdbe38ab386696503cad0c04670b2c7b92fff4b19f",
     "src/surge-xt/SurgeSynthEditor.cpp": "fe105281431ac9fe6d38be5dcbd3a44a30adc285b57f94d3d5a64e568acac27a",
-    "src/surge-xt/gui/SurgeGUIEditor.cpp": "d95ca8ff4fdbcf564b923e582ecc32417acd3da4b8919d3f31eec3e8895deea2",
-    "src/surge-xt/gui/SurgeGUIEditor.h": "b03e2724516b1a5e8eb4fd17be4ee8e5773de07e2a6754fdc5de6304e6620de7",
-    "src/surge-xt/gui/SurgeGUIEditorKeyboardActions.h": "adf626136f917f8eaf48ac489a2f4e9191a9e6e93d931fcff5e467ece4903262",
-    "src/surge-xt/gui/SurgeGUIEditorMenuStructures.cpp": "8223b05efa3d149d486750eeb059c254c8f9de11a2b17c110c74da81dc6a2ad8",
-    "src/surge-xt/gui/SurgeGUIEditorValueCallbacks.cpp": "c570cb3f14c9c4ef042938b5cb92d635134b1a27d0d7bff0db4065568430c9f6",
+    "src/surge-xt/gui/SurgeGUIEditor.cpp": "e88f2989d67587f72f9cab50706b5eef1185227f8cbf704c453845d5a146d593",
+    "src/surge-xt/gui/SurgeGUIEditor.h": "fdbac3023fa2c9a9e3d5537d69ecf51df64c89f02566f39ed23339e67c75485e",
+    "src/surge-xt/gui/SurgeGUIEditorKeyboardActions.h": "5446a468c773a629884ec99ea9332eac6ce89d2c1b26033ccbb7ada1acbbc220",
+    "src/surge-xt/gui/SurgeGUIEditorMenuStructures.cpp": "7b84754dc1f8cdb0238302b6432509e45696b4db30c26585c53de56f94b97a54",
+    "src/surge-xt/gui/SurgeGUIEditorValueCallbacks.cpp": "78aa311dac2da6a162add443feae11bae6a7776f6a2fcbd20f48f5a0d931ae4c",
     "src/surge-xt/gui/SurgeJUCEHelpers.h": "209329ea02d4e7611680de930a75bb40ab19b9f886a239a1e79927b61613f013",
     "src/surge-xt/gui/overlays/AboutScreen.cpp": "1f07c95555517dbcaab23a20bae521ab4c9e704cecd04f24eb927d612c53ded2",
     "src/surge-xt/gui/overlays/Alert.cpp": "510888d689050b9e9989b0d144792ea7ec0735eb7f7354b6d6a5709d35fcb47a",
@@ -28,15 +28,15 @@
     "src/surge-xt/gui/overlays/OverlayWrapper.cpp": "7b7111c3538808fcc12962dd25365eee0279ba2f98c55c3aea0011f69b516681",
     "src/surge-xt/gui/overlays/PatchDBViewer.cpp": "4251dd0a7d0f666b5e06813f567fc56b56a68ca22aec34f5bd50668d60bcf7f5",
     "src/surge-xt/gui/overlays/PatchStoreDialog.cpp": "24d018bcd69431b31c8edefa1325e7f948f3562c928b8bdca8a0f4cfba5cbbeb",
-    "src/surge-xt/gui/overlays/TuningOverlays.cpp": "04410c92cfaeec5e9484fe6080ca546642161d7e50678846f309642e92eb75a4",
+    "src/surge-xt/gui/overlays/TuningOverlays.cpp": "711a6b7563b0147ff745bcd3513870ecccf5fa8a16d43ac57107861aae900acf",
     "src/surge-xt/gui/overlays/TypeinParamEditor.cpp": "25a855eb630ad4b2449570d2ab60adc08551d4ec139b824e612472f561f0f51a",
     "src/surge-xt/gui/overlays/WaveShaperAnalysis.cpp": "3d635c9f2797744e952ce0e70fd6e22df95b47dba857f476bbe8ff3b70ca6238",
     "src/surge-xt/gui/widgets/CurrentFxDisplay.cpp": "3733da433c93a5b2d23c707075a1deeaa1965bf820f749518fd3d9462239840a",
     "src/surge-xt/gui/widgets/LFOAndStepDisplay.cpp": "17090163b885688b162c33cb41ed81b62e3323435997ba8baf577172ad4b3cf6",
     "src/surge-xt/gui/widgets/MenuCustomComponents.cpp": "4bb56a7da2f0c103591463be70e0f0393c9adbd40b864aa5bf0314d7a5e12be7",
     "src/surge-xt/gui/widgets/ModulationSourceButton.cpp": "28da47c0106db4d59343f768567687fda9bf70bfa12e4a146bb9180e4681f28a",
-    "src/surge-xt/gui/widgets/OscillatorWaveformDisplay.cpp": "7745946f054b524e9d4c0b3df9caa6744c10b55bd0bc3622c9eeee3a593f9935",
-    "src/surge-xt/gui/widgets/PatchSelector.cpp": "2e9f66efcbbafa348259bbf621b2f7104a11b3f02c7e8445bc32ab03bcd923de",
+    "src/surge-xt/gui/widgets/OscillatorWaveformDisplay.cpp": "8afc2670f03db4ddc3949e4244d857ff86bcfb741c43808acb187c9f2180890b",
+    "src/surge-xt/gui/widgets/PatchSelector.cpp": "2e82cfc85e33c04f5b9601581c5faee9989e361dd9a77ba69cd670a0ab963500",
     "src/surge-xt/gui/widgets/XMLConfiguredMenus.cpp": "9ba6898798081f37eb70ae5a15036e0a3945f9306e5275d8e2bb8a1f70f821cb"
   },
   "entries": [
@@ -1621,7 +1621,7 @@
       "kind": "menu-call",
       "name": "00e3728fe45e291e",
       "source": "src/surge-xt/gui/SurgeGUIEditor.cpp",
-      "line": 2697,
+      "line": 2702,
       "arguments": [
         "sc + Surge::GUI::toOSCase(\" Hard Clip at 0 dBFS\")",
         "true",
@@ -1635,7 +1635,7 @@
       "kind": "menu-call",
       "name": "0a0ab00d530aaffc",
       "source": "src/surge-xt/gui/SurgeGUIEditor.cpp",
-      "line": 2707,
+      "line": 2712,
       "arguments": [
         "sc + Surge::GUI::toOSCase(\" Hard Clip at +18 dBFS\")",
         "true",
@@ -1649,7 +1649,7 @@
       "kind": "menu-call",
       "name": "357c81ba4121447a",
       "source": "src/surge-xt/gui/SurgeGUIEditor.cpp",
-      "line": 2687,
+      "line": 2692,
       "arguments": [
         "sc + Surge::GUI::toOSCase(\" Hard Clip Disabled\")",
         "true",
@@ -1663,7 +1663,7 @@
       "kind": "menu-call",
       "name": "74b6804ae0202d94",
       "source": "src/surge-xt/gui/SurgeGUIEditor.cpp",
-      "line": 3540,
+      "line": 3791,
       "arguments": [
         "menu",
         "Surge::GUI::toOSCase(\"Oscilloscope...\")",
@@ -1677,91 +1677,91 @@
       "kind": "overlay",
       "name": "ACTION_HISTORY",
       "source": "src/surge-xt/gui/SurgeGUIEditor.h",
-      "line": 473
+      "line": 492
     },
     {
       "id": "src/surge-xt/gui/SurgeGUIEditor.h:overlay:FILTER_ANALYZER",
       "kind": "overlay",
       "name": "FILTER_ANALYZER",
       "source": "src/surge-xt/gui/SurgeGUIEditor.h",
-      "line": 470
+      "line": 489
     },
     {
       "id": "src/surge-xt/gui/SurgeGUIEditor.h:overlay:FORMULA_EDITOR",
       "kind": "overlay",
       "name": "FORMULA_EDITOR",
       "source": "src/surge-xt/gui/SurgeGUIEditor.h",
-      "line": 466
+      "line": 485
     },
     {
       "id": "src/surge-xt/gui/SurgeGUIEditor.h:overlay:KEYBINDINGS_EDITOR",
       "kind": "overlay",
       "name": "KEYBINDINGS_EDITOR",
       "source": "src/surge-xt/gui/SurgeGUIEditor.h",
-      "line": 472
+      "line": 491
     },
     {
       "id": "src/surge-xt/gui/SurgeGUIEditor.h:overlay:MODULATION_EDITOR",
       "kind": "overlay",
       "name": "MODULATION_EDITOR",
       "source": "src/surge-xt/gui/SurgeGUIEditor.h",
-      "line": 465
+      "line": 484
     },
     {
       "id": "src/surge-xt/gui/SurgeGUIEditor.h:overlay:MSEG_EDITOR",
       "kind": "overlay",
       "name": "MSEG_EDITOR",
       "source": "src/surge-xt/gui/SurgeGUIEditor.h",
-      "line": 462
+      "line": 481
     },
     {
       "id": "src/surge-xt/gui/SurgeGUIEditor.h:overlay:OPEN_SOUND_CONTROL_SETTINGS",
       "kind": "overlay",
       "name": "OPEN_SOUND_CONTROL_SETTINGS",
       "source": "src/surge-xt/gui/SurgeGUIEditor.h",
-      "line": 474
+      "line": 493
     },
     {
       "id": "src/surge-xt/gui/SurgeGUIEditor.h:overlay:OSCILLOSCOPE",
       "kind": "overlay",
       "name": "OSCILLOSCOPE",
       "source": "src/surge-xt/gui/SurgeGUIEditor.h",
-      "line": 471
+      "line": 490
     },
     {
       "id": "src/surge-xt/gui/SurgeGUIEditor.h:overlay:PATCH_BROWSER",
       "kind": "overlay",
       "name": "PATCH_BROWSER",
       "source": "src/surge-xt/gui/SurgeGUIEditor.h",
-      "line": 464
+      "line": 483
     },
     {
       "id": "src/surge-xt/gui/SurgeGUIEditor.h:overlay:SAVE_PATCH",
       "kind": "overlay",
       "name": "SAVE_PATCH",
       "source": "src/surge-xt/gui/SurgeGUIEditor.h",
-      "line": 463
+      "line": 482
     },
     {
       "id": "src/surge-xt/gui/SurgeGUIEditor.h:overlay:TUNING_EDITOR",
       "kind": "overlay",
       "name": "TUNING_EDITOR",
       "source": "src/surge-xt/gui/SurgeGUIEditor.h",
-      "line": 468
+      "line": 487
     },
     {
       "id": "src/surge-xt/gui/SurgeGUIEditor.h:overlay:WAVESHAPER_ANALYZER",
       "kind": "overlay",
       "name": "WAVESHAPER_ANALYZER",
       "source": "src/surge-xt/gui/SurgeGUIEditor.h",
-      "line": 469
+      "line": 488
     },
     {
       "id": "src/surge-xt/gui/SurgeGUIEditor.h:overlay:WTS_EDITOR",
       "kind": "overlay",
       "name": "WTS_EDITOR",
       "source": "src/surge-xt/gui/SurgeGUIEditor.h",
-      "line": 467
+      "line": 486
     },
     {
       "id": "src/surge-xt/gui/SurgeGUIEditorKeyboardActions.h:shortcut:ANNOUNCE_STATE",
@@ -1946,9 +1946,9 @@
       "line": 71
     },
     {
-      "id": "src/surge-xt/gui/SurgeGUIEditorKeyboardActions.h:shortcut:TOGGLE_PATCH_BRWOSER",
+      "id": "src/surge-xt/gui/SurgeGUIEditorKeyboardActions.h:shortcut:TOGGLE_PATCH_BROWSER",
       "kind": "shortcut",
-      "name": "TOGGLE_PATCH_BRWOSER",
+      "name": "TOGGLE_PATCH_BROWSER",
       "source": "src/surge-xt/gui/SurgeGUIEditorKeyboardActions.h",
       "line": 59
     },
@@ -2062,7 +2062,7 @@
       "kind": "menu-call",
       "name": "026ce5fff12ac43d",
       "source": "src/surge-xt/gui/SurgeGUIEditorMenuStructures.cpp",
-      "line": 1688,
+      "line": 1733,
       "arguments": [
         "Surge::GUI::toOSCase(label)",
         "true",
@@ -2076,7 +2076,7 @@
       "kind": "menu-call",
       "name": "034adf88b438140c",
       "source": "src/surge-xt/gui/SurgeGUIEditorMenuStructures.cpp",
-      "line": 1622,
+      "line": 1667,
       "arguments": [
         "Surge::GUI::toOSCase(\"Open Factory Data Folder...\")",
         "<callback>"
@@ -2115,7 +2115,7 @@
       "kind": "menu-call",
       "name": "09a963e891b82951",
       "source": "src/surge-xt/gui/SurgeGUIEditorMenuStructures.cpp",
-      "line": 1126,
+      "line": 1160,
       "arguments": [
         "Surge::GUI::toOSCase(\"Export Patch as Text (Non-Default Parameters Only)\")",
         "true",
@@ -2129,7 +2129,7 @@
       "kind": "menu-call",
       "name": "0dd4ddb424a235d1",
       "source": "src/surge-xt/gui/SurgeGUIEditorMenuStructures.cpp",
-      "line": 1875,
+      "line": 1920,
       "arguments": [
         "\"Close Melatonin Inspector\"",
         "<callback>"
@@ -2155,7 +2155,7 @@
       "kind": "menu-call",
       "name": "1031543b28f040b6",
       "source": "src/surge-xt/gui/SurgeGUIEditorMenuStructures.cpp",
-      "line": 1667,
+      "line": 1712,
       "arguments": [
         "Surge::GUI::toOSCase(\"Rescan All Data Folders\")",
         "<callback>"
@@ -2168,7 +2168,7 @@
       "kind": "menu-call",
       "name": "104e32b58e20f009",
       "source": "src/surge-xt/gui/SurgeGUIEditorMenuStructures.cpp",
-      "line": 1953,
+      "line": 1998,
       "arguments": [
         "Surge::GUI::toOSCase(\"Mouse Behavior\")",
         "mouseMenu"
@@ -2181,7 +2181,7 @@
       "kind": "menu-call",
       "name": "12eb0a7e9433247a",
       "source": "src/surge-xt/gui/SurgeGUIEditorMenuStructures.cpp",
-      "line": 1190,
+      "line": 1224,
       "arguments": [
         "\"C3\"",
         "true",
@@ -2195,7 +2195,7 @@
       "kind": "menu-call",
       "name": "135aaceb717b8b65",
       "source": "src/surge-xt/gui/SurgeGUIEditorMenuStructures.cpp",
-      "line": 1895,
+      "line": 1940,
       "arguments": [
         "Surge::GUI::toOSCase(\"Show UI Instrumentation...\")",
         "<callback>"
@@ -2208,7 +2208,7 @@
       "kind": "menu-call",
       "name": "13933934c6b86aec",
       "source": "src/surge-xt/gui/SurgeGUIEditorMenuStructures.cpp",
-      "line": 1774,
+      "line": 1819,
       "arguments": [
         "Surge::GUI::toOSCase(\"Clear Current MIDI Mapping\")",
         "<callback>"
@@ -2221,7 +2221,7 @@
       "kind": "menu-call",
       "name": "13b9670a5f9ae09a",
       "source": "src/surge-xt/gui/SurgeGUIEditorMenuStructures.cpp",
-      "line": 1196,
+      "line": 1230,
       "arguments": [
         "\"C4\"",
         "true",
@@ -2249,7 +2249,7 @@
       "kind": "menu-call",
       "name": "147f10e5b2cd4067",
       "source": "src/surge-xt/gui/SurgeGUIEditorMenuStructures.cpp",
-      "line": 1090,
+      "line": 1124,
       "arguments": [
         "Surge::GUI::toOSCase(\"Keep Current Tuning\")",
         "true",
@@ -2291,7 +2291,7 @@
       "kind": "menu-call",
       "name": "18708ea26e5d9f38",
       "source": "src/surge-xt/gui/SurgeGUIEditorMenuStructures.cpp",
-      "line": 1885,
+      "line": 1930,
       "arguments": [
         "\"Launch Melatonin Inspector\"",
         "<callback>"
@@ -2318,7 +2318,7 @@
       "kind": "menu-call",
       "name": "1ab5fd8719d19b90",
       "source": "src/surge-xt/gui/SurgeGUIEditorMenuStructures.cpp",
-      "line": 1610,
+      "line": 1655,
       "arguments": [
         "Surge::GUI::toOSCase(\"Skin Development Guide...\")",
         "<callback>"
@@ -2331,7 +2331,7 @@
       "kind": "menu-call",
       "name": "1e0426856124c794",
       "source": "src/surge-xt/gui/SurgeGUIEditorMenuStructures.cpp",
-      "line": 1534,
+      "line": 1579,
       "arguments": [
         "Surge::GUI::toOSCase(\"Rescan Skins\")",
         "<callback>"
@@ -2344,7 +2344,7 @@
       "kind": "menu-call",
       "name": "20b77f43fac1b79d",
       "source": "src/surge-xt/gui/SurgeGUIEditorMenuStructures.cpp",
-      "line": 1315,
+      "line": 1361,
       "arguments": [
         "Surge::GUI::toOSCase(\"Never Move Keyboard Focus\")",
         "true",
@@ -2358,7 +2358,7 @@
       "kind": "menu-call",
       "name": "21428fd6b8fa563a",
       "source": "src/surge-xt/gui/SurgeGUIEditorMenuStructures.cpp",
-      "line": 1956,
+      "line": 2001,
       "arguments": [
         "Surge::GUI::toOSCase(\"Patch Settings\")",
         "patchDefMenu"
@@ -2371,7 +2371,7 @@
       "kind": "menu-call",
       "name": "23f0ec207cd0180d",
       "source": "src/surge-xt/gui/SurgeGUIEditorMenuStructures.cpp",
-      "line": 1945,
+      "line": 1990,
       "arguments": [
         "Surge::GUI::toOSCase(\"Value Displays\")",
         "valueDispMenu"
@@ -2384,7 +2384,7 @@
       "kind": "menu-call",
       "name": "29871805a0cae590",
       "source": "src/surge-xt/gui/SurgeGUIEditorMenuStructures.cpp",
-      "line": 1296,
+      "line": 1342,
       "arguments": [
         "Surge::GUI::toOSCase(\"Follow Keyboard Focus\")",
         "true",
@@ -2398,7 +2398,7 @@
       "kind": "menu-call",
       "name": "2fc5dd5a8fd535e6",
       "source": "src/surge-xt/gui/SurgeGUIEditorMenuStructures.cpp",
-      "line": 1996,
+      "line": 2041,
       "arguments": [
         "Surge::GUI::toOSCase(\"Reach the Developers...\")",
         "<callback>"
@@ -2425,7 +2425,7 @@
       "kind": "menu-call",
       "name": "3467b9be5a8ce9b2",
       "source": "src/surge-xt/gui/SurgeGUIEditorMenuStructures.cpp",
-      "line": 1343,
+      "line": 1389,
       "arguments": [
         "wfMenu",
         "Surge::GUI::toOSCase(\"Virtual Keyboard\")",
@@ -2453,7 +2453,7 @@
       "kind": "menu-call",
       "name": "3578de3712e83acd",
       "source": "src/surge-xt/gui/SurgeGUIEditorMenuStructures.cpp",
-      "line": 1128,
+      "line": 1162,
       "arguments": [
         "Surge::GUI::toOSCase(\"Export Patch as Text (All Parameters)\")",
         "true",
@@ -2467,7 +2467,7 @@
       "kind": "menu-call",
       "name": "35fd5911ef04de72",
       "source": "src/surge-xt/gui/SurgeGUIEditorMenuStructures.cpp",
-      "line": 1208,
+      "line": 1242,
       "arguments": [
         "\"Middle C\"",
         "middleCSubMenu"
@@ -2480,7 +2480,7 @@
       "kind": "menu-call",
       "name": "387330fb5d30d841",
       "source": "src/surge-xt/gui/SurgeGUIEditorMenuStructures.cpp",
-      "line": 1230,
+      "line": 1264,
       "arguments": [
         "Surge::GUI::toOSCase(\"Load MSEG Snap State from Patch\")",
         "true",
@@ -2494,7 +2494,7 @@
       "kind": "menu-call",
       "name": "395c62d62f34baa7",
       "source": "src/surge-xt/gui/SurgeGUIEditorMenuStructures.cpp",
-      "line": 1978,
+      "line": 2023,
       "arguments": [
         "\"Tuning\"",
         "tuningSubMenu"
@@ -2507,7 +2507,7 @@
       "kind": "menu-call",
       "name": "39ed531992faf9c4",
       "source": "src/surge-xt/gui/SurgeGUIEditorMenuStructures.cpp",
-      "line": 1857,
+      "line": 1902,
       "arguments": [
         "devSubMenu",
         "Surge::GUI::toOSCase(\"Show Debug Console...\")",
@@ -2521,7 +2521,7 @@
       "kind": "menu-call",
       "name": "3b484c407a12d715",
       "source": "src/surge-xt/gui/SurgeGUIEditorMenuStructures.cpp",
-      "line": 1407,
+      "line": 1453,
       "arguments": [
         "Surge::GUI::toOSCase(\"Add Sub-Menus for Modulation Menu Items\")",
         "true",
@@ -2535,7 +2535,7 @@
       "kind": "menu-call",
       "name": "3d5762e09d01e906",
       "source": "src/surge-xt/gui/SurgeGUIEditorMenuStructures.cpp",
-      "line": 1075,
+      "line": 1109,
       "arguments": [
         "Surge::GUI::toOSCase(\"Override With Embedded Tempo if Available\")",
         "true",
@@ -2590,7 +2590,7 @@
       "kind": "menu-call",
       "name": "4171578aa9ee551c",
       "source": "src/surge-xt/gui/SurgeGUIEditorMenuStructures.cpp",
-      "line": 1220,
+      "line": 1254,
       "arguments": [
         "Surge::GUI::toOSCase(\"Remember Tab Positions Per Scene\")",
         "true",
@@ -2600,11 +2600,25 @@
       "requiresRuntimeExpansion": false
     },
     {
+      "id": "src/surge-xt/gui/SurgeGUIEditorMenuStructures.cpp:menu-call:41c5ebe467309024",
+      "kind": "menu-call",
+      "name": "41c5ebe467309024",
+      "source": "src/surge-xt/gui/SurgeGUIEditorMenuStructures.cpp",
+      "line": 1296,
+      "arguments": [
+        "Surge::GUI::toOSCase(\"Retrigger Held Notes on Patch Load\")",
+        "true",
+        "retriggerHeldNotes"
+      ],
+      "labelHint": "\"Retrigger Held Notes on Patch Load\"",
+      "requiresRuntimeExpansion": false
+    },
+    {
       "id": "src/surge-xt/gui/SurgeGUIEditorMenuStructures.cpp:menu-call:43cdf9b17a608ca2",
       "kind": "menu-call",
       "name": "43cdf9b17a608ca2",
       "source": "src/surge-xt/gui/SurgeGUIEditorMenuStructures.cpp",
-      "line": 1116,
+      "line": 1150,
       "arguments": [
         "Surge::GUI::toOSCase(\"Override With Embedded Mapping if Available\")",
         "true",
@@ -2618,7 +2632,7 @@
       "kind": "menu-call",
       "name": "45e4732ac0137006",
       "source": "src/surge-xt/gui/SurgeGUIEditorMenuStructures.cpp",
-      "line": 1152,
+      "line": 1186,
       "arguments": [
         "Surge::GUI::toOSCase(\"Modulation Value Readout Shows Bounds\")",
         "true",
@@ -2645,7 +2659,7 @@
       "kind": "menu-call",
       "name": "49bd36c07c39358d",
       "source": "src/surge-xt/gui/SurgeGUIEditorMenuStructures.cpp",
-      "line": 2013,
+      "line": 2058,
       "arguments": [
         "settingsMenu",
         "Surge::GUI::toOSCase(\"Surge XT Manual...\")",
@@ -2659,7 +2673,7 @@
       "kind": "menu-call",
       "name": "4b9125772d10d0e6",
       "source": "src/surge-xt/gui/SurgeGUIEditorMenuStructures.cpp",
-      "line": 1991,
+      "line": 2036,
       "arguments": [
         "Surge::GUI::toOSCase(\"Developer Options\")",
         "devSubMenu"
@@ -2685,7 +2699,7 @@
       "kind": "menu-call",
       "name": "4bf4c482702ddfbe",
       "source": "src/surge-xt/gui/SurgeGUIEditorMenuStructures.cpp",
-      "line": 1970,
+      "line": 2015,
       "arguments": [
         "Surge::GUI::toOSCase(\"MIDI Settings\")",
         "midiSubMenu"
@@ -2712,7 +2726,7 @@
       "kind": "menu-call",
       "name": "4c87171a6cf528de",
       "source": "src/surge-xt/gui/SurgeGUIEditorMenuStructures.cpp",
-      "line": 1967,
+      "line": 2012,
       "arguments": [
         "Surge::GUI::toOSCase(\"MPE Settings\")",
         "mpeSubMenu"
@@ -2752,7 +2766,7 @@
       "kind": "menu-call",
       "name": "537ecedcf70068fa",
       "source": "src/surge-xt/gui/SurgeGUIEditorMenuStructures.cpp",
-      "line": 1950,
+      "line": 1995,
       "arguments": [
         "Surge::GUI::toOSCase(\"Data Folders\")",
         "dataSubMenu"
@@ -2765,7 +2779,7 @@
       "kind": "menu-call",
       "name": "567eac81f4751824",
       "source": "src/surge-xt/gui/SurgeGUIEditorMenuStructures.cpp",
-      "line": 1109,
+      "line": 1143,
       "arguments": [
         "Surge::GUI::toOSCase(\"Keep Current Mapping\")",
         "true",
@@ -2793,7 +2807,7 @@
       "kind": "menu-call",
       "name": "582487027c721d06",
       "source": "src/surge-xt/gui/SurgeGUIEditorMenuStructures.cpp",
-      "line": 1869,
+      "line": 1914,
       "arguments": [
         "Surge::GUI::toOSCase(\"Dump Undo/Redo Stack to stdout\")",
         "true",
@@ -2807,7 +2821,7 @@
       "kind": "menu-call",
       "name": "596e6f2efd21dbb4",
       "source": "src/surge-xt/gui/SurgeGUIEditorMenuStructures.cpp",
-      "line": 1751,
+      "line": 1796,
       "arguments": [
         "Surge::GUI::toOSCase(\"Soft Takeover MIDI Learned Parameters\")",
         "true",
@@ -2821,7 +2835,7 @@
       "kind": "menu-call",
       "name": "598cff5ef7b2015c",
       "source": "src/surge-xt/gui/SurgeGUIEditorMenuStructures.cpp",
-      "line": 1832,
+      "line": 1877,
       "arguments": [
         "Surge::GUI::toOSCase(\"Show OSC Settings...\")",
         "<callback>"
@@ -2874,7 +2888,7 @@
       "kind": "menu-call",
       "name": "5b47647ffee41e68",
       "source": "src/surge-xt/gui/SurgeGUIEditorMenuStructures.cpp",
-      "line": 1491,
+      "line": 1537,
       "arguments": [
         "cat",
         "*addToThis"
@@ -2928,7 +2942,7 @@
       "kind": "menu-call",
       "name": "62ecf3b7e42aab1e",
       "source": "src/surge-xt/gui/SurgeGUIEditorMenuStructures.cpp",
-      "line": 1286,
+      "line": 1332,
       "arguments": [
         "wfMenu",
         "Surge::GUI::toOSCase(\"Edit Keyboard Shortcuts...\")",
@@ -2942,7 +2956,7 @@
       "kind": "menu-call",
       "name": "654b1bab77b2b96b",
       "source": "src/surge-xt/gui/SurgeGUIEditorMenuStructures.cpp",
-      "line": 2000,
+      "line": 2045,
       "arguments": [
         "Surge::GUI::toOSCase(\"Read the Code...\")",
         "<callback>"
@@ -2955,7 +2969,7 @@
       "kind": "menu-call",
       "name": "6569c1e3b391a75a",
       "source": "src/surge-xt/gui/SurgeGUIEditorMenuStructures.cpp",
-      "line": 1174,
+      "line": 1208,
       "arguments": [
         "Surge::GUI::toOSCase(\"Show Ghosted LFO Waveform Reference\")",
         "true",
@@ -2969,7 +2983,7 @@
       "kind": "menu-call",
       "name": "659009e609da0ed3",
       "source": "src/surge-xt/gui/SurgeGUIEditorMenuStructures.cpp",
-      "line": 1939,
+      "line": 1984,
       "arguments": [
         "\"Zoom\"",
         "zoomMenu"
@@ -2996,7 +3010,7 @@
       "kind": "menu-call",
       "name": "6cb408e6fdf98ce6",
       "source": "src/surge-xt/gui/SurgeGUIEditorMenuStructures.cpp",
-      "line": 2003,
+      "line": 2048,
       "arguments": [
         "Surge::GUI::toOSCase(\"Download Additional Content...\")",
         "<callback>"
@@ -3009,7 +3023,7 @@
       "kind": "menu-call",
       "name": "6d78caac03cd5e42",
       "source": "src/surge-xt/gui/SurgeGUIEditorMenuStructures.cpp",
-      "line": 1942,
+      "line": 1987,
       "arguments": [
         "\"Skins\"",
         "skinSubMenu"
@@ -3022,7 +3036,7 @@
       "kind": "menu-call",
       "name": "6e1d15fff3e4c0ea",
       "source": "src/surge-xt/gui/SurgeGUIEditorMenuStructures.cpp",
-      "line": 1835,
+      "line": 1880,
       "arguments": [
         "Surge::GUI::toOSCase(\"Show OSC Specification...\")",
         "<callback>"
@@ -3074,7 +3088,7 @@
       "kind": "menu-call",
       "name": "75646f1f4b2a1ba3",
       "source": "src/surge-xt/gui/SurgeGUIEditorMenuStructures.cpp",
-      "line": 1633,
+      "line": 1678,
       "arguments": [
         "Surge::GUI::toOSCase(\"Open User Data Folder...\")",
         "<callback>"
@@ -3087,13 +3101,26 @@
       "kind": "menu-call",
       "name": "776dc4c053a9200a",
       "source": "src/surge-xt/gui/SurgeGUIEditorMenuStructures.cpp",
-      "line": 1731,
+      "line": 1776,
       "arguments": [
         "\"Omni\"",
         "true",
         "(learnChan == -1)"
       ],
       "labelHint": "\"Omni\"",
+      "requiresRuntimeExpansion": false
+    },
+    {
+      "id": "src/surge-xt/gui/SurgeGUIEditorMenuStructures.cpp:menu-call:79949c62b6bf6c33",
+      "kind": "menu-call",
+      "name": "79949c62b6bf6c33",
+      "source": "src/surge-xt/gui/SurgeGUIEditorMenuStructures.cpp",
+      "line": 227,
+      "arguments": [
+        "Surge::GUI::toOSCase(\"MPE Timbre Range\")",
+        "entries"
+      ],
+      "labelHint": "\"MPE Timbre Range\"",
       "requiresRuntimeExpansion": false
     },
     {
@@ -3115,7 +3142,7 @@
       "kind": "menu-call",
       "name": "7d5ea693aaa30646",
       "source": "src/surge-xt/gui/SurgeGUIEditorMenuStructures.cpp",
-      "line": 1607,
+      "line": 1652,
       "arguments": [
         "Surge::GUI::toOSCase(\"Show Skin Inspector...\")",
         "<callback>"
@@ -3142,7 +3169,7 @@
       "kind": "menu-call",
       "name": "82559663336a71f9",
       "source": "src/surge-xt/gui/SurgeGUIEditorMenuStructures.cpp",
-      "line": 1529,
+      "line": 1574,
       "arguments": [
         "skinSubMenu",
         "Surge::GUI::toOSCase(\"Reload Current Skin\")",
@@ -3156,7 +3183,7 @@
       "kind": "menu-call",
       "name": "83e37d0baeb365a9",
       "source": "src/surge-xt/gui/SurgeGUIEditorMenuStructures.cpp",
-      "line": 1395,
+      "line": 1441,
       "arguments": [
         "Surge::GUI::toOSCase(\"Announce Patch Browser Entries\")",
         "true",
@@ -3183,7 +3210,7 @@
       "kind": "menu-call",
       "name": "85d489f3c408f8d2",
       "source": "src/surge-xt/gui/SurgeGUIEditorMenuStructures.cpp",
-      "line": 1302,
+      "line": 1348,
       "arguments": [
         "Surge::GUI::toOSCase(\"Follow Mouse Hover Focus\")",
         "true",
@@ -3197,7 +3224,7 @@
       "kind": "menu-call",
       "name": "87a1a588666cddcb",
       "source": "src/surge-xt/gui/SurgeGUIEditorMenuStructures.cpp",
-      "line": 1202,
+      "line": 1236,
       "arguments": [
         "\"C5\"",
         "true",
@@ -3211,7 +3238,7 @@
       "kind": "menu-call",
       "name": "8a4c93a60e6939c5",
       "source": "src/surge-xt/gui/SurgeGUIEditorMenuStructures.cpp",
-      "line": 1716,
+      "line": 1761,
       "arguments": [
         "Surge::GUI::toOSCase(\"Use MIDI Channels 2 and 3 to Play Scenes Individually\")",
         "!synth->storage.mapChannelToOctave",
@@ -3225,7 +3252,7 @@
       "kind": "menu-call",
       "name": "8c455526973e382d",
       "source": "src/surge-xt/gui/SurgeGUIEditorMenuStructures.cpp",
-      "line": 1352,
+      "line": 1398,
       "arguments": [
         "Surge::GUI::toOSCase(\"Virtual Keyboard: Click Sets Overall Velocity\")",
         "true",
@@ -3239,7 +3266,7 @@
       "kind": "menu-call",
       "name": "8f8b0fd4c684ae31",
       "source": "src/surge-xt/gui/SurgeGUIEditorMenuStructures.cpp",
-      "line": 1738,
+      "line": 1783,
       "arguments": [
         "fmt::format(\"Channel {}\", ch + 1)",
         "true",
@@ -3253,7 +3280,7 @@
       "kind": "menu-call",
       "name": "9126bb5ab508c873",
       "source": "src/surge-xt/gui/SurgeGUIEditorMenuStructures.cpp",
-      "line": 1576,
+      "line": 1621,
       "arguments": [
         "Surge::GUI::toOSCase(\"Install a New Skin...\")",
         "<callback>"
@@ -3266,7 +3293,7 @@
       "kind": "menu-call",
       "name": "912d208b643ac325",
       "source": "src/surge-xt/gui/SurgeGUIEditorMenuStructures.cpp",
-      "line": 1141,
+      "line": 1175,
       "arguments": [
         "Surge::GUI::toOSCase(\"High Precision Value Readouts\")",
         "true",
@@ -3280,7 +3307,7 @@
       "kind": "menu-call",
       "name": "91629bee07e21292",
       "source": "src/surge-xt/gui/SurgeGUIEditorMenuStructures.cpp",
-      "line": 1242,
+      "line": 1276,
       "arguments": [
         "Surge::GUI::toOSCase(\"Previous/Next Patch Constrained to Current Category\")",
         "true",
@@ -3308,7 +3335,7 @@
       "kind": "menu-call",
       "name": "9294567dfd498552",
       "source": "src/surge-xt/gui/SurgeGUIEditorMenuStructures.cpp",
-      "line": 1761,
+      "line": 1806,
       "arguments": [
         "Surge::GUI::toOSCase(\"Save MIDI Mapping As...\")",
         "<callback>"
@@ -3321,7 +3348,7 @@
       "kind": "menu-call",
       "name": "9433650cd5aad344",
       "source": "src/surge-xt/gui/SurgeGUIEditorMenuStructures.cpp",
-      "line": 1310,
+      "line": 1356,
       "arguments": [
         "str",
         "kbfMenu"
@@ -3344,19 +3371,6 @@
       "requiresRuntimeExpansion": true
     },
     {
-      "id": "src/surge-xt/gui/SurgeGUIEditorMenuStructures.cpp:menu-call:954e9d8d48a369a2",
-      "kind": "menu-call",
-      "name": "954e9d8d48a369a2",
-      "source": "src/surge-xt/gui/SurgeGUIEditorMenuStructures.cpp",
-      "line": 1507,
-      "arguments": [
-        "Surge::GUI::toOSCase(\"Change Layout Grid Resolution...\")",
-        "<callback>"
-      ],
-      "labelHint": "\"Change Layout Grid Resolution...\"",
-      "requiresRuntimeExpansion": false
-    },
-    {
       "id": "src/surge-xt/gui/SurgeGUIEditorMenuStructures.cpp:menu-call:9807d5bc16d25d4b",
       "kind": "menu-call",
       "name": "9807d5bc16d25d4b",
@@ -3375,7 +3389,7 @@
       "kind": "menu-call",
       "name": "9c6e880d0805a17f",
       "source": "src/surge-xt/gui/SurgeGUIEditorMenuStructures.cpp",
-      "line": 1962,
+      "line": 2007,
       "arguments": [
         "Surge::GUI::toOSCase(\"Accessibility\")",
         "accMenu"
@@ -3402,7 +3416,7 @@
       "kind": "menu-call",
       "name": "9df57645055a14e4",
       "source": "src/surge-xt/gui/SurgeGUIEditorMenuStructures.cpp",
-      "line": 1845,
+      "line": 1890,
       "arguments": [
         "Surge::GUI::toOSCase(\"Download TouchOSC Template...\")",
         "<callback>"
@@ -3415,7 +3429,7 @@
       "kind": "menu-call",
       "name": "9e351e36d3a63540",
       "source": "src/surge-xt/gui/SurgeGUIEditorMenuStructures.cpp",
-      "line": 1863,
+      "line": 1908,
       "arguments": [
         "Surge::GUI::toOSCase(\"Use Focus Debugger\")",
         "true",
@@ -3429,7 +3443,7 @@
       "kind": "menu-call",
       "name": "a148168e3abfc17f",
       "source": "src/surge-xt/gui/SurgeGUIEditorMenuStructures.cpp",
-      "line": 1082,
+      "line": 1116,
       "arguments": [
         "Surge::GUI::toOSCase(\"Tempo on Patch Load\")",
         "tempoOnLoadMenu"
@@ -3455,7 +3469,7 @@
       "kind": "menu-call",
       "name": "a4018e0cd9ac9fdb",
       "source": "src/surge-xt/gui/SurgeGUIEditorMenuStructures.cpp",
-      "line": 1974,
+      "line": 2019,
       "arguments": [
         "Surge::GUI::toOSCase(\"OSC Settings\")",
         "oscSubMenu"
@@ -3464,24 +3478,11 @@
       "requiresRuntimeExpansion": false
     },
     {
-      "id": "src/surge-xt/gui/SurgeGUIEditorMenuStructures.cpp:menu-call:a40d6bcac4b079d7",
-      "kind": "menu-call",
-      "name": "a40d6bcac4b079d7",
-      "source": "src/surge-xt/gui/SurgeGUIEditorMenuStructures.cpp",
-      "line": 227,
-      "arguments": [
-        "Surge::GUI::toOSCase(\"MPE Timbre Value Range\")",
-        "entries"
-      ],
-      "labelHint": "\"MPE Timbre Value Range\"",
-      "requiresRuntimeExpansion": false
-    },
-    {
       "id": "src/surge-xt/gui/SurgeGUIEditorMenuStructures.cpp:menu-call:a673bb8f3b864bc7",
       "kind": "menu-call",
       "name": "a673bb8f3b864bc7",
       "source": "src/surge-xt/gui/SurgeGUIEditorMenuStructures.cpp",
-      "line": 1262,
+      "line": 1308,
       "arguments": [
         "Surge::GUI::toOSCase(\"Confirm Patch Loading if Unsaved Changes Exist\")",
         "true",
@@ -3491,11 +3492,24 @@
       "requiresRuntimeExpansion": false
     },
     {
+      "id": "src/surge-xt/gui/SurgeGUIEditorMenuStructures.cpp:menu-call:a72ac1671ad3107a",
+      "kind": "menu-call",
+      "name": "a72ac1671ad3107a",
+      "source": "src/surge-xt/gui/SurgeGUIEditorMenuStructures.cpp",
+      "line": 1078,
+      "arguments": [
+        "Surge::GUI::toOSCase(backupStr)",
+        "<callback>"
+      ],
+      "labelHint": "dynamic: Surge::GUI::toOSCase(backupStr)",
+      "requiresRuntimeExpansion": true
+    },
+    {
       "id": "src/surge-xt/gui/SurgeGUIEditorMenuStructures.cpp:menu-call:a79d1f74fa02bf29",
       "kind": "menu-call",
       "name": "a79d1f74fa02bf29",
       "source": "src/surge-xt/gui/SurgeGUIEditorMenuStructures.cpp",
-      "line": 1770,
+      "line": 1815,
       "arguments": [
         "Surge::GUI::toOSCase(\"Set Current MIDI Mapping as Default\")",
         "<callback>"
@@ -3522,7 +3536,7 @@
       "kind": "menu-call",
       "name": "a9cc45532ac3a2ff",
       "source": "src/surge-xt/gui/SurgeGUIEditorMenuStructures.cpp",
-      "line": 2018,
+      "line": 2063,
       "arguments": [
         "Surge::GUI::toOSCase(\"Surge XT Website...\")",
         "<callback>"
@@ -3535,7 +3549,7 @@
       "kind": "menu-call",
       "name": "ad0d4df3735f119f",
       "source": "src/surge-xt/gui/SurgeGUIEditorMenuStructures.cpp",
-      "line": 2009,
+      "line": 2054,
       "arguments": [
         "Surge::GUI::toOSCase(\"Skin Library...\")",
         "<callback>"
@@ -3603,7 +3617,7 @@
       "kind": "menu-call",
       "name": "b4dfe884fe4f4697",
       "source": "src/surge-xt/gui/SurgeGUIEditorMenuStructures.cpp",
-      "line": 1819,
+      "line": 1864,
       "arguments": [
         "p.first",
         "<callback>"
@@ -3616,7 +3630,7 @@
       "kind": "menu-call",
       "name": "b4f750219a12408e",
       "source": "src/surge-xt/gui/SurgeGUIEditorMenuStructures.cpp",
-      "line": 1162,
+      "line": 1196,
       "arguments": [
         "Surge::GUI::toOSCase(\"Show Value Readout on Mouse Hover\")",
         "true",
@@ -3644,7 +3658,7 @@
       "kind": "menu-call",
       "name": "b896d9719e160ff8",
       "source": "src/surge-xt/gui/SurgeGUIEditorMenuStructures.cpp",
-      "line": 1417,
+      "line": 1463,
       "arguments": [
         "Surge::GUI::toOSCase(\"Focus Modulator Editor on \\\"\") + Surge::GUI::toOSCase(\"Add Modulation From\\\" Actions\")",
         "true",
@@ -3712,7 +3726,7 @@
       "kind": "menu-call",
       "name": "bcbd5a33ec82f02a",
       "source": "src/surge-xt/gui/SurgeGUIEditorMenuStructures.cpp",
-      "line": 1329,
+      "line": 1375,
       "arguments": [
         "\"Use software renderer\"",
         "true",
@@ -3722,11 +3736,24 @@
       "requiresRuntimeExpansion": false
     },
     {
+      "id": "src/surge-xt/gui/SurgeGUIEditorMenuStructures.cpp:menu-call:bfec4ecad5e4aaa7",
+      "kind": "menu-call",
+      "name": "bfec4ecad5e4aaa7",
+      "source": "src/surge-xt/gui/SurgeGUIEditorMenuStructures.cpp",
+      "line": 1553,
+      "arguments": [
+        "Surge::GUI::toOSCase(\"Set Layout Grid Resolution...\")",
+        "<callback>"
+      ],
+      "labelHint": "\"Set Layout Grid Resolution...\"",
+      "requiresRuntimeExpansion": false
+    },
+    {
       "id": "src/surge-xt/gui/SurgeGUIEditorMenuStructures.cpp:menu-call:c1b0e9a44d90dca6",
       "kind": "menu-call",
       "name": "c1b0e9a44d90dca6",
       "source": "src/surge-xt/gui/SurgeGUIEditorMenuStructures.cpp",
-      "line": 2023,
+      "line": 2068,
       "arguments": [
         "settingsMenu",
         "\"About Surge XT\"",
@@ -3740,7 +3767,7 @@
       "kind": "menu-call",
       "name": "c1c692f9e0474c52",
       "source": "src/surge-xt/gui/SurgeGUIEditorMenuStructures.cpp",
-      "line": 1123,
+      "line": 1157,
       "arguments": [
         "Surge::GUI::toOSCase(\"Tuning on Patch Load\")",
         "tuningOnLoadMenu"
@@ -3753,7 +3780,7 @@
       "kind": "menu-call",
       "name": "c57e702e7b7c7df3",
       "source": "src/surge-xt/gui/SurgeGUIEditorMenuStructures.cpp",
-      "line": 1600,
+      "line": 1645,
       "arguments": [
         "Surge::GUI::toOSCase(\"Menu Colors Follow OS Light/Dark Mode\")",
         "true",
@@ -3767,7 +3794,7 @@
       "kind": "menu-call",
       "name": "c7d773d938882868",
       "source": "src/surge-xt/gui/SurgeGUIEditorMenuStructures.cpp",
-      "line": 1252,
+      "line": 1286,
       "arguments": [
         "Surge::GUI::toOSCase(\"Retain Patch Search Results After Loading Via Click\")",
         "true",
@@ -3795,7 +3822,7 @@
       "kind": "menu-call",
       "name": "c972046a068f88e8",
       "source": "src/surge-xt/gui/SurgeGUIEditorMenuStructures.cpp",
-      "line": 1068,
+      "line": 1102,
       "arguments": [
         "Surge::GUI::toOSCase(\"Keep Current Tempo\")",
         "true",
@@ -3805,11 +3832,24 @@
       "requiresRuntimeExpansion": false
     },
     {
+      "id": "src/surge-xt/gui/SurgeGUIEditorMenuStructures.cpp:menu-call:cc537e3a7b6203d3",
+      "kind": "menu-call",
+      "name": "cc537e3a7b6203d3",
+      "source": "src/surge-xt/gui/SurgeGUIEditorMenuStructures.cpp",
+      "line": 1091,
+      "arguments": [
+        "Surge::GUI::toOSCase(\"Patch Backups\")",
+        "patchBackupMenu"
+      ],
+      "labelHint": "\"Patch Backups\"",
+      "requiresRuntimeExpansion": false
+    },
+    {
       "id": "src/surge-xt/gui/SurgeGUIEditorMenuStructures.cpp:menu-call:cfe13ad9318e9345",
       "kind": "menu-call",
       "name": "cfe13ad9318e9345",
       "source": "src/surge-xt/gui/SurgeGUIEditorMenuStructures.cpp",
-      "line": 1384,
+      "line": 1430,
       "arguments": [
         "Surge::GUI::toOSCase(\"Send Additional Accessibility Announcements\")",
         "true",
@@ -3823,7 +3863,7 @@
       "kind": "menu-call",
       "name": "d056fa39925b289f",
       "source": "src/surge-xt/gui/SurgeGUIEditorMenuStructures.cpp",
-      "line": 1484,
+      "line": 1530,
       "arguments": [
         "dname",
         "true",
@@ -3837,7 +3877,7 @@
       "kind": "menu-call",
       "name": "d2b0b6bf2a4a7ad3",
       "source": "src/surge-xt/gui/SurgeGUIEditorMenuStructures.cpp",
-      "line": 1284,
+      "line": 1330,
       "arguments": [
         "Surge::GUI::toOSCase(\"Use Keyboard Shortcuts\")",
         "true",
@@ -3851,7 +3891,7 @@
       "kind": "menu-call",
       "name": "d364f729fd86d818",
       "source": "src/surge-xt/gui/SurgeGUIEditorMenuStructures.cpp",
-      "line": 1745,
+      "line": 1790,
       "arguments": [
         "Surge::GUI::toOSCase(\"Default Channel For Menu-Based MIDI Learn\")",
         "chanSubMenu"
@@ -3864,7 +3904,7 @@
       "kind": "menu-call",
       "name": "d56c9fd9df8f01bd",
       "source": "src/surge-xt/gui/SurgeGUIEditorMenuStructures.cpp",
-      "line": 1798,
+      "line": 1843,
       "arguments": [
         "Surge::GUI::toOSCase(\"Show Current MIDI Mapping...\")",
         "<callback>"
@@ -3877,7 +3917,7 @@
       "kind": "menu-call",
       "name": "d5e08ba4532e8566",
       "source": "src/surge-xt/gui/SurgeGUIEditorMenuStructures.cpp",
-      "line": 1568,
+      "line": 1613,
       "arguments": [
         "Surge::GUI::toOSCase(\"Open Current Skin Folder...\")",
         "<callback>"
@@ -3890,7 +3930,7 @@
       "kind": "menu-call",
       "name": "d6d4d8e9fcb66835",
       "source": "src/surge-xt/gui/SurgeGUIEditorMenuStructures.cpp",
-      "line": 1097,
+      "line": 1131,
       "arguments": [
         "Surge::GUI::toOSCase(\"Override With Embedded Tuning if Available\")",
         "true",
@@ -3917,7 +3957,7 @@
       "kind": "menu-call",
       "name": "db42cab3f8b2c8c9",
       "source": "src/surge-xt/gui/SurgeGUIEditorMenuStructures.cpp",
-      "line": 1602,
+      "line": 1647,
       "arguments": [
         "Surge::GUI::toOSCase(\"Menu Colors Applied from Skin\")",
         "true",
@@ -3931,7 +3971,7 @@
       "kind": "menu-call",
       "name": "e07385e43d0fb0e8",
       "source": "src/surge-xt/gui/SurgeGUIEditorMenuStructures.cpp",
-      "line": 1711,
+      "line": 1756,
       "arguments": [
         "Surge::GUI::toOSCase(\"Sustain Pedal In Mono Mode\")",
         "mmom"
@@ -3958,7 +3998,7 @@
       "kind": "menu-call",
       "name": "e54a4a2941ffc970",
       "source": "src/surge-xt/gui/SurgeGUIEditorMenuStructures.cpp",
-      "line": 1959,
+      "line": 2004,
       "arguments": [
         "Surge::GUI::toOSCase(\"Workflow\")",
         "wfMenu"
@@ -3985,7 +4025,7 @@
       "kind": "menu-call",
       "name": "ea19b20ac788ff23",
       "source": "src/surge-xt/gui/SurgeGUIEditorMenuStructures.cpp",
-      "line": 1708,
+      "line": 1753,
       "arguments": [
         "Surge::GUI::toOSCase(\"Controller Smoothing\")",
         "smen"
@@ -4026,7 +4066,7 @@
       "kind": "menu-call",
       "name": "ee35b8e2fa119ff0",
       "source": "src/surge-xt/gui/SurgeGUIEditorMenuStructures.cpp",
-      "line": 1377,
+      "line": 1423,
       "arguments": [
         "Surge::GUI::toOSCase(\"Set All Recommended Accessibility Options\")",
         "true",
@@ -4053,7 +4093,7 @@
       "kind": "menu-call",
       "name": "ef1c3c3f657951d5",
       "source": "src/surge-xt/gui/SurgeGUIEditorMenuStructures.cpp",
-      "line": 1641,
+      "line": 1686,
       "arguments": [
         "Surge::GUI::toOSCase(\"Set Custom User Data Folder...\")",
         "<callback>"
@@ -4080,7 +4120,7 @@
       "kind": "menu-call",
       "name": "f1635cf5cda41630",
       "source": "src/surge-xt/gui/SurgeGUIEditorMenuStructures.cpp",
-      "line": 1504,
+      "line": 1550,
       "arguments": [
         "Surge::GUI::toOSCase(m)",
         "<callback>"
@@ -4116,6 +4156,20 @@
       "requiresRuntimeExpansion": false
     },
     {
+      "id": "src/surge-xt/gui/SurgeGUIEditorMenuStructures.cpp:menu-call:f912a9eb6662515f",
+      "kind": "menu-call",
+      "name": "f912a9eb6662515f",
+      "source": "src/surge-xt/gui/SurgeGUIEditorMenuStructures.cpp",
+      "line": 1064,
+      "arguments": [
+        "Surge::GUI::toOSCase(\"Enable Patch Backups\")",
+        "true",
+        "enablePatchBackups"
+      ],
+      "labelHint": "\"Enable Patch Backups\"",
+      "requiresRuntimeExpansion": false
+    },
+    {
       "id": "src/surge-xt/gui/SurgeGUIEditorMenuStructures.cpp:menu-call:f9207e42bfc458db",
       "kind": "menu-call",
       "name": "f9207e42bfc458db",
@@ -4146,7 +4200,7 @@
       "kind": "menu-call",
       "name": "00cc65635a2b91da",
       "source": "src/surge-xt/gui/SurgeGUIEditorValueCallbacks.cpp",
-      "line": 2443,
+      "line": 2543,
       "arguments": [
         "Surge::GUI::toOSCase(lb)",
         "true",
@@ -4160,7 +4214,7 @@
       "kind": "menu-call",
       "name": "01accba9e15245bf",
       "source": "src/surge-xt/gui/SurgeGUIEditorValueCallbacks.cpp",
-      "line": 3219,
+      "line": 3356,
       "arguments": [
         "modName",
         "<callback>"
@@ -4173,7 +4227,7 @@
       "kind": "menu-call",
       "name": "01f5c51aec26da32",
       "source": "src/surge-xt/gui/SurgeGUIEditorValueCallbacks.cpp",
-      "line": 1938,
+      "line": 1940,
       "arguments": [
         "p->get_display(true, ef)",
         "true",
@@ -4187,7 +4241,7 @@
       "kind": "menu-call",
       "name": "023321cc4cd34cd3",
       "source": "src/surge-xt/gui/SurgeGUIEditorValueCallbacks.cpp",
-      "line": 2267,
+      "line": 2293,
       "arguments": [
         "Surge::GUI::toOSCase(\"Linear\")",
         "true",
@@ -4201,7 +4255,7 @@
       "kind": "menu-call",
       "name": "037faad060511955",
       "source": "src/surge-xt/gui/SurgeGUIEditorValueCallbacks.cpp",
-      "line": 1655,
+      "line": 1657,
       "arguments": [
         "\"Straight\"",
         "tsMenuR"
@@ -4214,7 +4268,7 @@
       "kind": "menu-call",
       "name": "03ae0556e05f4312",
       "source": "src/surge-xt/gui/SurgeGUIEditorValueCallbacks.cpp",
-      "line": 2387,
+      "line": 2413,
       "arguments": [
         "Surge::GUI::toOSCase(tapeHysteresisModes[i])",
         "true",
@@ -4228,7 +4282,7 @@
       "kind": "menu-call",
       "name": "073eb858f748c926",
       "source": "src/surge-xt/gui/SurgeGUIEditorValueCallbacks.cpp",
-      "line": 2893,
+      "line": 3030,
       "arguments": [
         "Surge::GUI::toOSCase(\"Enabled\")",
         "true",
@@ -4242,7 +4296,7 @@
       "kind": "menu-call",
       "name": "0b720907d05633f0",
       "source": "src/surge-xt/gui/SurgeGUIEditorValueCallbacks.cpp",
-      "line": 3240,
+      "line": 3377,
       "arguments": [
         "\"Scene LFOs\"",
         "addSLFOSub"
@@ -4255,7 +4309,7 @@
       "kind": "menu-call",
       "name": "0cfab7d9978bf41d",
       "source": "src/surge-xt/gui/SurgeGUIEditorValueCallbacks.cpp",
-      "line": 2570,
+      "line": 2670,
       "arguments": [
         "-1",
         "Surge::GUI::toOSCase(\"Scale-Invariant Linear Modulation:\")",
@@ -4269,7 +4323,7 @@
       "kind": "menu-call",
       "name": "0d56c87e7f137c60",
       "source": "src/surge-xt/gui/SurgeGUIEditorValueCallbacks.cpp",
-      "line": 2918,
+      "line": 3055,
       "arguments": [
         "Surge::GUI::toOSCase(\"Two Octaves Down\")",
         "true",
@@ -4283,7 +4337,7 @@
       "kind": "menu-call",
       "name": "0f274647035836ae",
       "source": "src/surge-xt/gui/SurgeGUIEditorValueCallbacks.cpp",
-      "line": 2634,
+      "line": 2771,
       "arguments": [
         "\"Vintage FM\"",
         "true",
@@ -4297,7 +4351,7 @@
       "kind": "menu-call",
       "name": "100a1006a5489185",
       "source": "src/surge-xt/gui/SurgeGUIEditorValueCallbacks.cpp",
-      "line": 1352,
+      "line": 1354,
       "arguments": [
         "vtxt",
         "<callback>"
@@ -4310,7 +4364,7 @@
       "kind": "menu-call",
       "name": "1424400d27c41289",
       "source": "src/surge-xt/gui/SurgeGUIEditorValueCallbacks.cpp",
-      "line": 90,
+      "line": 92,
       "arguments": [
         "Surge::GUI::toOSCase(labels[i])",
         "true",
@@ -4324,7 +4378,7 @@
       "kind": "menu-call",
       "name": "1424400d27c41289",
       "source": "src/surge-xt/gui/SurgeGUIEditorValueCallbacks.cpp",
-      "line": 1985,
+      "line": 1987,
       "arguments": [
         "Surge::GUI::toOSCase(labels[i])",
         "true",
@@ -4338,7 +4392,7 @@
       "kind": "menu-call",
       "name": "1424400d27c41289",
       "source": "src/surge-xt/gui/SurgeGUIEditorValueCallbacks.cpp",
-      "line": 2017,
+      "line": 2019,
       "arguments": [
         "Surge::GUI::toOSCase(labels[i])",
         "true",
@@ -4352,7 +4406,7 @@
       "kind": "menu-call",
       "name": "14f954b96b3a5ff4",
       "source": "src/surge-xt/gui/SurgeGUIEditorValueCallbacks.cpp",
-      "line": 1656,
+      "line": 1658,
       "arguments": [
         "\"Dotted\"",
         "tsMenuD"
@@ -4365,7 +4419,7 @@
       "kind": "menu-call",
       "name": "1550bb22f92e828a",
       "source": "src/surge-xt/gui/SurgeGUIEditorValueCallbacks.cpp",
-      "line": 3250,
+      "line": 3387,
       "arguments": [
         "\"MIDI\"",
         "addMIDISub"
@@ -4378,7 +4432,7 @@
       "kind": "menu-call",
       "name": "1688cff5dcdaa00b",
       "source": "src/surge-xt/gui/SurgeGUIEditorValueCallbacks.cpp",
-      "line": 2650,
+      "line": 2787,
       "arguments": [
         "Surge::GUI::toOSCase(\"Freeze Release at Sustain Level\")",
         "true",
@@ -4392,7 +4446,7 @@
       "kind": "menu-call",
       "name": "17be0c55e8f41650",
       "source": "src/surge-xt/gui/SurgeGUIEditorValueCallbacks.cpp",
-      "line": 1433,
+      "line": 1435,
       "arguments": [
         "Surge::GUI::toOSCase(\"Copy Modulator with Targets\")",
         "<callback>"
@@ -4405,7 +4459,7 @@
       "kind": "menu-call",
       "name": "17cccdc7a2db964b",
       "source": "src/surge-xt/gui/SurgeGUIEditorValueCallbacks.cpp",
-      "line": 1448,
+      "line": 1450,
       "arguments": [
         "Surge::GUI::toOSCase(\"Paste\")",
         "<callback>"
@@ -4418,7 +4472,7 @@
       "kind": "menu-call",
       "name": "17cccdc7a2db964b",
       "source": "src/surge-xt/gui/SurgeGUIEditorValueCallbacks.cpp",
-      "line": 1482,
+      "line": 1484,
       "arguments": [
         "Surge::GUI::toOSCase(\"Paste\")",
         "<callback>"
@@ -4431,7 +4485,7 @@
       "kind": "menu-call",
       "name": "181aee0556098fd7",
       "source": "src/surge-xt/gui/SurgeGUIEditorValueCallbacks.cpp",
-      "line": 1409,
+      "line": 1411,
       "arguments": [
         "Surge::GUI::toOSCase(\"Switch To\")",
         "hamSub"
@@ -4444,7 +4498,7 @@
       "kind": "menu-call",
       "name": "1a8e15080045dbe8",
       "source": "src/surge-xt/gui/SurgeGUIEditorValueCallbacks.cpp",
-      "line": 2750,
+      "line": 2887,
       "arguments": [
         "Surge::GUI::toOSCase(txt)",
         "enable",
@@ -4458,7 +4512,7 @@
       "kind": "menu-call",
       "name": "1b4b0f9d8ebdacbb",
       "source": "src/surge-xt/gui/SurgeGUIEditorValueCallbacks.cpp",
-      "line": 176,
+      "line": 178,
       "arguments": [
         "name",
         "isEnabled",
@@ -4472,7 +4526,7 @@
       "kind": "menu-call",
       "name": "1b4b0f9d8ebdacbb",
       "source": "src/surge-xt/gui/SurgeGUIEditorValueCallbacks.cpp",
-      "line": 192,
+      "line": 194,
       "arguments": [
         "name",
         "isEnabled",
@@ -4486,7 +4540,7 @@
       "kind": "menu-call",
       "name": "1b4fabe1c7eb0a54",
       "source": "src/surge-xt/gui/SurgeGUIEditorValueCallbacks.cpp",
-      "line": 824,
+      "line": 826,
       "arguments": [
         "Surge::GUI::toOSCase(\"Copy from \") + oscname + Surge::GUI::toOSCase(\" with Modulation\")",
         "<callback>"
@@ -4495,11 +4549,25 @@
       "requiresRuntimeExpansion": true
     },
     {
+      "id": "src/surge-xt/gui/SurgeGUIEditorValueCallbacks.cpp:menu-call:1d8ca6f7837f3b5b",
+      "kind": "menu-call",
+      "name": "1d8ca6f7837f3b5b",
+      "source": "src/surge-xt/gui/SurgeGUIEditorValueCallbacks.cpp",
+      "line": 2076,
+      "arguments": [
+        "Surge::GUI::toOSCase(\"Retrigger on New Note\")",
+        "true",
+        "isChecked"
+      ],
+      "labelHint": "\"Retrigger on New Note\"",
+      "requiresRuntimeExpansion": false
+    },
+    {
       "id": "src/surge-xt/gui/SurgeGUIEditorValueCallbacks.cpp:menu-call:214a52abbb2be44a",
       "kind": "menu-call",
       "name": "214a52abbb2be44a",
       "source": "src/surge-xt/gui/SurgeGUIEditorValueCallbacks.cpp",
-      "line": 3292,
+      "line": 3429,
       "arguments": [
         "Surge::GUI::toOSCase(sc + \" Hard Clip at 0 dBFS\")",
         "true",
@@ -4513,7 +4581,7 @@
       "kind": "menu-call",
       "name": "236dfa32c89d8f2f",
       "source": "src/surge-xt/gui/SurgeGUIEditorValueCallbacks.cpp",
-      "line": 2228,
+      "line": 2254,
       "arguments": [
         "Surge::GUI::toOSCase(\"Glissando\")",
         "true",
@@ -4527,7 +4595,7 @@
       "kind": "menu-call",
       "name": "2ba4775cdb0a62d7",
       "source": "src/surge-xt/gui/SurgeGUIEditorValueCallbacks.cpp",
-      "line": 682,
+      "line": 684,
       "arguments": [
         "Surge::GUI::toOSCase(\"Show CPU Usage\")",
         "true",
@@ -4541,7 +4609,7 @@
       "kind": "menu-call",
       "name": "2d211990bb744908",
       "source": "src/surge-xt/gui/SurgeGUIEditorValueCallbacks.cpp",
-      "line": 2531,
+      "line": 2631,
       "arguments": [
         "\"Legacy (<XT 1.4)\"",
         "true",
@@ -4555,7 +4623,7 @@
       "kind": "menu-call",
       "name": "2d2520253a8eedc3",
       "source": "src/surge-xt/gui/SurgeGUIEditorValueCallbacks.cpp",
-      "line": 3303,
+      "line": 3440,
       "arguments": [
         "Surge::GUI::toOSCase(sc + \" Hard Clip at +18 dBFS\")",
         "true",
@@ -4569,7 +4637,7 @@
       "kind": "menu-call",
       "name": "358f767c252e6123",
       "source": "src/surge-xt/gui/SurgeGUIEditorValueCallbacks.cpp",
-      "line": 3255,
+      "line": 3392,
       "arguments": [
         "\"Internal\"",
         "addMiscSub"
@@ -4582,7 +4650,7 @@
       "kind": "menu-call",
       "name": "37af780c014c2991",
       "source": "src/surge-xt/gui/SurgeGUIEditorValueCallbacks.cpp",
-      "line": 1963,
+      "line": 1965,
       "arguments": [
         "Surge::GUI::toOSCase(\"Precise Tuning\")",
         "true",
@@ -4596,7 +4664,7 @@
       "kind": "menu-call",
       "name": "3866dac4fd07aff0",
       "source": "src/surge-xt/gui/SurgeGUIEditorValueCallbacks.cpp",
-      "line": 2668,
+      "line": 2805,
       "arguments": [
         "Surge::GUI::toOSCase(\"Legacy Mode\")",
         "true",
@@ -4610,7 +4678,7 @@
       "kind": "menu-call",
       "name": "3c3351731ebcc8a8",
       "source": "src/surge-xt/gui/SurgeGUIEditorValueCallbacks.cpp",
-      "line": 3208,
+      "line": 3345,
       "arguments": [
         "subn",
         "<callback>"
@@ -4623,7 +4691,7 @@
       "kind": "menu-call",
       "name": "40fb5151fa2b0ae5",
       "source": "src/surge-xt/gui/SurgeGUIEditorValueCallbacks.cpp",
-      "line": 2555,
+      "line": 2655,
       "arguments": [
         "Surge::GUI::toOSCase(combinator_mode_names[cxm])",
         "true",
@@ -4637,7 +4705,7 @@
       "kind": "menu-call",
       "name": "419e000ea0178bb7",
       "source": "src/surge-xt/gui/SurgeGUIEditorValueCallbacks.cpp",
-      "line": 2362,
+      "line": 2388,
       "arguments": [
         "Surge::GUI::toOSCase(\"Ramp Not Masked Above Threshold\")",
         "true",
@@ -4651,7 +4719,7 @@
       "kind": "menu-call",
       "name": "4635a3cd8f67ed82",
       "source": "src/surge-xt/gui/SurgeGUIEditorValueCallbacks.cpp",
-      "line": 1914,
+      "line": 1916,
       "arguments": [
         "grpN",
         "sub",
@@ -4665,7 +4733,7 @@
       "kind": "menu-call",
       "name": "46a0980ac11ca87a",
       "source": "src/surge-xt/gui/SurgeGUIEditorValueCallbacks.cpp",
-      "line": 3319,
+      "line": 3456,
       "arguments": [
         "Surge::GUI::toOSCase(\"Global Hard Clip Disabled\")",
         "true",
@@ -4679,7 +4747,7 @@
       "kind": "menu-call",
       "name": "47a880bd52d0b977",
       "source": "src/surge-xt/gui/SurgeGUIEditorValueCallbacks.cpp",
-      "line": 2216,
+      "line": 2242,
       "arguments": [
         "Surge::GUI::toOSCase(\"Constant Rate\")",
         "true",
@@ -4693,7 +4761,7 @@
       "kind": "menu-call",
       "name": "4baed2747377d068",
       "source": "src/surge-xt/gui/SurgeGUIEditorValueCallbacks.cpp",
-      "line": 1657,
+      "line": 1659,
       "arguments": [
         "\"Triplet\"",
         "tsMenuT"
@@ -4706,7 +4774,7 @@
       "kind": "menu-call",
       "name": "4cda47f872432027",
       "source": "src/surge-xt/gui/SurgeGUIEditorValueCallbacks.cpp",
-      "line": 3245,
+      "line": 3382,
       "arguments": [
         "\"Envelopes\"",
         "addEGSub"
@@ -4719,7 +4787,7 @@
       "kind": "menu-call",
       "name": "4fc5da6fc2f9970b",
       "source": "src/surge-xt/gui/SurgeGUIEditorValueCallbacks.cpp",
-      "line": 2050,
+      "line": 2052,
       "arguments": [
         "\"Enabled\"",
         "true",
@@ -4733,7 +4801,7 @@
       "kind": "menu-call",
       "name": "540d9f67e368b814",
       "source": "src/surge-xt/gui/SurgeGUIEditorValueCallbacks.cpp",
-      "line": 1634,
+      "line": 1636,
       "arguments": [
         "p->tempoSyncNotationValue(mul * ((float)i + dotlaboff))",
         "<callback>"
@@ -4746,7 +4814,7 @@
       "kind": "menu-call",
       "name": "5640d774cb776d54",
       "source": "src/surge-xt/gui/SurgeGUIEditorValueCallbacks.cpp",
-      "line": 2152,
+      "line": 2178,
       "arguments": [
         "label",
         "<callback>"
@@ -4759,7 +4827,7 @@
       "kind": "menu-call",
       "name": "566e5a01bfb542af",
       "source": "src/surge-xt/gui/SurgeGUIEditorValueCallbacks.cpp",
-      "line": 288,
+      "line": 290,
       "arguments": [
         "Surge::GUI::toOSCase(learntxt)",
         "<callback>"
@@ -4772,7 +4840,7 @@
       "kind": "menu-call",
       "name": "57893f78e38afb6f",
       "source": "src/surge-xt/gui/SurgeGUIEditorValueCallbacks.cpp",
-      "line": 1439,
+      "line": 1441,
       "arguments": [
         "Surge::GUI::toOSCase(\"Copy Targets\")",
         "<callback>"
@@ -4785,7 +4853,7 @@
       "kind": "menu-call",
       "name": "57893f78e38afb6f",
       "source": "src/surge-xt/gui/SurgeGUIEditorValueCallbacks.cpp",
-      "line": 1476,
+      "line": 1478,
       "arguments": [
         "Surge::GUI::toOSCase(\"Copy Targets\")",
         "<callback>"
@@ -4798,7 +4866,7 @@
       "kind": "menu-call",
       "name": "5a18da209b7be2f0",
       "source": "src/surge-xt/gui/SurgeGUIEditorValueCallbacks.cpp",
-      "line": 2279,
+      "line": 2305,
       "arguments": [
         "Surge::GUI::toOSCase(\"Exponential\")",
         "true",
@@ -4812,7 +4880,7 @@
       "kind": "menu-call",
       "name": "5cbcb6634f6f0446",
       "source": "src/surge-xt/gui/SurgeGUIEditorValueCallbacks.cpp",
-      "line": 2307,
+      "line": 2333,
       "arguments": [
         "title",
         "true",
@@ -4822,11 +4890,25 @@
       "requiresRuntimeExpansion": true
     },
     {
+      "id": "src/surge-xt/gui/SurgeGUIEditorValueCallbacks.cpp:menu-call:5d748105759cb040",
+      "kind": "menu-call",
+      "name": "5d748105759cb040",
+      "source": "src/surge-xt/gui/SurgeGUIEditorValueCallbacks.cpp",
+      "line": 2480,
+      "arguments": [
+        "Surge::GUI::toOSCase(label)",
+        "true",
+        "isChecked"
+      ],
+      "labelHint": "dynamic: Surge::GUI::toOSCase(label)",
+      "requiresRuntimeExpansion": true
+    },
+    {
       "id": "src/surge-xt/gui/SurgeGUIEditorValueCallbacks.cpp:menu-call:653a3e3f6814fc6a",
       "kind": "menu-call",
       "name": "653a3e3f6814fc6a",
       "source": "src/surge-xt/gui/SurgeGUIEditorValueCallbacks.cpp",
-      "line": 3338,
+      "line": 3475,
       "arguments": [
         "Surge::GUI::toOSCase(\"Global Hard Clip at +18 dBFS\")",
         "true",
@@ -4840,7 +4922,7 @@
       "kind": "menu-call",
       "name": "6b51cf7434c6c6dd",
       "source": "src/surge-xt/gui/SurgeGUIEditorValueCallbacks.cpp",
-      "line": 1428,
+      "line": 1430,
       "arguments": [
         "Surge::GUI::toOSCase(\"Copy Modulator\")",
         "<callback>"
@@ -4853,7 +4935,7 @@
       "kind": "menu-call",
       "name": "6b57f1f695143318",
       "source": "src/surge-xt/gui/SurgeGUIEditorValueCallbacks.cpp",
-      "line": 248,
+      "line": 250,
       "arguments": [
         "chanSubName",
         "chanSub"
@@ -4866,7 +4948,7 @@
       "kind": "menu-call",
       "name": "6f81a059742ea9ff",
       "source": "src/surge-xt/gui/SurgeGUIEditorValueCallbacks.cpp",
-      "line": 2837,
+      "line": 2974,
       "arguments": [
         "txt",
         "true",
@@ -4880,7 +4962,7 @@
       "kind": "menu-call",
       "name": "704d9942431f445a",
       "source": "src/surge-xt/gui/SurgeGUIEditorValueCallbacks.cpp",
-      "line": 2610,
+      "line": 2710,
       "arguments": [
         "\"Stereo\"",
         "true",
@@ -4890,11 +4972,25 @@
       "requiresRuntimeExpansion": false
     },
     {
+      "id": "src/surge-xt/gui/SurgeGUIEditorValueCallbacks.cpp:menu-call:706b350747dc226f",
+      "kind": "menu-call",
+      "name": "706b350747dc226f",
+      "source": "src/surge-xt/gui/SurgeGUIEditorValueCallbacks.cpp",
+      "line": 2735,
+      "arguments": [
+        "Surge::GUI::toOSCase(\"Unison Voices\")",
+        "true",
+        "dt == WavetableOscillator::UNISON_VOICES"
+      ],
+      "labelHint": "\"Unison Voices\"",
+      "requiresRuntimeExpansion": false
+    },
+    {
       "id": "src/surge-xt/gui/SurgeGUIEditorValueCallbacks.cpp:menu-call:7750ecbf7571c2c8",
       "kind": "menu-call",
       "name": "7750ecbf7571c2c8",
       "source": "src/surge-xt/gui/SurgeGUIEditorValueCallbacks.cpp",
-      "line": 2593,
+      "line": 2693,
       "arguments": [
         "Surge::GUI::toOSCase(\"9 Gradients\")",
         "subMenu"
@@ -4907,7 +5003,7 @@
       "kind": "menu-call",
       "name": "776dc4c053a9200a",
       "source": "src/surge-xt/gui/SurgeGUIEditorValueCallbacks.cpp",
-      "line": 224,
+      "line": 226,
       "arguments": [
         "\"Omni\"",
         "true",
@@ -4921,7 +5017,7 @@
       "kind": "menu-call",
       "name": "77c73d6bccc358dd",
       "source": "src/surge-xt/gui/SurgeGUIEditorValueCallbacks.cpp",
-      "line": 820,
+      "line": 822,
       "arguments": [
         "Surge::GUI::toOSCase(\"Copy from \") + oscname",
         "<callback>"
@@ -4934,7 +5030,7 @@
       "kind": "menu-call",
       "name": "7825994669df2934",
       "source": "src/surge-xt/gui/SurgeGUIEditorValueCallbacks.cpp",
-      "line": 2583,
+      "line": 2683,
       "arguments": [
         "Surge::GUI::toOSCase(\"4 Gradients\")",
         "subMenu"
@@ -4947,7 +5043,7 @@
       "kind": "menu-call",
       "name": "78dca9bafd01710a",
       "source": "src/surge-xt/gui/SurgeGUIEditorValueCallbacks.cpp",
-      "line": 342,
+      "line": 344,
       "arguments": [
         "txt",
         "<callback>"
@@ -4960,7 +5056,7 @@
       "kind": "menu-call",
       "name": "78dca9bafd01710a",
       "source": "src/surge-xt/gui/SurgeGUIEditorValueCallbacks.cpp",
-      "line": 362,
+      "line": 364,
       "arguments": [
         "txt",
         "<callback>"
@@ -4973,7 +5069,7 @@
       "kind": "menu-call",
       "name": "7957827b434721cd",
       "source": "src/surge-xt/gui/SurgeGUIEditorValueCallbacks.cpp",
-      "line": 1739,
+      "line": 1741,
       "arguments": [
         "Surge::GUI::toOSCase(\"Use Decimal Values\")",
         "true",
@@ -4987,7 +5083,7 @@
       "kind": "menu-call",
       "name": "81533c7b37e5f96e",
       "source": "src/surge-xt/gui/SurgeGUIEditorValueCallbacks.cpp",
-      "line": 3328,
+      "line": 3465,
       "arguments": [
         "Surge::GUI::toOSCase(\"Global Hard Clip at 0 dBFS\")",
         "true",
@@ -5001,7 +5097,7 @@
       "kind": "menu-call",
       "name": "81b0ebd0102f418b",
       "source": "src/surge-xt/gui/SurgeGUIEditorValueCallbacks.cpp",
-      "line": 2034,
+      "line": 2036,
       "arguments": [
         "Surge::GUI::toOSCase(\"Sustain Pedal in Mono Mode\")",
         "makeMonoModeOptionsMenu(menuRect, false)"
@@ -5010,11 +5106,25 @@
       "requiresRuntimeExpansion": false
     },
     {
+      "id": "src/surge-xt/gui/SurgeGUIEditorValueCallbacks.cpp:menu-call:84872783838c2bac",
+      "kind": "menu-call",
+      "name": "84872783838c2bac",
+      "source": "src/surge-xt/gui/SurgeGUIEditorValueCallbacks.cpp",
+      "line": 2744,
+      "arguments": [
+        "Surge::GUI::toOSCase(\"Sample Loop Count\")",
+        "true",
+        "dt == WavetableOscillator::SAMPLE_PLAY_COUNT"
+      ],
+      "labelHint": "\"Sample Loop Count\"",
+      "requiresRuntimeExpansion": false
+    },
+    {
       "id": "src/surge-xt/gui/SurgeGUIEditorValueCallbacks.cpp:menu-call:868a0cc58c202c20",
       "kind": "menu-call",
       "name": "868a0cc58c202c20",
       "source": "src/surge-xt/gui/SurgeGUIEditorValueCallbacks.cpp",
-      "line": 709,
+      "line": 711,
       "arguments": [
         "*s",
         "<callback>"
@@ -5027,7 +5137,7 @@
       "kind": "menu-call",
       "name": "8b34d2d2d0adb6d2",
       "source": "src/surge-xt/gui/SurgeGUIEditorValueCallbacks.cpp",
-      "line": 1887,
+      "line": 1889,
       "arguments": [
         "displaytxt",
         "true",
@@ -5041,7 +5151,7 @@
       "kind": "menu-call",
       "name": "8cb81ed4dcec1053",
       "source": "src/surge-xt/gui/SurgeGUIEditorValueCallbacks.cpp",
-      "line": 3260,
+      "line": 3397,
       "arguments": [
         "Surge::GUI::toOSCase(\"Add Modulation from\")",
         "addModSub"
@@ -5054,7 +5164,7 @@
       "kind": "menu-call",
       "name": "8d98fb70b61e1954",
       "source": "src/surge-xt/gui/SurgeGUIEditorValueCallbacks.cpp",
-      "line": 1394,
+      "line": 1396,
       "arguments": [
         "Surge::GUI::toOSCase(\"Rename Macro...\")",
         "<callback>"
@@ -5067,7 +5177,7 @@
       "kind": "menu-call",
       "name": "8ef1b60f19ab353b",
       "source": "src/surge-xt/gui/SurgeGUIEditorValueCallbacks.cpp",
-      "line": 1642,
+      "line": 1644,
       "arguments": [
         "p->tempoSyncNotationValue(mul * ((float)i + triplaboff))",
         "<callback>"
@@ -5080,7 +5190,7 @@
       "kind": "menu-call",
       "name": "8f24aff1be55970a",
       "source": "src/surge-xt/gui/SurgeGUIEditorValueCallbacks.cpp",
-      "line": 2874,
+      "line": 3011,
       "arguments": [
         "mo_multitype_names[m]",
         "true",
@@ -5094,7 +5204,7 @@
       "kind": "menu-call",
       "name": "8f8b0fd4c684ae31",
       "source": "src/surge-xt/gui/SurgeGUIEditorValueCallbacks.cpp",
-      "line": 235,
+      "line": 237,
       "arguments": [
         "fmt::format(\"Channel {}\", ch + 1)",
         "true",
@@ -5108,7 +5218,7 @@
       "kind": "menu-call",
       "name": "94803f762edea002",
       "source": "src/surge-xt/gui/SurgeGUIEditorValueCallbacks.cpp",
-      "line": 2770,
+      "line": 2907,
       "arguments": [
         "\"Absolute\"",
         "true",
@@ -5122,7 +5232,7 @@
       "kind": "menu-call",
       "name": "955ac6116d9d3d41",
       "source": "src/surge-xt/gui/SurgeGUIEditorValueCallbacks.cpp",
-      "line": 1510,
+      "line": 1512,
       "arguments": [
         "iterator.getItem()"
       ],
@@ -5134,7 +5244,7 @@
       "kind": "menu-call",
       "name": "955ac6116d9d3d41",
       "source": "src/surge-xt/gui/SurgeGUIEditorValueCallbacks.cpp",
-      "line": 3372,
+      "line": 3509,
       "arguments": [
         "iterator.getItem()"
       ],
@@ -5146,7 +5256,7 @@
       "kind": "menu-call",
       "name": "982e67ad74777be5",
       "source": "src/surge-xt/gui/SurgeGUIEditorValueCallbacks.cpp",
-      "line": 2604,
+      "line": 2704,
       "arguments": [
         "\"Mono\"",
         "true",
@@ -5160,7 +5270,7 @@
       "kind": "menu-call",
       "name": "9cbb9f89898fd3ba",
       "source": "src/surge-xt/gui/SurgeGUIEditorValueCallbacks.cpp",
-      "line": 1651,
+      "line": 1653,
       "arguments": [
         "txt2",
         "<callback>"
@@ -5173,7 +5283,7 @@
       "kind": "menu-call",
       "name": "9cbb9f89898fd3ba",
       "source": "src/surge-xt/gui/SurgeGUIEditorValueCallbacks.cpp",
-      "line": 1661,
+      "line": 1663,
       "arguments": [
         "txt2",
         "<callback>"
@@ -5186,7 +5296,7 @@
       "kind": "menu-call",
       "name": "9cbb9f89898fd3ba",
       "source": "src/surge-xt/gui/SurgeGUIEditorValueCallbacks.cpp",
-      "line": 1721,
+      "line": 1723,
       "arguments": [
         "txt2",
         "<callback>"
@@ -5199,7 +5309,7 @@
       "kind": "menu-call",
       "name": "9cbb9f89898fd3ba",
       "source": "src/surge-xt/gui/SurgeGUIEditorValueCallbacks.cpp",
-      "line": 1731,
+      "line": 1733,
       "arguments": [
         "txt2",
         "<callback>"
@@ -5212,7 +5322,7 @@
       "kind": "menu-call",
       "name": "9e82e0c06c9aafdd",
       "source": "src/surge-xt/gui/SurgeGUIEditorValueCallbacks.cpp",
-      "line": 2944,
+      "line": 3081,
       "arguments": [
         "Surge::GUI::toOSCase(\"Disable Hardsync\")",
         "true",
@@ -5226,7 +5336,7 @@
       "kind": "menu-call",
       "name": "a02dc1c42ec42068",
       "source": "src/surge-xt/gui/SurgeGUIEditorValueCallbacks.cpp",
-      "line": 250,
+      "line": 252,
       "arguments": [
         "Surge::GUI::toOSCase(\"Assign to MIDI CC\")",
         "midiSub"
@@ -5239,7 +5349,7 @@
       "kind": "menu-call",
       "name": "a2e58516f2bf80bb",
       "source": "src/surge-xt/gui/SurgeGUIEditorValueCallbacks.cpp",
-      "line": 2417,
+      "line": 2517,
       "arguments": [
         "Surge::GUI::toOSCase(fbClipModes[i])",
         "true",
@@ -5253,7 +5363,7 @@
       "kind": "menu-call",
       "name": "a993896b3bddac86",
       "source": "src/surge-xt/gui/SurgeGUIEditorValueCallbacks.cpp",
-      "line": 3235,
+      "line": 3372,
       "arguments": [
         "\"Voice LFOs\"",
         "addVLFOSub"
@@ -5266,7 +5376,7 @@
       "kind": "menu-call",
       "name": "ada7b43d65b0a802",
       "source": "src/surge-xt/gui/SurgeGUIEditorValueCallbacks.cpp",
-      "line": 831,
+      "line": 833,
       "arguments": [
         "Surge::GUI::toOSCase(\"Paste to \") + oscname",
         "<callback>"
@@ -5279,7 +5389,7 @@
       "kind": "menu-call",
       "name": "af4cf0f880a99afa",
       "source": "src/surge-xt/gui/SurgeGUIEditorValueCallbacks.cpp",
-      "line": 728,
+      "line": 730,
       "arguments": [
         "s",
         "<callback>"
@@ -5292,7 +5402,7 @@
       "kind": "menu-call",
       "name": "b20962da170eada7",
       "source": "src/surge-xt/gui/SurgeGUIEditorValueCallbacks.cpp",
-      "line": 3281,
+      "line": 3418,
       "arguments": [
         "Surge::GUI::toOSCase(sc + \" Hard Clip Disabled\")",
         "true",
@@ -5306,7 +5416,7 @@
       "kind": "menu-call",
       "name": "b24f6fbac15dc159",
       "source": "src/surge-xt/gui/SurgeGUIEditorValueCallbacks.cpp",
-      "line": 1034,
+      "line": 1036,
       "arguments": [
         "Surge::GUI::toOSCase(\"Detach Sustain Pedal from Voicing\")",
         "true",
@@ -5320,7 +5430,7 @@
       "kind": "menu-call",
       "name": "b933414f2bd35df0",
       "source": "src/surge-xt/gui/SurgeGUIEditorValueCallbacks.cpp",
-      "line": 2240,
+      "line": 2266,
       "arguments": [
         "Surge::GUI::toOSCase(\"Retrigger at Scale Degrees\")",
         "true",
@@ -5334,7 +5444,7 @@
       "kind": "menu-call",
       "name": "b94aa8dad21a950c",
       "source": "src/surge-xt/gui/SurgeGUIEditorValueCallbacks.cpp",
-      "line": 872,
+      "line": 874,
       "arguments": [
         "Surge::GUI::toOSCase(\"Copy Scene\")",
         "<callback>"
@@ -5347,7 +5457,7 @@
       "kind": "menu-call",
       "name": "bc3e90e91e0d9c36",
       "source": "src/surge-xt/gui/SurgeGUIEditorValueCallbacks.cpp",
-      "line": 2184,
+      "line": 2210,
       "arguments": [
         "Surge::GUI::toOSCase(\"Reset Filter Cutoff To Keytrack Root\")",
         "<callback>"
@@ -5360,7 +5470,7 @@
       "kind": "menu-call",
       "name": "c2ed80daa38c8be0",
       "source": "src/surge-xt/gui/SurgeGUIEditorValueCallbacks.cpp",
-      "line": 2628,
+      "line": 2765,
       "arguments": [
         "\"Surge\"",
         "true",
@@ -5374,7 +5484,7 @@
       "kind": "menu-call",
       "name": "c78062b93526d85d",
       "source": "src/surge-xt/gui/SurgeGUIEditorValueCallbacks.cpp",
-      "line": 2539,
+      "line": 2639,
       "arguments": [
         "\"Tilt Filter\"",
         "true",
@@ -5388,7 +5498,7 @@
       "kind": "menu-call",
       "name": "c83b0099fc42dc84",
       "source": "src/surge-xt/gui/SurgeGUIEditorValueCallbacks.cpp",
-      "line": 1365,
+      "line": 1367,
       "arguments": [
         "Surge::GUI::toOSCase(\"Bipolar Mode\")",
         "true",
@@ -5402,7 +5512,7 @@
       "kind": "menu-call",
       "name": "cc166ce9d3281c10",
       "source": "src/surge-xt/gui/SurgeGUIEditorValueCallbacks.cpp",
-      "line": 2255,
+      "line": 2281,
       "arguments": [
         "Surge::GUI::toOSCase(\"Logarithmic\")",
         "true",
@@ -5416,7 +5526,7 @@
       "kind": "menu-call",
       "name": "d0dd69047b1a618a",
       "source": "src/surge-xt/gui/SurgeGUIEditorValueCallbacks.cpp",
-      "line": 3230,
+      "line": 3367,
       "arguments": [
         "\"Macros\"",
         "addMacroSub"
@@ -5429,7 +5539,7 @@
       "kind": "menu-call",
       "name": "d646685c45704d20",
       "source": "src/surge-xt/gui/SurgeGUIEditorValueCallbacks.cpp",
-      "line": 2516,
+      "line": 2616,
       "arguments": [
         "\"Stereo\"",
         "true",
@@ -5443,7 +5553,7 @@
       "kind": "menu-call",
       "name": "d6c79a535791d5a0",
       "source": "src/surge-xt/gui/SurgeGUIEditorValueCallbacks.cpp",
-      "line": 879,
+      "line": 881,
       "arguments": [
         "Surge::GUI::toOSCase(\"Paste Scene\")",
         "synth->storage.get_clipboard_type() == cp_scene",
@@ -5457,7 +5567,7 @@
       "kind": "menu-call",
       "name": "d9a634863af228fd",
       "source": "src/surge-xt/gui/SurgeGUIEditorValueCallbacks.cpp",
-      "line": 1694,
+      "line": 1696,
       "arguments": [
         "txt3",
         "<callback>"
@@ -5470,7 +5580,7 @@
       "kind": "menu-call",
       "name": "de7d1b721a1e0632",
       "source": "src/surge-xt/gui/SurgeGUIEditorValueCallbacks.cpp",
-      "line": 3359,
+      "line": 3496,
       "arguments": [
         "i"
       ],
@@ -5482,7 +5592,7 @@
       "kind": "menu-call",
       "name": "e160cc9f991660e0",
       "source": "src/surge-xt/gui/SurgeGUIEditorValueCallbacks.cpp",
-      "line": 2076,
+      "line": 2102,
       "arguments": [
         "Surge::GUI::toOSCase(\"Tempo Sync\")",
         "true",
@@ -5496,7 +5606,7 @@
       "kind": "menu-call",
       "name": "e3bb2b1428c122d3",
       "source": "src/surge-xt/gui/SurgeGUIEditorValueCallbacks.cpp",
-      "line": 2334,
+      "line": 2360,
       "arguments": [
         "Surge::GUI::toOSCase(title)",
         "true",
@@ -5510,7 +5620,7 @@
       "kind": "menu-call",
       "name": "e54490d4d33d0472",
       "source": "src/surge-xt/gui/SurgeGUIEditorValueCallbacks.cpp",
-      "line": 2509,
+      "line": 2609,
       "arguments": [
         "\"Mono\"",
         "true",
@@ -5524,7 +5634,7 @@
       "kind": "menu-call",
       "name": "e6fa457373bd81fc",
       "source": "src/surge-xt/gui/SurgeGUIEditorValueCallbacks.cpp",
-      "line": 216,
+      "line": 218,
       "arguments": [
         "name",
         "currentSub",
@@ -5538,7 +5648,7 @@
       "kind": "menu-call",
       "name": "e9274309eb8d617f",
       "source": "src/surge-xt/gui/SurgeGUIEditorValueCallbacks.cpp",
-      "line": 3215,
+      "line": 3352,
       "arguments": [
         "modName",
         "subm"
@@ -5551,7 +5661,7 @@
       "kind": "menu-call",
       "name": "ea94341acbeec8a1",
       "source": "src/surge-xt/gui/SurgeGUIEditorValueCallbacks.cpp",
-      "line": 1419,
+      "line": 1421,
       "arguments": [
         "Surge::GUI::toOSCase(\"Rename Modulator...\")",
         "<callback>"
@@ -5564,7 +5674,7 @@
       "kind": "menu-call",
       "name": "fb2cbcef7e8967a6",
       "source": "src/surge-xt/gui/SurgeGUIEditorValueCallbacks.cpp",
-      "line": 1626,
+      "line": 1628,
       "arguments": [
         "p->tempoSyncNotationValue(mul * ((float)i))",
         "<callback>"
@@ -6824,6 +6934,45 @@
       "line": 1
     },
     {
+      "id": "src/surge-xt/gui/overlays/TuningOverlays.cpp:menu-call:09f9230cbede43d2",
+      "kind": "menu-call",
+      "name": "09f9230cbede43d2",
+      "source": "src/surge-xt/gui/overlays/TuningOverlays.cpp",
+      "line": 3912,
+      "arguments": [
+        "Surge::GUI::toOSCase(\"Invert Scale\")",
+        "<callback>"
+      ],
+      "labelHint": "\"Invert Scale\"",
+      "requiresRuntimeExpansion": false
+    },
+    {
+      "id": "src/surge-xt/gui/overlays/TuningOverlays.cpp:menu-call:3fc9f883d6a512a5",
+      "kind": "menu-call",
+      "name": "3fc9f883d6a512a5",
+      "source": "src/surge-xt/gui/overlays/TuningOverlays.cpp",
+      "line": 3922,
+      "arguments": [
+        "Surge::GUI::toOSCase(fmt::format(\"Rotate Scale to Degree {}\", degree))",
+        "<callback>"
+      ],
+      "labelHint": "\"Rotate Scale to Degree {}\"",
+      "requiresRuntimeExpansion": true
+    },
+    {
+      "id": "src/surge-xt/gui/overlays/TuningOverlays.cpp:menu-call:a451bee3f7a1f590",
+      "kind": "menu-call",
+      "name": "a451bee3f7a1f590",
+      "source": "src/surge-xt/gui/overlays/TuningOverlays.cpp",
+      "line": 3924,
+      "arguments": [
+        "Surge::GUI::toOSCase(fmt::format(\"Rotate and Invert Scale to Degree {}\", degree))",
+        "<callback>"
+      ],
+      "labelHint": "\"Rotate and Invert Scale to Degree {}\"",
+      "requiresRuntimeExpansion": true
+    },
+    {
       "id": "src/surge-xt/gui/overlays/TypeinParamEditor.cpp:editor-implementation:TypeinParamEditor",
       "kind": "editor-implementation",
       "name": "TypeinParamEditor",
@@ -7083,7 +7232,7 @@
       "kind": "menu-call",
       "name": "022bc7d312a0819b",
       "source": "src/surge-xt/gui/widgets/OscillatorWaveformDisplay.cpp",
-      "line": 1009,
+      "line": 1036,
       "arguments": [
         "\"Keep Even Harmonics\"",
         "<callback>"
@@ -7096,7 +7245,7 @@
       "kind": "menu-call",
       "name": "06590d65b5e8af89",
       "source": "src/surge-xt/gui/widgets/OscillatorWaveformDisplay.cpp",
-      "line": 1108,
+      "line": 1135,
       "arguments": [
         "\"Reverse\"",
         "<callback>"
@@ -7109,7 +7258,7 @@
       "kind": "menu-call",
       "name": "0be657bb6cc2faa6",
       "source": "src/surge-xt/gui/widgets/OscillatorWaveformDisplay.cpp",
-      "line": 783,
+      "line": 810,
       "arguments": [
         "Surge::GUI::toOSCase(\"Export Frames as .wav...\")",
         "<callback>"
@@ -7122,7 +7271,7 @@
       "kind": "menu-call",
       "name": "11a7f97d9c1add0e",
       "source": "src/surge-xt/gui/widgets/OscillatorWaveformDisplay.cpp",
-      "line": 975,
+      "line": 1002,
       "arguments": [
         "\"Keep Positive\"",
         "<callback>"
@@ -7135,7 +7284,7 @@
       "kind": "menu-call",
       "name": "13c9e6f5c1651585",
       "source": "src/surge-xt/gui/widgets/OscillatorWaveformDisplay.cpp",
-      "line": 914,
+      "line": 941,
       "arguments": [
         "\"Square\"",
         "<callback>"
@@ -7148,7 +7297,7 @@
       "kind": "menu-call",
       "name": "1e6aeda3c8c1c6bd",
       "source": "src/surge-xt/gui/widgets/OscillatorWaveformDisplay.cpp",
-      "line": 780,
+      "line": 807,
       "arguments": [
         "Surge::GUI::toOSCase(\"Export as .wt...\")",
         "<callback>"
@@ -7161,7 +7310,7 @@
       "kind": "menu-call",
       "name": "28abefab6ca0dd74",
       "source": "src/surge-xt/gui/widgets/OscillatorWaveformDisplay.cpp",
-      "line": 691,
+      "line": 692,
       "arguments": [
         "Surge::GUI::toOSCase(\"Play as Oneshot Sample\")",
         "true",
@@ -7175,7 +7324,7 @@
       "kind": "menu-call",
       "name": "3c73637b9fcdee23",
       "source": "src/surge-xt/gui/widgets/OscillatorWaveformDisplay.cpp",
-      "line": 1148,
+      "line": 1175,
       "arguments": [
         "\"Window (Linear)\"",
         "<callback>"
@@ -7188,7 +7337,7 @@
       "kind": "menu-call",
       "name": "441e08662700c343",
       "source": "src/surge-xt/gui/widgets/OscillatorWaveformDisplay.cpp",
-      "line": 745,
+      "line": 772,
       "arguments": [
         "std::to_string(sz)",
         "true",
@@ -7202,7 +7351,7 @@
       "kind": "menu-call",
       "name": "45cbc2da59d11cd2",
       "source": "src/surge-xt/gui/widgets/OscillatorWaveformDisplay.cpp",
-      "line": 992,
+      "line": 1019,
       "arguments": [
         "\"Keep Negative\"",
         "<callback>"
@@ -7215,7 +7364,7 @@
       "kind": "menu-call",
       "name": "4a33eacd5fa65f2b",
       "source": "src/surge-xt/gui/widgets/OscillatorWaveformDisplay.cpp",
-      "line": 1285,
+      "line": 1312,
       "arguments": [
         "item"
       ],
@@ -7227,7 +7376,7 @@
       "kind": "menu-call",
       "name": "5281d9556cc3e626",
       "source": "src/surge-xt/gui/widgets/OscillatorWaveformDisplay.cpp",
-      "line": 829,
+      "line": 856,
       "arguments": [
         "contextMenu",
         "Surge::GUI::toOSCase(\"Wavetable Script Editor...\")",
@@ -7237,11 +7386,25 @@
       "requiresRuntimeExpansion": true
     },
     {
+      "id": "src/surge-xt/gui/widgets/OscillatorWaveformDisplay.cpp:menu-call:5875f07c9143d9f7",
+      "kind": "menu-call",
+      "name": "5875f07c9143d9f7",
+      "source": "src/surge-xt/gui/widgets/OscillatorWaveformDisplay.cpp",
+      "line": 719,
+      "arguments": [
+        "Surge::GUI::toOSCase(\"Use Unison Voices as Loop Count\")",
+        "true",
+        "isLoopCount"
+      ],
+      "labelHint": "\"Use Unison Voices as Loop Count\"",
+      "requiresRuntimeExpansion": false
+    },
+    {
       "id": "src/surge-xt/gui/widgets/OscillatorWaveformDisplay.cpp:menu-call:5f0a584052e9d32d",
       "kind": "menu-call",
       "name": "5f0a584052e9d32d",
       "source": "src/surge-xt/gui/widgets/OscillatorWaveformDisplay.cpp",
-      "line": 1092,
+      "line": 1119,
       "arguments": [
         "\"Invert Odd Harmonics\"",
         "<callback>"
@@ -7254,7 +7417,7 @@
       "kind": "menu-call",
       "name": "627a093bb56055fb",
       "source": "src/surge-xt/gui/widgets/OscillatorWaveformDisplay.cpp",
-      "line": 900,
+      "line": 927,
       "arguments": [
         "\"Sawtooth\"",
         "<callback>"
@@ -7267,7 +7430,7 @@
       "kind": "menu-call",
       "name": "637bfea4d015e3d6",
       "source": "src/surge-xt/gui/widgets/OscillatorWaveformDisplay.cpp",
-      "line": 1293,
+      "line": 1320,
       "arguments": [
         "storage->wt_list[p].name",
         "true",
@@ -7294,7 +7457,7 @@
       "kind": "menu-call",
       "name": "68ac3538474bc30e",
       "source": "src/surge-xt/gui/widgets/OscillatorWaveformDisplay.cpp",
-      "line": 928,
+      "line": 955,
       "arguments": [
         "\"Random\"",
         "<callback>"
@@ -7321,7 +7484,7 @@
       "kind": "menu-call",
       "name": "739f0dad967d6a4d",
       "source": "src/surge-xt/gui/widgets/OscillatorWaveformDisplay.cpp",
-      "line": 1131,
+      "line": 1158,
       "arguments": [
         "\"Soften\"",
         "<callback>"
@@ -7334,7 +7497,7 @@
       "kind": "menu-call",
       "name": "757c581726d652b5",
       "source": "src/surge-xt/gui/widgets/OscillatorWaveformDisplay.cpp",
-      "line": 958,
+      "line": 985,
       "arguments": [
         "\"Shift Right\"",
         "<callback>"
@@ -7347,7 +7510,7 @@
       "kind": "menu-call",
       "name": "7a4771186bdeb850",
       "source": "src/surge-xt/gui/widgets/OscillatorWaveformDisplay.cpp",
-      "line": 697,
+      "line": 700,
       "arguments": [
         "Surge::GUI::toOSCase(\"Play as Looped Sample\")",
         "true",
@@ -7361,7 +7524,7 @@
       "kind": "menu-call",
       "name": "7c5968b649e63680",
       "source": "src/surge-xt/gui/widgets/OscillatorWaveformDisplay.cpp",
-      "line": 818,
+      "line": 845,
       "arguments": [
         "Surge::GUI::toOSCase(\"Rename Wavetable...\")",
         "rnaction"
@@ -7374,7 +7537,7 @@
       "kind": "menu-call",
       "name": "7dd872b499a45af7",
       "source": "src/surge-xt/gui/widgets/OscillatorWaveformDisplay.cpp",
-      "line": 867,
+      "line": 894,
       "arguments": [
         "\"Sine\"",
         "<callback>"
@@ -7387,7 +7550,7 @@
       "kind": "menu-call",
       "name": "91a46ea12cf5aea4",
       "source": "src/surge-xt/gui/widgets/OscillatorWaveformDisplay.cpp",
-      "line": 1062,
+      "line": 1089,
       "arguments": [
         "\"Invert\"",
         "<callback>"
@@ -7400,7 +7563,7 @@
       "kind": "menu-call",
       "name": "93572f52a832224f",
       "source": "src/surge-xt/gui/widgets/OscillatorWaveformDisplay.cpp",
-      "line": 1163,
+      "line": 1190,
       "arguments": [
         "\"Window (Cosine)\"",
         "<callback>"
@@ -7413,7 +7576,7 @@
       "kind": "menu-call",
       "name": "952e5a957779da50",
       "source": "src/surge-xt/gui/widgets/OscillatorWaveformDisplay.cpp",
-      "line": 770,
+      "line": 797,
       "arguments": [
         "Surge::GUI::toOSCase(\"Load Wavetable from File...\")",
         "action"
@@ -7426,7 +7589,7 @@
       "kind": "menu-call",
       "name": "95961eee9a89cc1b",
       "source": "src/surge-xt/gui/widgets/OscillatorWaveformDisplay.cpp",
-      "line": 840,
+      "line": 867,
       "arguments": [
         "Surge::GUI::toOSCase(\"Refresh Wavetable List\")",
         "refresh"
@@ -7439,7 +7602,7 @@
       "kind": "menu-call",
       "name": "95b84c527ccdb9ee",
       "source": "src/surge-xt/gui/widgets/OscillatorWaveformDisplay.cpp",
-      "line": 881,
+      "line": 908,
       "arguments": [
         "\"Triangle\"",
         "<callback>"
@@ -7452,7 +7615,7 @@
       "kind": "menu-call",
       "name": "a965450c19b509ed",
       "source": "src/surge-xt/gui/widgets/OscillatorWaveformDisplay.cpp",
-      "line": 1045,
+      "line": 1072,
       "arguments": [
         "\"Absolute\"",
         "<callback>"
@@ -7465,7 +7628,7 @@
       "kind": "menu-call",
       "name": "b3686dbde71b11bd",
       "source": "src/surge-xt/gui/widgets/OscillatorWaveformDisplay.cpp",
-      "line": 777,
+      "line": 804,
       "arguments": [
         "Surge::GUI::toOSCase(\"Export as .wav...\")",
         "<callback>"
@@ -7478,7 +7641,7 @@
       "kind": "menu-call",
       "name": "bba746055f3f380a",
       "source": "src/surge-xt/gui/widgets/OscillatorWaveformDisplay.cpp",
-      "line": 1076,
+      "line": 1103,
       "arguments": [
         "\"Invert Even Harmonics\"",
         "<callback>"
@@ -7491,7 +7654,7 @@
       "kind": "menu-call",
       "name": "c81b0ab370aa39ea",
       "source": "src/surge-xt/gui/widgets/OscillatorWaveformDisplay.cpp",
-      "line": 732,
+      "line": 759,
       "arguments": [
         "Surge::GUI::toOSCase(fmt::format(\"Number of Frames: {}\", frames))",
         "true",
@@ -7505,7 +7668,7 @@
       "kind": "menu-call",
       "name": "c8dd541e63feed25",
       "source": "src/surge-xt/gui/widgets/OscillatorWaveformDisplay.cpp",
-      "line": 749,
+      "line": 776,
       "arguments": [
         "Surge::GUI::toOSCase(fmt::format(\"Frame Length: {} samples\", wt.size))",
         "sizeMenu"
@@ -7518,7 +7681,7 @@
       "kind": "menu-call",
       "name": "ccbdef878fa52ab7",
       "source": "src/surge-xt/gui/widgets/OscillatorWaveformDisplay.cpp",
-      "line": 791,
+      "line": 818,
       "arguments": [
         "\"Export for Serum...\"",
         "<callback>"
@@ -7531,7 +7694,7 @@
       "kind": "menu-call",
       "name": "d32048eb381d4ba9",
       "source": "src/surge-xt/gui/widgets/OscillatorWaveformDisplay.cpp",
-      "line": 1026,
+      "line": 1053,
       "arguments": [
         "\"Keep Odd Harmonics\"",
         "<callback>"
@@ -7544,7 +7707,7 @@
       "kind": "menu-call",
       "name": "d440c09cfe92d1e1",
       "source": "src/surge-xt/gui/widgets/OscillatorWaveformDisplay.cpp",
-      "line": 1364,
+      "line": 1391,
       "arguments": [
         "name",
         "*subMenu",
@@ -7558,7 +7721,7 @@
       "kind": "menu-call",
       "name": "de897bb0bfcdec92",
       "source": "src/surge-xt/gui/widgets/OscillatorWaveformDisplay.cpp",
-      "line": 794,
+      "line": 821,
       "arguments": [
         "\"Export for VCV Rack...\"",
         "<callback>"
@@ -7571,7 +7734,7 @@
       "kind": "menu-call",
       "name": "e210b236e3797e5f",
       "source": "src/surge-xt/gui/widgets/OscillatorWaveformDisplay.cpp",
-      "line": 799,
+      "line": 826,
       "arguments": [
         "Surge::GUI::toOSCase(\"Export Wavetable\")",
         "exportMenu"
@@ -7597,7 +7760,7 @@
       "kind": "menu-call",
       "name": "e728bcb82b263f65",
       "source": "src/surge-xt/gui/widgets/OscillatorWaveformDisplay.cpp",
-      "line": 944,
+      "line": 971,
       "arguments": [
         "\"Shift Left\"",
         "<callback>"
@@ -7606,11 +7769,38 @@
       "requiresRuntimeExpansion": false
     },
     {
+      "id": "src/surge-xt/gui/widgets/PatchSelector.cpp:menu-call:223b6e6c502d7f1a",
+      "kind": "menu-call",
+      "name": "223b6e6c502d7f1a",
+      "source": "src/surge-xt/gui/widgets/PatchSelector.cpp",
+      "line": 883,
+      "arguments": [
+        "Surge::GUI::toOSCase(\"Open Backups Folder...\")",
+        "<callback>"
+      ],
+      "labelHint": "\"Open Backups Folder...\"",
+      "requiresRuntimeExpansion": false
+    },
+    {
+      "id": "src/surge-xt/gui/widgets/PatchSelector.cpp:menu-call:2a30180e6b4e3b99",
+      "kind": "menu-call",
+      "name": "2a30180e6b4e3b99",
+      "source": "src/surge-xt/gui/widgets/PatchSelector.cpp",
+      "line": 1191,
+      "arguments": [
+        "juce::CharPointer_UTF8(name.c_str())",
+        "sub",
+        "true"
+      ],
+      "labelHint": "dynamic: juce::CharPointer_UTF8(name.c_str())",
+      "requiresRuntimeExpansion": true
+    },
+    {
       "id": "src/surge-xt/gui/widgets/PatchSelector.cpp:menu-call:36b3ea10477f3a9c",
       "kind": "menu-call",
       "name": "36b3ea10477f3a9c",
       "source": "src/surge-xt/gui/widgets/PatchSelector.cpp",
-      "line": 824,
+      "line": 834,
       "arguments": [
         "Surge::GUI::toOSCase(\"Refresh Patch Browser\")",
         "<callback>"
@@ -7623,7 +7813,7 @@
       "kind": "menu-call",
       "name": "421b7e889aec850f",
       "source": "src/surge-xt/gui/widgets/PatchSelector.cpp",
-      "line": 678,
+      "line": 679,
       "arguments": [
         "contextMenu",
         "Surge::GUI::toOSCase(\"Initialize Patch\")",
@@ -7637,7 +7827,19 @@
       "kind": "menu-call",
       "name": "4a33eacd5fa65f2b",
       "source": "src/surge-xt/gui/widgets/PatchSelector.cpp",
-      "line": 1157,
+      "line": 1171,
+      "arguments": [
+        "item"
+      ],
+      "labelHint": "dynamic: item",
+      "requiresRuntimeExpansion": true
+    },
+    {
+      "id": "src/surge-xt/gui/widgets/PatchSelector.cpp:menu-call:4a33eacd5fa65f2b:2",
+      "kind": "menu-call",
+      "name": "4a33eacd5fa65f2b",
+      "source": "src/surge-xt/gui/widgets/PatchSelector.cpp",
+      "line": 1336,
       "arguments": [
         "item"
       ],
@@ -7649,7 +7851,7 @@
       "kind": "menu-call",
       "name": "4bafe9bce17432d8",
       "source": "src/surge-xt/gui/widgets/PatchSelector.cpp",
-      "line": 836,
+      "line": 846,
       "arguments": [
         "Surge::GUI::toOSCase(\"Open User Patches Folder...\")",
         "<callback>"
@@ -7662,7 +7864,7 @@
       "kind": "menu-call",
       "name": "4c3c9ad7fb1d8112",
       "source": "src/surge-xt/gui/widgets/PatchSelector.cpp",
-      "line": 943,
+      "line": 967,
       "arguments": [
         "\"Favorites\"",
         "subMenu"
@@ -7675,7 +7877,7 @@
       "kind": "menu-call",
       "name": "4cd5531f7868da8c",
       "source": "src/surge-xt/gui/widgets/PatchSelector.cpp",
-      "line": 817,
+      "line": 827,
       "arguments": [
         "contextMenu",
         "Surge::GUI::toOSCase(\"Patch Database...\")",
@@ -7689,7 +7891,7 @@
       "kind": "menu-call",
       "name": "53aaf3431c11c42c",
       "source": "src/surge-xt/gui/widgets/PatchSelector.cpp",
-      "line": 933,
+      "line": 957,
       "arguments": [
         "juce::CharPointer_UTF8(storage->patch_list[idx].name.c_str())",
         "<callback>"
@@ -7702,7 +7904,7 @@
       "kind": "menu-call",
       "name": "53aaf3431c11c42c",
       "source": "src/surge-xt/gui/widgets/PatchSelector.cpp",
-      "line": 949,
+      "line": 973,
       "arguments": [
         "juce::CharPointer_UTF8(storage->patch_list[idx].name.c_str())",
         "<callback>"
@@ -7715,7 +7917,7 @@
       "kind": "menu-call",
       "name": "5ad741afc65d605c",
       "source": "src/surge-xt/gui/widgets/PatchSelector.cpp",
-      "line": 839,
+      "line": 849,
       "arguments": [
         "Surge::GUI::toOSCase(\"Open Factory Patches Folder...\")",
         "<callback>"
@@ -7728,7 +7930,7 @@
       "kind": "menu-call",
       "name": "5c6c1f6257fbd375",
       "source": "src/surge-xt/gui/widgets/PatchSelector.cpp",
-      "line": 749,
+      "line": 759,
       "arguments": [
         "Surge::GUI::toOSCase(\"Rename Patch...\")",
         "<callback>"
@@ -7741,7 +7943,7 @@
       "kind": "menu-call",
       "name": "5dc278035353d163",
       "source": "src/surge-xt/gui/widgets/PatchSelector.cpp",
-      "line": 784,
+      "line": 794,
       "arguments": [
         "Surge::GUI::toOSCase(\"Delete Patch\")",
         "<callback>"
@@ -7750,11 +7952,25 @@
       "requiresRuntimeExpansion": false
     },
     {
+      "id": "src/surge-xt/gui/widgets/PatchSelector.cpp:menu-call:65287f3862f357c8",
+      "kind": "menu-call",
+      "name": "65287f3862f357c8",
+      "source": "src/surge-xt/gui/widgets/PatchSelector.cpp",
+      "line": 1241,
+      "arguments": [
+        "Surge::GUI::toOSCase(\"Backups\")",
+        "backupsMenu",
+        "true"
+      ],
+      "labelHint": "\"Backups\"",
+      "requiresRuntimeExpansion": false
+    },
+    {
       "id": "src/surge-xt/gui/widgets/PatchSelector.cpp:menu-call:71fd9cd3f58d5cd5",
       "kind": "menu-call",
       "name": "71fd9cd3f58d5cd5",
       "source": "src/surge-xt/gui/widgets/PatchSelector.cpp",
-      "line": 940,
+      "line": 964,
       "arguments": [
         "Surge::GUI::toOSCase(\"Load favorites from...\")",
         "<callback>"
@@ -7767,7 +7983,7 @@
       "kind": "menu-call",
       "name": "71fd9cd3f58d5cd5",
       "source": "src/surge-xt/gui/widgets/PatchSelector.cpp",
-      "line": 954,
+      "line": 978,
       "arguments": [
         "Surge::GUI::toOSCase(\"Load favorites from...\")",
         "<callback>"
@@ -7780,7 +7996,7 @@
       "kind": "menu-call",
       "name": "8a7d89478da31002",
       "source": "src/surge-xt/gui/widgets/PatchSelector.cpp",
-      "line": 706,
+      "line": 716,
       "arguments": [
         "contextMenu",
         "Surge::GUI::toOSCase(\"Save Patch\")",
@@ -7790,11 +8006,38 @@
       "requiresRuntimeExpansion": true
     },
     {
+      "id": "src/surge-xt/gui/widgets/PatchSelector.cpp:menu-call:8cca1a5715c81dd0",
+      "kind": "menu-call",
+      "name": "8cca1a5715c81dd0",
+      "source": "src/surge-xt/gui/widgets/PatchSelector.cpp",
+      "line": 1197,
+      "arguments": [
+        "juce::CharPointer_UTF8(name.c_str())",
+        "sub"
+      ],
+      "labelHint": "dynamic: juce::CharPointer_UTF8(name.c_str())",
+      "requiresRuntimeExpansion": true
+    },
+    {
+      "id": "src/surge-xt/gui/widgets/PatchSelector.cpp:menu-call:9b2cd0b238ed8964",
+      "kind": "menu-call",
+      "name": "9b2cd0b238ed8964",
+      "source": "src/surge-xt/gui/widgets/PatchSelector.cpp",
+      "line": 692,
+      "arguments": [
+        "Surge::GUI::toOSCase(\"Set Current Patch as Default\")",
+        "canSetDefaultPatch",
+        "false"
+      ],
+      "labelHint": "\"Set Current Patch as Default\"",
+      "requiresRuntimeExpansion": false
+    },
+    {
       "id": "src/surge-xt/gui/widgets/PatchSelector.cpp:menu-call:a552e72622ebc74a",
       "kind": "menu-call",
       "name": "a552e72622ebc74a",
       "source": "src/surge-xt/gui/widgets/PatchSelector.cpp",
-      "line": 853,
+      "line": 863,
       "arguments": [
         "Surge::GUI::toOSCase(\"Open Third Party Patches Folder...\")",
         "<callback>"
@@ -7803,11 +8046,24 @@
       "requiresRuntimeExpansion": false
     },
     {
+      "id": "src/surge-xt/gui/widgets/PatchSelector.cpp:menu-call:a58af67998be5548",
+      "kind": "menu-call",
+      "name": "a58af67998be5548",
+      "source": "src/surge-xt/gui/widgets/PatchSelector.cpp",
+      "line": 1246,
+      "arguments": [
+        "Surge::GUI::toOSCase(\"Backups\")",
+        "backupsMenu"
+      ],
+      "labelHint": "\"Backups\"",
+      "requiresRuntimeExpansion": false
+    },
+    {
       "id": "src/surge-xt/gui/widgets/PatchSelector.cpp:menu-call:ad6cc72d8c4ad05e",
       "kind": "menu-call",
       "name": "ad6cc72d8c4ad05e",
       "source": "src/surge-xt/gui/widgets/PatchSelector.cpp",
-      "line": 938,
+      "line": 962,
       "arguments": [
         "Surge::GUI::toOSCase(\"Export favorites to...\")",
         "<callback>"
@@ -7820,7 +8076,7 @@
       "kind": "menu-call",
       "name": "ad6cc72d8c4ad05e",
       "source": "src/surge-xt/gui/widgets/PatchSelector.cpp",
-      "line": 953,
+      "line": 977,
       "arguments": [
         "Surge::GUI::toOSCase(\"Export favorites to...\")",
         "<callback>"
@@ -7829,24 +8085,11 @@
       "requiresRuntimeExpansion": false
     },
     {
-      "id": "src/surge-xt/gui/widgets/PatchSelector.cpp:menu-call:b9920c6c8e71cad0",
-      "kind": "menu-call",
-      "name": "b9920c6c8e71cad0",
-      "source": "src/surge-xt/gui/widgets/PatchSelector.cpp",
-      "line": 683,
-      "arguments": [
-        "Surge::GUI::toOSCase(\"Set Current Patch as Default\")",
-        "<callback>"
-      ],
-      "labelHint": "\"Set Current Patch as Default\"",
-      "requiresRuntimeExpansion": false
-    },
-    {
       "id": "src/surge-xt/gui/widgets/PatchSelector.cpp:menu-call:c90b3b10c0bfb0a2",
       "kind": "menu-call",
       "name": "c90b3b10c0bfb0a2",
       "source": "src/surge-xt/gui/widgets/PatchSelector.cpp",
-      "line": 711,
+      "line": 721,
       "arguments": [
         "Surge::GUI::toOSCase(\"Load Patch from File...\")",
         "<callback>"
@@ -7859,7 +8102,7 @@
       "kind": "menu-call",
       "name": "d440c09cfe92d1e1",
       "source": "src/surge-xt/gui/widgets/PatchSelector.cpp",
-      "line": 1214,
+      "line": 1393,
       "arguments": [
         "name",
         "*subMenu",
@@ -7873,7 +8116,7 @@
       "kind": "menu-call",
       "name": "d440c09cfe92d1e1",
       "source": "src/surge-xt/gui/widgets/PatchSelector.cpp",
-      "line": 1217,
+      "line": 1396,
       "arguments": [
         "name",
         "*subMenu",

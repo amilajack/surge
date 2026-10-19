@@ -27,6 +27,8 @@ async function choose(page,path,label){
   await expect(item,[...path,label].join(' > ')).toBeAttached();await item.dispatchEvent('click');
   await expect(page.getByRole('menu')).toHaveCount(0);
 }
+// Disabled items are hidden from assistive technology, as on desktop; read the open menus' titles.
+const allTitles=page=>page.evaluate(()=>JSON.parse(Module.ccall('surge_browser_open_menu_texts','string',[],[])));
 const sine=[...readFileSync(new URL('../../resources/data/patches_factory/Templates/Init Sine.fxp',import.meta.url))];
 
 test('category submenus load factory, third-party and tutorial patches',async({page})=>{
@@ -74,6 +76,10 @@ test('initialize, default, save and load-from-file functions',async({page})=>{
   // Load Patch from File uses the browser file picker and keeps the previous patch on the undo stack.
   await page.evaluate(bytes=>{window.showOpenFilePicker=async()=>[{kind:'file',name:'Picked.fxp',getFile:async()=>new File([new Uint8Array(bytes)],'Picked.fxp')}];},sine);
   await choose(page,[],'Load Patch from File...');await expect.poll(()=>patchName(page)).toBe('Picked');
+  // A patch loaded straight from a file has no patch list entry to store as the default.
+  expect(await open(page)).not.toContain('Set Current Patch as Default');
+  expect(await allTitles(page)).toContain('Set Current Patch as Default');
+  await closeMenus(page);
   await page.getByRole('button',{name:'Undo',exact:true}).dispatchEvent('click');
   await expect.poll(()=>patchName(page)).toBe('Init Saw');
 });
@@ -144,4 +150,69 @@ test('favorites submenu and favorites button menu load, export and import favori
   await page.getByRole('button',{name:'Remove from Favorites',exact:true}).focus();await page.keyboard.press('Shift+F10');
   await page.getByRole('menu').last().locator('[aria-label="Menu Favorite"]').dispatchEvent('click');
   await expect.poll(()=>patchName(page)).toBe('Menu Favorite');
+});
+
+test('periodic patch backups are written, listed under Backups and loaded',async({page})=>{
+  test.setTimeout(240000);
+  await start(page);
+  const mainMenu=async(path,label)=>{
+    await closeMenus(page);
+    await expect(async()=>{
+      await page.getByRole('button',{name:'Main Menu',exact:true}).dispatchEvent('click');
+      await expect(page.getByRole('menu')).toHaveCount(1,{timeout:1000});
+    }).toPass();
+    for(const name of path){
+      const before=JSON.stringify(await items(page));
+      await page.getByRole('menu').last().locator(`[aria-label="${css(name)}"]`).first().dispatchEvent('click');
+      await expect.poll(async()=>JSON.stringify(await items(page)),name).not.toBe(before);
+    }
+    const listed=await items(page);
+    if(label){
+      await page.getByRole('menu').last().locator(`[aria-label="${css(label)}"],[aria-label="${css(label)} (Checked)"]`).first().dispatchEvent('click');
+      await expect(page.getByRole('menu')).toHaveCount(0);
+    }
+    return listed;
+  };
+  const backups=()=>page.evaluate(()=>{
+    const walk=p=>Module.FS.readdir(p).filter(n=>n[0]!=='.').flatMap(n=>{const c=p+'/'+n;return Module.FS.isDir(Module.FS.stat(c).mode)?walk(c):[c];});
+    return Module.FS.analyzePath('/user/Backups').exists?walk('/user/Backups'):[];
+  });
+  // Nothing is listed before a backup exists. Opening the folder is an OS shell action,
+  // which browser builds leave out of the menu.
+  let top=await open(page);
+  expect(top).not.toContain('Backups');
+  expect(top).not.toContain('Open Backups Folder...');
+  await closeMenus(page);
+  // Enable backups and set the shortest interval through the original prompt.
+  const backupMenu=['Patch Settings','Patch Backups'];
+  expect(await mainMenu(backupMenu)).toEqual(['Enable Patch Backups','Set Save Interval (Current: 5 Minutes)']);
+  await mainMenu(backupMenu,'Enable Patch Backups');
+  await mainMenu(backupMenu,'Set Save Interval (Current: 5 Minutes)');await prompt(page,'1');
+  expect(await mainMenu(backupMenu)).toEqual(['Enable Patch Backups (Checked)','Set Save Interval (Current: 1 Minute)']);
+  await closeMenus(page);
+  // Only an edited patch is backed up, once the interval has elapsed.
+  const volume=page.getByRole('slider',{name:'Global Volume',exact:true});
+  await volume.focus();for(let i=0;i<6;++i)await page.keyboard.press('ArrowDown');
+  const edited=await volume.getAttribute('aria-valuetext');
+  await expect.poll(backups,{timeout:120000,intervals:[2000]}).toHaveLength(1);
+  const [file]=await backups();
+  expect(file).toMatch(/^\/user\/Backups\/\d{4}-\d{2}-\d{2}\/Templates\/Init Saw \(\d{2}-\d{2}-\d{2}\)\.fxp$/);
+  const [,day,stem]=file.match(/^\/user\/Backups\/([^/]+)\/Templates\/(.+)\.fxp$/);
+  // The patch menu lists backups by date and category; the folder action stays out.
+  await choose(page,['Templates'],'Init Sine');await expect.poll(()=>patchName(page)).toBe('Init Sine');
+  top=await open(page);
+  expect(top).toContain('Backups');
+  expect(top).not.toContain('Open Backups Folder...');
+  expect(await open(page,'Backups',day,'Templates')).toEqual([stem]);
+  // Loading a backup restores the edited patch under the name streamed into it, which
+  // carries the backup's time, and ticks it.
+  await choose(page,['Backups',day,'Templates'],stem);
+  await expect.poll(()=>patchName(page)).toBe(stem);
+  await expect(volume).toHaveAttribute('aria-valuetext',edited);
+  expect(await open(page,'Backups',day,'Templates')).toEqual([stem+' (Checked)']);
+  await closeMenus(page);
+  // Backups are user files: they survive a reload.
+  await reloadPersisted(page);
+  expect(await backups()).toEqual([file]);
+  await mainMenu(backupMenu,'Enable Patch Backups');
 });

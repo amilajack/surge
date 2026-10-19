@@ -522,3 +522,30 @@ test('modulator output menu from the button hamburger',async({page})=>{
   expect((await hamburger()).includes('Amplitude Parameter Applies to Raw and EG Outputs (Checked)')).toBe(before==='0');
   await closeMenus(page);
 });
+
+test('scene LFO retrigger, delay line mode and sample loop count menus',async({page})=>{
+  test.setTimeout(180000);
+  await start(page);
+  // Voice LFOs attack on every note already, so only scene LFOs offer Retrigger on New Note.
+  const trigger=page.locator('#juce-accessibility [aria-label$=" Trigger Mode"]').first();
+  expect(await context(page,trigger)).not.toContain('Retrigger on New Note');
+  await closeMenus(page);
+  const sceneLfo=await node(page,'S-LFO 1').boundingBox();
+  await page.mouse.click(sceneLfo.x+sceneLfo.width/2,sceneLfo.y+sceneLfo.height/2);
+  await expect(trigger).toHaveAttribute('aria-label','Scene A Scene LFO 1 Trigger Mode');
+  expect(await toggle(page,trigger,'Retrigger on New Note')).toBe(false);
+  // The choice is stored with the patch, as the trigger mode parameter's deform type.
+  const deform=xml=>tag(xml,'a_lfo6_trigmode')?.deform_type;
+  expect(deform(await save(page))).toBe('1');
+  await toggle(page,trigger,'Retrigger on New Note');
+  expect(deform(await save(page))??'0').toBe('0');
+  // Delay: the left delay time chooses the line mode (Clean or Tape).
+  await setFx(page,'A Insert FX 1','Delay');
+  const modes=await context(page,'FX A1 Left - Delay Time');
+  expect(modes).toContain('MODE');
+  expect(modes.filter(l=>/^(Clean|Tape)( \(Checked\))?$/.test(l)).sort()).toHaveLength(2);
+  await radioGroup(page,'FX A1 Left - Delay Time',[],['Clean','Tape','Clean']);
+  // A wavetable always runs Unison Voices as voices; a sample can play its count as loops.
+  expect(await context(page,'Scene A Osc 1 Unison Voices')).not.toContain('Sample Loop Count');
+  await closeMenus(page);
+});

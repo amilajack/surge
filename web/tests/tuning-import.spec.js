@@ -68,3 +68,47 @@ test('file-drop read failures report an error without changing tuning',async({pa
   await expect(page.locator('#file-status')).toContainText('Dropped file unreadable');
   expect(await state(page)).toEqual(before);
 });
+
+test('the tuning editor rotates and inverts the scale from a degree menu',async({page})=>{
+  test.setTimeout(120000);
+  await page.goto('/surge-xt-browser.html');
+  await expect(page.getByRole('button',{name:'Main Menu',exact:true})).toBeAttached({timeout:60000});
+  await importFile(page,'scl','! just5.scl\nJust pentatonic\n5\n!\n9/8\n5/4\n3/2\n5/3\n2/1\n');
+  await page.locator('canvas').first().focus();await page.keyboard.press('Alt+t');
+  const scala=page.getByRole('textbox',{name:'Scala Scale',exact:true});
+  await expect(scala).toHaveValue(/9\/8\n5\/4\n3\/2\n5\/3\n2\/1/);
+  const tones=async()=>(await scala.inputValue()).trim().split('\n').slice(-5);
+  const mode=name=>page.getByRole('radio',{name,exact:true}).dispatchEvent('click');
+  // Right-clicking a row of the interval matrix opens the menu for that degree.
+  const degreeMenu=async(row,label)=>{
+    await mode('Interval');
+    await expect(async()=>{
+      await page.mouse.click(110,120+14*row,{button:'right'});
+      await expect(page.getByRole('menu')).toHaveCount(1,{timeout:1000});
+    }).toPass();
+    const listed=await page.getByRole('menu').last().locator('[role^=menuitem]').evaluateAll(n=>n.map(x=>x.getAttribute('aria-label')));
+    if(label){await page.getByRole('menuitem',{name:label,exact:true}).dispatchEvent('click');await expect(page.getByRole('menu')).toHaveCount(0);await mode('Scala');}
+    return listed;
+  };
+  // The root leaves a rotation unchanged, so it offers only the mirror.
+  const root=await degreeMenu(0);
+  expect(root).toContain('Invert Scale');
+  expect(root.filter(l=>/^Rotate/.test(l))).toEqual([]);
+  await page.keyboard.press('Escape');await expect(page.getByRole('menu')).toHaveCount(0);
+  expect(await degreeMenu(2)).toEqual(expect.arrayContaining(['Invert Scale','Rotate Scale to Degree 2','Rotate and Invert Scale to Degree 2']));
+  await page.keyboard.press('Escape');await expect(page.getByRole('menu')).toHaveCount(0);
+  // Rotating to degree 2 (5/4) makes it the new root.
+  await degreeMenu(2,'Rotate Scale to Degree 2');
+  expect(await tones()).toEqual(['6/5','4/3','8/5','9/5','2/1']);
+  // Inverting mirrors the intervals within the period.
+  await degreeMenu(0,'Invert Scale');
+  expect(await tones()).toEqual(['10/9','5/4','3/2','5/3','2/1']);
+  // Each change is a tuning undo step.
+  await page.getByRole('button',{name:'Undo',exact:true}).dispatchEvent('click');
+  await expect.poll(tones).toEqual(['6/5','4/3','8/5','9/5','2/1']);
+  await page.getByRole('button',{name:'Undo',exact:true}).dispatchEvent('click');
+  await expect.poll(tones).toEqual(['9/8','5/4','3/2','5/3','2/1']);
+  // Rotate and invert: the rotation to degree 2, mirrored.
+  await degreeMenu(2,'Rotate and Invert Scale to Degree 2');
+  expect(await tones()).toEqual(['10/9','5/4','3/2','5/3','2/1']);
+});

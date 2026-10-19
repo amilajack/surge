@@ -46,6 +46,7 @@ const toggles=[
   [['Accessibility'],'Send Additional Accessibility Announcements'],[['Accessibility'],'Add Sub-Menus for Modulation Menu Items'],
   [['Accessibility'],'Focus Modulator Editor on "Add Modulation From" Actions'],
   [['MIDI Settings'],'Use MIDI Channels 2 and 3 to Play Scenes Individually'],[['MIDI Settings'],'Soft Takeover MIDI Learned Parameters'],
+  [['Workflow'],'Retrigger Held Notes on Patch Load'],[['Patch Settings','Patch Backups'],'Enable Patch Backups'],
 ];
 test('preference toggles flip, persist across reloads and restore',async({page})=>{
   test.setTimeout(240000);
@@ -66,7 +67,7 @@ const radios=[
   [['Value Displays','Middle C'],['C3','C4','C5']],[['Mouse Behavior'],['Legacy','Slow','Medium','Exact']],
   [['Workflow','Shift + F10 and Edit Parameter Value Shortcuts'],['Follow Keyboard Focus','Follow Mouse Hover Focus']],
   [['MPE Settings','MPE Pitch Bend Smoothing'],['Legacy','Slow Exponential','Fast Exponential','Fast Linear','No Smoothing']],
-  [['MPE Settings','MPE Timbre Value Range'],['Unipolar','Bipolar']],
+  [['MPE Settings','MPE Timbre Range'],['Unipolar','Bipolar']],
   [['MIDI Settings','Controller Smoothing'],['Legacy','Slow Exponential','Fast Exponential','Fast Linear','No Smoothing']],
   [['MIDI Settings','Sustain Pedal In Mono Mode'],['Sustain Pedal Holds All Notes (No Note Off Retrigger)','Sustain Pedal Allows Note Off Retrigger']],
   [['MIDI Settings','Default Channel For Menu-Based MIDI Learn'],['Omni',...Array.from({length:16},(_,i)=>'Channel '+(i+1))]],
@@ -225,10 +226,10 @@ test('MPE ranges, tuning actions and MIDI mapping actions',async({page})=>{
   test.setTimeout(180000);
   await start(page);
   // MPE pitch bend range prompts.
-  await choose(page,['MPE Settings'],'Change MPE Pitch Bend Range (Current: 48 Semitones)');await prompt(page,'24');
-  expect(await open(page,'MPE Settings')).toContain('Change MPE Pitch Bend Range (Current: 24 Semitones)');
-  await choose(page,['MPE Settings'],'Change Default MPE Pitch Bend Range (Current: 48 Semitones)');await prompt(page,'36');
-  expect(await open(page,'MPE Settings')).toContain('Change Default MPE Pitch Bend Range (Current: 36 Semitones)');
+  await choose(page,['MPE Settings'],'Set MPE Pitch Bend Range (Current: 48 Semitones)');await prompt(page,'24');
+  expect(await open(page,'MPE Settings')).toContain('Set MPE Pitch Bend Range (Current: 24 Semitones)');
+  await choose(page,['MPE Settings'],'Set Default MPE Pitch Bend Range (Current: 48 Semitones)');await prompt(page,'36');
+  expect(await open(page,'MPE Settings')).toContain('Set Default MPE Pitch Bend Range (Current: 36 Semitones)');
   await closeMenus(page);
   // Tuning editor, remap, standard mapping/scale/tuning and the current-tuning labels.
   await choose(page,['Tuning'],'Open Tuning Editor...');await expect(page.getByRole('table',{name:'Tuning Table',exact:true})).toBeAttached();
@@ -310,9 +311,9 @@ test('developer options, layout grid and desktop-only entries',async({page})=>{
   // A click anywhere on the About screen closes it, as on desktop.
   const canvas=await page.locator('canvas').first().boundingBox();
   await page.mouse.click(canvas.x+canvas.width/2,canvas.y+canvas.height/2);await expect(about).toHaveCount(0);
-  await devMenu('Skins','Change Layout Grid Resolution...');await prompt(page,'30');
+  await devMenu('Skins','Set Layout Grid Resolution...');await prompt(page,'30');
   expect(await devMenu('Skins')).toContain('Show Layout Grid (30 px)');
-  await page.getByRole('menu').last().locator('[aria-label="Change Layout Grid Resolution..."]').dispatchEvent('click');await prompt(page,'20');
+  await page.getByRole('menu').last().locator('[aria-label="Set Layout Grid Resolution..."]').dispatchEvent('click');await prompt(page,'20');
   expect(await devMenu('Skins')).toContain('Show Layout Grid (20 px)');
   await closeMenus(page);
   // Without the developer options, skin categories and the layout grid are absent.
@@ -396,10 +397,10 @@ test('embedded patch tuning, user MIDI mappings and the MPE timbre context menu'
   };
   expect(await context()).toEqual(expect.arrayContaining(['Unipolar','Bipolar (Checked)']));
   await page.getByRole('menu').last().locator('[aria-label="Unipolar"]').dispatchEvent('click');
-  expect(await isChecked(page,['MPE Settings','MPE Timbre Value Range'],'Unipolar')).toBe(true);
+  expect(await isChecked(page,['MPE Settings','MPE Timbre Range'],'Unipolar')).toBe(true);
   expect(await context()).toContain('Unipolar (Checked)');
   await page.getByRole('menu').last().locator('[aria-label="Bipolar"]').dispatchEvent('click');
-  expect(await isChecked(page,['MPE Settings','MPE Timbre Value Range'],'Bipolar')).toBe(true);
+  expect(await isChecked(page,['MPE Settings','MPE Timbre Range'],'Bipolar')).toBe(true);
   await choose(page,['MPE Settings'],'Disable MPE');
 });
 
