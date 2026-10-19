@@ -77,8 +77,14 @@ test('the host opens the editor page from get_resource in a sandboxed, isolated 
   expect(await patchName(frame)).toBe('Init Saw');
   // The page reached nothing but get_resource: no network request left the frame.
   expect(frameRequests).toEqual([]);
-  // The editor asked for its size and the host resized the window.
-  await expect.poll(async () => Number(await iframe.getAttribute('height'))).toBeGreaterThan(600);
+  // The editor asked for its size and the host resized the window to it.
+  const editorSize = await frame.evaluate(() => {
+    const canvas = SurgeHost.mainCanvas;
+    return [Math.round(canvas.getBoundingClientRect().width), Math.round(canvas.getBoundingClientRect().height)];
+  });
+  expect(editorSize[0]).toBeGreaterThanOrEqual(913);
+  await expect.poll(async () => [Number(await iframe.getAttribute('width')), Number(await iframe.getAttribute('height'))])
+    .toEqual(editorSize);
 });
 
 test('notes play through the DSP and the editor shows meters, voices and keys', async () => {
