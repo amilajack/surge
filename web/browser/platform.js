@@ -89,12 +89,13 @@ if (typeof window !== 'undefined') {
       if (element) element.textContent = message;
     },
     changed() {
-      if (platform.restoring) return;
+      if (platform.restoring || platform.storageState === 'memory') return;
       ++platform.generation;
       clearTimeout(platform.flushTimer);
       platform.flushTimer = setTimeout(() => platform.flush().catch(() => {}), 100);
     },
     async flush() {
+      if (platform.storageState === 'memory') return;
       if (platform.storageState === 'unavailable') throw platform.storageError;
       if (platform.pendingFlush) {
         await platform.pendingFlush;
@@ -380,6 +381,15 @@ if (typeof window !== 'undefined') {
   // close/rename/unlink operations; our queue adds error reporting and retries.
   Module['preRun'] = Module['preRun'] || [];
   Module['preRun'].push(() => {
+    if (Module['surgeWclap']) {
+      // A plug-in window has an opaque origin and no storage of its own: user
+      // files live in memory for as long as the window is open.
+      FS.mkdirTree('/user');
+      platform.restoring = false;
+      platform.storageState = 'memory';
+      platform.ready = Promise.resolve();
+      return;
+    }
     addRunDependency('surge-user-storage');
     platform.ready = new Promise(resolve => {
       FS.mkdirTree('/user');
@@ -399,7 +409,7 @@ if (typeof window !== 'undefined') {
     });
   });
   // A plugin must not hold the host page open; the host owns unload prompts.
-  if (!host.wam) window.addEventListener('beforeunload', event => {
+  if (!host.wam && !Module['surgeWclap']) window.addEventListener('beforeunload', event => {
     if (platform.generation > platform.savedGeneration || platform.storageState === 'error') {
       event.preventDefault(); event.returnValue = '';
     }

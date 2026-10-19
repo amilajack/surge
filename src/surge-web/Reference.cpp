@@ -148,6 +148,19 @@ int main(int argc, char **argv)
         printf("Validated %d factory patches; %d rejected\n", checked, failed);
         return failed || !checked ? 1 : 0;
     }
+    // State options may appear anywhere before the positional arguments.
+    const char *saveStatePath = nullptr, *loadStatePath = nullptr;
+    std::vector<char *> rest{argv[0]};
+    for (int i = 1; i < argc; ++i)
+    {
+        const std::string option(argv[i]);
+        if ((option == "--save-state" || option == "--load-state") && i + 1 < argc)
+            (option == "--save-state" ? saveStatePath : loadStatePath) = argv[++i];
+        else
+            rest.push_back(argv[i]);
+    }
+    argc = int(rest.size());
+    argv = rest.data();
     const bool effectOnly = argc >= 6 && std::string(argv[1]) == "--effect-only";
     if (effectOnly) { --argc; ++argv; }
     const bool audioInput = argc >= 6 && std::string(argv[1]) == "--audio-input";
@@ -205,7 +218,10 @@ int main(int argc, char **argv)
     if (argc != 5 || (effectOnly && (audioInput || oscillatorType >= 0 || seedMseg)))
     {
         fprintf(stderr,
-                "Usage: surge-engine-reference [--audio-input | --effect-only] [--convolution | --effect-type TYPE] [--oscillator-type TYPE] [--storage-seed UINT32] [--mseg-seed UINT32] [--effect-parameter INDEX NORMALIZED]... DATA_DIR PATCH.fxp SAMPLE_RATE OUTPUT.f32\n");
+                "Usage: surge-engine-reference [--audio-input | --effect-only] [--convolution | "
+                "--effect-type TYPE] [--oscillator-type TYPE] [--storage-seed UINT32] [--mseg-seed "
+                "UINT32] [--save-state PATH] [--load-state PATH] [--effect-parameter INDEX "
+                "NORMALIZED]... DATA_DIR PATCH.fxp SAMPLE_RATE OUTPUT.f32\n");
         return 2;
     }
     const auto rate = std::atoi(argv[3]);
@@ -244,6 +260,16 @@ int main(int argc, char **argv)
             fprintf(stderr, "%s\n", surge_error());
             return 1;
         }
+    }
+    if (loadStatePath && !surge_load_state(engine.get(), loadStatePath))
+    {
+        fprintf(stderr, "%s\n", surge_error());
+        return 1;
+    }
+    if (saveStatePath && !surge_save_state(engine.get(), saveStatePath))
+    {
+        fprintf(stderr, "%s\n", surge_error());
+        return 1;
     }
     auto *out = fopen(argv[4], "wb");
     if (!out)

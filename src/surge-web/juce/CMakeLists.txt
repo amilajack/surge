@@ -71,6 +71,28 @@ foreach(function malloc calloc realloc free posix_memalign aligned_alloc memalig
 endforeach()
 set_target_properties(surge-xt-browser PROPERTIES SUFFIX .html RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/web)
 
+# The editor as the webview page of the Surge XT WCLAP (web/scripts/package-wclap.py):
+# the same processor and editor on a stand-in engine that never renders, connected
+# to the plug-in by clap.webview/3 messages. The page loads it from a blob URL.
+add_executable(surge-xt-wclap-ui BrowserMain.cpp BrowserAudio.cpp BrowserWam.cpp BrowserWavetables.cpp
+  BrowserAudioThread.c BrowserAllocationAudit.c BrowserWclapUi.cpp)
+target_link_libraries(surge-xt-wclap-ui PRIVATE surge-xt-browser-editor)
+target_compile_definitions(surge-xt-wclap-ui PRIVATE SURGE_WCLAP_UI=1)
+target_include_directories(surge-xt-wclap-ui PRIVATE ${CMAKE_SOURCE_DIR}/src/surge-wclap)
+target_link_options(surge-xt-wclap-ui PRIVATE "SHELL:--pre-js ${CMAKE_SOURCE_DIR}/web/browser/factory-startup.js" -Wl,--error-limit=0 -sAUDIO_WORKLET=1 -sWASM_WORKERS=1
+  -sINITIAL_MEMORY=268435456 -sALLOW_MEMORY_GROWTH=1 -sMAXIMUM_MEMORY=2147483648
+  -sSTACK_SIZE=2097152 -sPTHREAD_POOL_SIZE=8 -sEXIT_RUNTIME=0 -sFORCE_FILESYSTEM=1
+  --preload-file ${CMAKE_SOURCE_DIR}/resources/fonts@/fonts
+  "SHELL:--pre-js ${CMAKE_SOURCE_DIR}/web/browser/platform.js"
+  "-sEXPORTED_RUNTIME_METHODS=['ccall','FS','stringToNewUTF8','specialHTMLTargets','HEAPU8','HEAPU16','HEAPF32']")
+foreach(function malloc calloc realloc free posix_memalign aligned_alloc memalign)
+  target_link_options(surge-xt-wclap-ui PRIVATE -Wl,--wrap=${function})
+endforeach()
+set_target_properties(surge-xt-wclap-ui PROPERTIES SUFFIX .js RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/wclap-ui)
+add_dependencies(surge-xt-wclap-ui surge-factory-library)
+set_property(TARGET surge-xt-wclap-ui APPEND PROPERTY LINK_DEPENDS
+  ${CMAKE_SOURCE_DIR}/web/browser/platform.js ${CMAKE_SOURCE_DIR}/web/browser/factory-startup.js)
+
 set_property(TARGET surge-xt-browser surge-juce-browser-check APPEND PROPERTY LINK_DEPENDS
   ${CMAKE_SOURCE_DIR}/web/browser/platform.js ${CMAKE_SOURCE_DIR}/web/juce-shell.html)
 

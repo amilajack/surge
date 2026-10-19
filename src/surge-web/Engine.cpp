@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 #include "Engine.h"
-#include "SurgeSynthesizer.h"
+#include "EngineCore.h"
 #include "dsp/SurgeVoice.h"
 #include "dsp/modulators/FormulaModulationHelper.h"
 #include "dsp/effects/ConvolutionEffect.h"
@@ -13,6 +13,9 @@
 #include <cstring>
 #include <memory>
 #include <sstream>
+#include <fstream>
+#include <iterator>
+#include <vector>
 #ifdef __EMSCRIPTEN__
 #include <emscripten.h>
 #define EXPORT EMSCRIPTEN_KEEPALIVE
@@ -98,15 +101,13 @@ template <typename F> int checked(F fn)
     return 0;
 }
 } // namespace
-struct SurgeWebEngine : SurgeSynthesizer::PluginLayer
+struct SurgeWebEngine : Surge::Web::EngineCore
 {
-    std::unique_ptr<SurgeSynthesizer> synth;
     std::string metadata;
     float input[2][BLOCK_SIZE]{};
     float output[2][BLOCK_SIZE]{};
     alignas(16) float effectBlock[2][BLOCK_SIZE]{};
     int cursor{0};
-    double sampleRate;
     // Set on the owning thread before audio starts; cleared only by the audio
     // thread after its final render, which publishes all audio-side writes.
     std::atomic<bool> attached{false};
@@ -118,43 +119,9 @@ struct SurgeWebEngine : SurgeSynthesizer::PluginLayer
         if (attached.load(std::memory_order_acquire))
             throw std::runtime_error("Engine is owned by audio");
     }
-    void resolveAirwindowsSelection()
+    SurgeWebEngine(double sr, const char *path)
+        : EngineCore(sr, SurgeStorage::SurgeStorageConfig::fromDataPath(path))
     {
-        // This offline API owns its engine exclusively; unlike the original UI,
-        // it has no periodic control pump to finish mailbox requests.
-#if SURGE_WEB
-        const auto failures = synth->browserEffectPreparationFailures.load(std::memory_order_acquire);
-        // At most three transitions: reclaim a superseded request, prepare the
-        // current request, then adopt and reclaim it. Never spin on a worker.
-        for (int pass = 0; pass < 3; ++pass)
-        {
-            synth->processBrowserAirwindowsSelections();
-            synth->prepareBrowserEffects();
-        }
-        if (synth->browserEffectPreparationFailures.load(std::memory_order_acquire) != failures)
-            throw std::runtime_error("Unable to prepare the Airwindows selection");
-        for (const auto &wanted : synth->browserAirwindowsWanted)
-            if (wanted.load(std::memory_order_acquire) >= 0)
-                throw std::runtime_error("Airwindows selection is still pending");
-#else
-        for (int slot = 0; slot < n_fx_slots; ++slot)
-            if (auto *aw = dynamic_cast<AirWindowsEffect *>(synth->fx[slot].get()))
-            {
-                auto &selector = synth->storage.getPatch().fx[slot].p[0];
-                if (aw->lastSelected != selector.val.i)
-                    aw->setupSubFX(selector.val.i, selector.user_data == nullptr);
-            }
-#endif
-    }
-    void surgeParameterUpdated(const SurgeSynthesizer::ID &, float) override {}
-    void surgeMacroUpdated(long, float) override {}
-    SurgeWebEngine(double sr, const char *path) : sampleRate(sr)
-    {
-        synth = std::make_unique<SurgeSynthesizer>(this, path);
-        synth->setSamplerate(sr);
-        synth->time_data.tempo = 120;
-        synth->time_data.ppqPos = 0;
-        synth->processAudioThreadOpsWhenAudioEngineUnavailable(true);
     }
 };
 extern "C"
@@ -251,6 +218,36 @@ extern "C"
             e->synth->savePatchToPath(fs::path(path), false);
             if (!fs::exists(path))
                 throw std::runtime_error("Unable to save patch");
+        });
+    }
+    EXPORT int surge_save_state(SurgeWebEngine *e, const char *path)
+    {
+        return checked([&] {
+            if (e)
+                e->requireOwnership();
+            if (!e || !path)
+                throw std::runtime_error("Missing engine or state path");
+            const auto state = e->saveState();
+            std::ofstream file(path, std::ios::binary);
+            file.write(reinterpret_cast<const char *>(state.data()), std::streamsize(state.size()));
+            if (!file)
+                throw std::runtime_error("Unable to write state");
+        });
+    }
+    EXPORT int surge_load_state(SurgeWebEngine *e, const char *path)
+    {
+        return checked([&] {
+            if (e)
+                e->requireOwnership();
+            if (!e || !path)
+                throw std::runtime_error("Missing engine or state path");
+            std::ifstream file(path, std::ios::binary);
+            const std::vector<char> data((std::istreambuf_iterator<char>(file)),
+                                         std::istreambuf_iterator<char>());
+            if (!e->loadState(data.data(), data.size()))
+                throw std::runtime_error("Unable to load state");
+            e->cursor = 0;
+            memset(e->output, 0, sizeof(e->output));
         });
     }
     EXPORT int surge_parameter_count(SurgeWebEngine *e)

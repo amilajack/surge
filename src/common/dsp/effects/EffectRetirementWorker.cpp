@@ -2,12 +2,24 @@
 #include "EffectRetirementWorker.h"
 #include <chrono>
 
+#if SURGE_WCLAP
+EffectRetirementWorker::EffectRetirementWorker() = default;
+EffectRetirementWorker::~EffectRetirementWorker() = default;
+void EffectRetirementWorker::reclaim(Slot &slot)
+{
+    slot.effect.reset();
+    UserData{}.swap(slot.data);
+    retired_.fetch_add(1, std::memory_order_relaxed);
+    slot.occupied.store(false, std::memory_order_release);
+}
+#else
 EffectRetirementWorker::EffectRetirementWorker() : worker_([this] { run(); }) {}
 EffectRetirementWorker::~EffectRetirementWorker()
 {
     stopping_.store(true, std::memory_order_release);
     worker_.join();
 }
+#endif
 bool EffectRetirementWorker::available(std::size_t index) const
 {
     return index < capacity && !slots_[index].occupied.load(std::memory_order_acquire);
@@ -19,8 +31,12 @@ bool EffectRetirementWorker::retire(std::size_t index, std::unique_ptr<Effect> &
     slot.effect.swap(effect);
     slot.data.swap(data);
     slot.occupied.store(true, std::memory_order_release);
+#if SURGE_WCLAP
+    reclaim(slot);
+#endif
     return true;
 }
+#if !SURGE_WCLAP
 void EffectRetirementWorker::run()
 {
     for (;;)
@@ -40,3 +56,4 @@ void EffectRetirementWorker::run()
         std::this_thread::sleep_for(std::chrono::milliseconds(2));
     }
 }
+#endif

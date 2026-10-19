@@ -17,6 +17,11 @@ void surge_poll_audio_startup();
 void surge_attach_wavetables(SurgeSynthProcessor *);
 void surge_attach_wam(SurgeSynthProcessor *);
 void surge_poll_wavetables();
+#if SURGE_WCLAP_UI
+// BrowserWclapUi.cpp: this editor is the webview page of the Surge XT WCLAP.
+void surge_wclap_ui_attach(SurgeSynthProcessor *, SurgeSynthEditor *);
+void surge_wclap_ui_pump();
+#endif
 static SurgeSynthProcessor *browserProcessor{};
 extern "C" EMSCRIPTEN_KEEPALIVE double surge_browser_formula_live_compilations()
 {
@@ -273,6 +278,10 @@ static void pumpControls(void *)
     browserProcessor->surge->prepareBrowserEffects();
     EM_ASM({ SurgeRuntime.phase('wavetable'); });
     surge_poll_wavetables();
+#if SURGE_WCLAP_UI
+    EM_ASM({ SurgeRuntime.phase('wclap'); });
+    surge_wclap_ui_pump();
+#endif
     EM_ASM({ SurgeRuntime.phase('idle'); });
 }
 int main()
@@ -292,6 +301,9 @@ int main()
     browserEditor = dynamic_cast<SurgeSynthEditor *>(editor.get());
     editor->addToDesktop(0);
     editor->setVisible(true);
+#if SURGE_WCLAP_UI
+    surge_wclap_ui_attach(&processor, browserEditor);
+#endif
     // Animation frames may stop while the page is hidden. Keep engine handoffs
     // and JUCE messages on a timer; only painting depends on animation frames.
     // Chrome can throttle timers too, but control work no longer waits for paint.

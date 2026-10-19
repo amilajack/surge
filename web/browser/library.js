@@ -52,8 +52,11 @@ export class FactoryLibrary {
   async download(entry) {
     const url = new URL(entry.url, this.location);
     let cache;
-    try { cache = await caches.open('surge-factory-v1'); }
-    catch (error) { this.report(`Factory cache unavailable; using the downloaded copy. ${error}`); }
+    // An opaque origin (a sandboxed plug-in window) has no cache storage.
+    if (globalThis.origin !== 'null') {
+      try { cache = await caches.open('surge-factory-v1'); }
+      catch (error) { this.report(`Factory cache unavailable; using the downloaded copy. ${error}`); }
+    }
     if (cache) {
       try {
         const cached = await cache.match(url);

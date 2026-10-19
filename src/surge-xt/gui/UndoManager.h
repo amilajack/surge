@@ -52,6 +52,11 @@ struct UndoManager
     };
 
     std::unique_ptr<UndoManagerImpl> impl;
+
+    // Called when an edit is recorded, undone or redone, before it is applied. For
+    // editors that mirror their engine elsewhere (the WCLAP webview). parameterOnly:
+    // a parameter, macro or modulation edit, which reach a host as parameter changes.
+    static inline void (*editObserver)(bool parameterOnly) = nullptr;
     void pushParameterChange(int paramId, const Parameter *p, pdata val, Target to = UNDO);
     void pushMacroChange(int macroid, float val);
     void pushModulationChange(int paramId, const Parameter *p, modsources modsource, int scene,

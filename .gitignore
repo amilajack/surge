@@ -121,3 +121,4 @@ web/profiles/
 .toolchains/
 build-web/
 build-reference/
+build-wclap/

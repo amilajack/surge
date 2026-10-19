@@ -64,8 +64,14 @@ class ConvolutionKernelWorker
     std::array<Slot, capacity> slots_;
     std::atomic<bool> stopping_{false};
     std::atomic<std::uint32_t> applied_{0};
+    void pass();
+#if SURGE_WCLAP
+    // A WCLAP has no threads: each call completes the worker's pass inline.
+    void serve();
+#else
     std::thread worker_;
     void run();
+#endif
     Result takeImpl(std::size_t slot, std::uint64_t generation,
                     const Request *expected, std::unique_ptr<ConvolutionKernel> &active);
 };

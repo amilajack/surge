@@ -1,0 +1,105 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Surge XT</title>
+<!-- SPDX-License-Identifier: GPL-3.0-or-later -->
+<style>
+html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#141518;color:#d6d6d6;font:13px system-ui,-apple-system,"Segoe UI",sans-serif}
+canvas{position:absolute;touch-action:none}
+#wclap-status{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:10px;z-index:2000;background:#141518}
+#wclap-status[hidden]{display:none}
+#wclap-status progress{width:220px;accent-color:#ff9000}
+#file-status{position:fixed;left:8px;bottom:8px;z-index:1000;max-width:60%;background:#202328e6;padding:4px 8px;border-radius:3px}
+#file-status:empty{display:none}
+</style>
+</head>
+<body>
+<div id="wclap-status" role="status"><span id="wclap-message">Loading Surge XT…</span><progress id="wclap-progress" max="4" value="0"></progress></div>
+<div id="file-status" role="status"></div>
+<script>
+// The Surge XT WCLAP's clap.webview/3 page. It talks to the plug-in only by
+// posting ArrayBuffers to window.parent and receiving them as messages.
+// Everything it loads is fetched relative to this page, so it works where a host
+// serves the bundle at a URL and where it answers fetch() from get_resource
+// (a sandboxed srcdoc frame with an opaque origin and no network).
+// The editor uses threads: the frame needs cross-origin isolation.
+(() => {
+  'use strict';
+  const base = new URL('./', document.baseURI);
+  const status = document.getElementById('wclap-status');
+  const message = document.getElementById('wclap-message');
+  const progress = document.getElementById('wclap-progress');
+  const fail = error => {
+    message.textContent = 'Surge XT could not start: ' + String(error && error.message || error);
+    progress.hidden = true;
+    status.hidden = false;
+  };
+  const pending = [];
+  let receiving = false;
+  const deliver = buffer => {
+    const bytes = new Uint8Array(buffer), pointer = Module._surge_wclap_ui_buffer(bytes.length);
+    if (!pointer) return;
+    Module.HEAPU8.set(bytes, pointer);
+    Module._surge_wclap_ui_receive(pointer, bytes.length);
+  };
+  globalThis.SurgeWclapPage = {
+    send(buffer) { window.parent.postMessage(buffer, '*', [buffer]); },
+    // The editor is up and has said Hello: plug-in messages can be delivered.
+    ready() {
+      receiving = true;
+      for (const buffer of pending.splice(0)) deliver(buffer);
+      status.hidden = true;
+    },
+  };
+  addEventListener('message', event => {
+    if (event.source !== window.parent || !(event.data instanceof ArrayBuffer)) return;
+    if (receiving) deliver(event.data); else pending.push(event.data);
+  });
+  if (!globalThis.crossOriginIsolated) {
+    fail(new Error('this window is not cross-origin isolated, which the editor needs for its threads'));
+    return;
+  }
+  const load = async (name, as) => {
+    const response = await fetch(new URL(name, base));
+    if (!response.ok) throw new Error(`${name} (${response.status})`);
+    const result = as === 'bytes' ? new Uint8Array(await response.arrayBuffer()) : await response.text();
+    progress.value++;
+    return result;
+  };
+  const runScript = blob => new Promise((resolve, reject) => {
+    const script = document.createElement('script');
+    script.src = URL.createObjectURL(blob);
+    script.onload = resolve;
+    script.onerror = () => reject(new Error('a script did not run'));
+    document.body.append(script);
+  });
+  (async () => {
+    const [support, library, glue, wasm] = await Promise.all([
+      load('support.js'), load('library.js'), load('surge-xt-wclap-ui.js'), load('surge-xt-wclap-ui.wasm', 'bytes')]);
+    message.textContent = 'Starting Surge XT…';
+    await runScript(new Blob([support], {type: 'text/javascript'}));
+    const libraryUrl = URL.createObjectURL(new Blob([library], {type: 'text/javascript'}));
+    globalThis.SurgeFactoryLibrary = (await import(libraryUrl)).FactoryLibrary;
+    const glueBlob = new Blob([glue], {type: 'text/javascript'});
+    globalThis.Module = {
+      surgeWclap: true,
+      // Threads start from the same script; the .data package and anything
+      // else resolve next to this page.
+      mainScriptUrlOrBlob: glueBlob,
+      locateFile: path => new URL(path, base).href,
+      instantiateWasm(imports, done) {
+        WebAssembly.instantiate(wasm, imports).then(result => done(result.instance, result.module), fail);
+        return {};
+      },
+      setStatus() {},
+      onAbort: fail,
+      onRuntimeInitialized() { globalThis.SurgeAccessibility?.attach(Module); },
+    };
+    await runScript(glueBlob);
+  })().catch(fail);
+})();
+</script>
+</body>
+</html>

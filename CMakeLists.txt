@@ -21,11 +21,26 @@ endif()
 project(Surge VERSION 1.4.0 LANGUAGES C CXX)
 
 option(SURGE_ENGINE_ONLY "Build the development engine harness without native products" OFF)
+option(SURGE_WCLAP "Build the single-threaded WCLAP DSP module (Emscripten standalone Wasm, no pthreads)" OFF)
 if(EMSCRIPTEN)
   set(SURGE_ENGINE_ONLY ON)
-  # All objects sharing the AudioWorklet memory must use the same ABI.
-  add_compile_options(-msimd128 -pthread -fexceptions)
-  add_link_options(-msimd128 -pthread -fexceptions)
+  if(SURGE_WCLAP)
+    # A WCLAP owns non-shared memory and runs every CLAP call on one host agent:
+    # no pthreads, no JavaScript runtime, native Wasm exception handling.
+    add_compile_options(-msimd128 -fwasm-exceptions)
+    add_link_options(-msimd128 -fwasm-exceptions)
+    add_compile_definitions(SURGE_WCLAP=1)
+  else()
+    # All objects sharing the AudioWorklet memory must use the same ABI.
+    add_compile_options(-msimd128 -pthread -fexceptions)
+    add_link_options(-msimd128 -pthread -fexceptions)
+  endif()
+  # Reproducible artifacts: no checkout, build or toolchain paths in the output.
+  get_filename_component(surge_emscripten_root "${CMAKE_C_COMPILER}" DIRECTORY)
+  add_compile_options(
+    "-ffile-prefix-map=${CMAKE_SOURCE_DIR}=surge"
+    "-ffile-prefix-map=${CMAKE_BINARY_DIR}=build"
+    "-ffile-prefix-map=${surge_emscripten_root}=emscripten")
 endif()
 
 # Banner {{{

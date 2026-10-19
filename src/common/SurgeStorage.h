@@ -1334,6 +1334,10 @@ class SurgePatch
     // void save_xml();
     void load_xml(const void *data, int size, bool preset);
     unsigned int save_xml(void **data);
+    // The <editor> view state inside <dawExtraState> (zoom, tabs, overlays), so a host
+    // whose editor runs elsewhere (WCLAP) can carry it without reloading the patch.
+    void loadEditorStateXml(TiXmlElement *dawExtraState, bool restoreMSEGEditStateFromPatch);
+    void saveEditorStateXml(TiXmlElement &dawExtraState);
     unsigned int save_RIFF(void **data);
 
     // Factor these so the LFO preset mechanism can use them as well
@@ -2193,7 +2197,11 @@ class alignas(16) SurgeStorage
     struct RNGGen
     {
         RNGGen()
+#if SURGE_WCLAP
+            : g(Surge::AudioRandomDevice{}()), d(0, RAND_MAX),
+#else
             : g(std::chrono::system_clock::now().time_since_epoch().count()), d(0, RAND_MAX),
+#endif
               pm1(-1.f, 1.f), z1(0.f, 1.f), u32(0, 0xFFFFFFFF)
         {
         }

@@ -17,6 +17,9 @@ extern "C"
     const char *surge_error(void);
     int surge_load_patch(SurgeWebEngine *engine, const char *path);
     int surge_save_patch(SurgeWebEngine *engine, const char *path);
+    // Raw engine state (the desktop plug-in's getStateInformation bytes).
+    int surge_save_state(SurgeWebEngine *engine, const char *path);
+    int surge_load_state(SurgeWebEngine *engine, const char *path);
     int surge_parameter_count(SurgeWebEngine *engine);
     // Development diagnostic; requires exclusive ownership, outside rendering.
     double surge_formula_compilation_count(SurgeWebEngine *engine);

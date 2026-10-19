@@ -1154,7 +1154,8 @@ void SurgeGUIEditor::idle()
                 vuInvalid = true;
             }
 
-            vu->setIsAudioActive(synth->audio_processing_active);
+            // An editor whose engine runs elsewhere (WCLAP) hears from it remotely.
+            vu->setIsAudioActive(synth->audio_processing_active || synth->remoteAudioActive);
 
             bool showCPU = Surge::Storage::getUserDefaultValue(&(synth->storage),
                                                                Surge::Storage::ShowCPUUsage, false);
