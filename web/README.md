@@ -886,9 +886,11 @@ build path; objects compile with `-ffile-prefix-map`.
   The module uses SIMD128 and relaxed SIMD: a host's engine needs both (V8 has
   both; wasmtime 49 has both, and with `relaxed_simd_deterministic` renders the
   same as V8 on arm64). It has a name section, so profilers name its functions.
-- **Build.** Release, LTO (link-time code generation with Wasm exception
+- **Build.** Release, full LTO (link-time code generation with Wasm exception
   handling enabled in the backend: without `-wasm-enable-eh` at link time LLVM
-  drops every landing pad and a C++ throw traps), `-ffp-contract=off`. Where the
+  drops every landing pad and a C++ throw traps; full rather than CMake's
+  ThinLTO, which names promoted symbols after each object's path and so makes
+  the module depend on the build directory), `-ffp-contract=off`. Where the
   DSP needs a fused multiply-add to match the native ARM64 build (the one-pole
   lag, the filter coefficient smoothing, the note-to-omega interpolation, the
   ensemble's delay time), `surge::fusedMultiplyAdd` is one `relaxed_madd`
