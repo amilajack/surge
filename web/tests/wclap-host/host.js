@@ -148,6 +148,12 @@ globalThis.wclapHost = {
   openWindow,
   closeWindow,
   async reopen() { await closeWindow(); await openWindow(); },
+  // The host resizes the window (adjusted to the plug-in's hints first).
+  async setSize(width, height) {
+    const size = await call('guiSetSize', {width, height});
+    if (frame) { frame.width = size.width; frame.height = size.height; }
+    return size;
+  },
   frame: () => frame,
   events: () => events.splice(0),
 };

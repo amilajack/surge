@@ -1,17 +1,24 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 // The DSP agent of the WCLAP test host: one module.wasm instance, its plug-ins,
 // and every CLAP call (audio and main-thread calls alike), as a DAW's DSP worker.
-// The bundle's files reach WASI through synchronous requests.
-import {WclapModule, EVENT} from '../lib/clap-host.mjs';
-import {httpFiles} from '../lib/wasi.mjs';
+// The bundle's files reach WASI through synchronous requests; the plug-in's private
+// user folder (/user) is kept in memory for as long as the host runs.
+//
+// Like a DAW with many tracks, the host lets a quiet instrument sleep: when process
+// says CONTINUE_IF_NOT_QUIET and its output is silent, the host stops processing it
+// until an event arrives or the plug-in asks (request_process).
+import {WclapModule, EVENT, PROCESS} from '../lib/clap-host.mjs';
+import {httpFiles, memoryFiles} from '../lib/wasi.mjs';
 
-let module = null, plugin = null, audioPort = null, windowOpen = false;
+let module = null, plugin = null, audioPort = null, windowOpen = false, user = null;
+let asleep = false, sleeps = 0, wakes = 0;
 const pending = [];
 const stats = {blocks: 0, peak: 0, outEvents: []};
 const post = (message, transfer = []) => self.postMessage(message, transfer);
 
 const callbacks = {
   requestCallback() { setTimeout(() => plugin?.onMainThread(), 0); },
+  requestProcess() { if (asleep) { asleep = false; wakes++; } post({type: 'event', name: 'requestProcess'}); },
   requestFlush() { setTimeout(() => { if (plugin && !plugin.processing) record(plugin.flush([])); }, 0); },
   paramsRescan(flags) { post({type: 'event', name: 'rescan', flags}); },
   markDirty() { post({type: 'event', name: 'dirty'}); },
@@ -30,8 +37,16 @@ function record(events) {
 }
 
 function render(frames) {
+  if (asleep && !pending.length) return [new Float32Array(frames), new Float32Array(frames)];
+  asleep = false;
   const events = pending.splice(0).map(event => ({...event, time: 0}));
   const result = plugin.process(frames, {events});
+  if (result.status === PROCESS.CONTINUE_IF_NOT_QUIET && result.constantMask === 3n) {
+    asleep = true;
+    sleeps++;
+    plugin.stopProcessing();
+    setTimeout(() => plugin?.onMainThread(), 0);
+  }
   record(result.events);
   stats.blocks++;
   let peak = 0;
@@ -43,7 +58,8 @@ function render(frames) {
 const methods = {
   async load({bundle, seed}) {
     const bytes = await (await fetch(new URL('module.wasm', bundle))).arrayBuffer();
-    module = await WclapModule.load({bytes, files: httpFiles(new URL('.', bundle).href), seed});
+    user ??= memoryFiles();
+    module = await WclapModule.load({bytes, files: httpFiles(new URL('.', bundle).href), user, seed});
     return module.descriptors();
   },
   create({id, rate}) {
@@ -71,7 +87,19 @@ const methods = {
     }
     return null;
   },
-  stats() { return {blocks: stats.blocks, peak: stats.peak, outEvents: stats.outEvents.splice(0)}; },
+  stats() { return {blocks: stats.blocks, peak: stats.peak, outEvents: stats.outEvents.splice(0), asleep, sleeps, wakes}; },
+  guiSetSize({width, height}) { const adjusted = plugin.guiAdjustSize(width, height); return {ok: plugin.guiSetSize(adjusted.width, adjusted.height), ...adjusted}; },
+  guiSetScale({scale}) { return plugin.guiSetScale(scale); },
+  guiShow() { return plugin.guiShow(); },
+  guiHide() { return plugin.guiHide(); },
+  // The plug-in's user folder: every path and size.
+  userFiles() { return [...user.entries].map(([path, entry]) => ({path, type: entry.type, size: entry.data?.length ?? 0})); },
+  userFile({path}) { return user.read(path); },
+  presets({location}) {
+    const discovery = module.discoverPresets();
+    try { return {locations: discovery.locations, ...discovery.metadata(location)}; }
+    finally { discovery.destroy(); }
+  },
   saveState() { return plugin.saveState(); },
   loadState({bytes}) { return plugin.loadState(bytes); },
   guiCreate() { const ok = plugin.guiCreate(); return {ok, size: plugin.guiSize(), uri: plugin.webviewUri()}; },

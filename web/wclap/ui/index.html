@@ -11,13 +11,17 @@ canvas{position:absolute;touch-action:none}
 #wclap-status{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:10px;z-index:2000;background:#141518}
 #wclap-status[hidden]{display:none}
 #wclap-status progress{width:220px;accent-color:#ff9000}
-#file-status{position:fixed;left:8px;bottom:8px;z-index:1000;max-width:60%;background:#202328e6;padding:4px 8px;border-radius:3px}
-#file-status:empty{display:none}
+#file-status,#storage-status{position:fixed;left:8px;bottom:8px;z-index:1000;max-width:60%;background:#202328e6;padding:4px 8px;border-radius:3px}
+#storage-status{bottom:40px}
+#file-status:empty,#storage-status:empty{display:none}
+#retry-storage{position:fixed;left:8px;bottom:72px;z-index:1000}
 </style>
 </head>
 <body>
 <div id="wclap-status" role="status"><span id="wclap-message">Loading Surge XT…</span><progress id="wclap-progress" max="4" value="0"></progress></div>
 <div id="file-status" role="status"></div>
+<div id="storage-status" role="alert"></div>
+<button id="retry-storage" hidden onclick="SurgeBrowser.flush().catch(()=>{})">Retry saving</button>
 <script>
 // The Surge XT WCLAP's clap.webview/3 page. It talks to the plug-in only by
 // posting ArrayBuffers to window.parent and receiving them as messages.
@@ -25,9 +29,18 @@ canvas{position:absolute;touch-action:none}
 // serves the bundle at a URL and where it answers fetch() from get_resource
 // (a sandboxed srcdoc frame with an opaque origin and no network).
 // The editor uses threads: the frame needs cross-origin isolation.
+//
+// Before the editor starts, the page asks the plug-in for its user folder (a
+// writable /user directory the host may give the plug-in): the editor keeps its
+// user patches, settings and favourites there and writes them back through the
+// plug-in. Without one, user files live in memory while the window is open.
 (() => {
   'use strict';
   const base = new URL('./', document.baseURI);
+  const VERSION = 2;
+  const T = {UserFiles: 11, UserFileOps: 12, Scale: 68, UserFileList: 70, UserFilesDone: 71};
+  const encoder = new TextEncoder(), decoder = new TextDecoder();
+  const post = bytes => window.parent.postMessage(bytes.buffer, '*', [bytes.buffer]);
   const status = document.getElementById('wclap-status');
   const message = document.getElementById('wclap-message');
   const progress = document.getElementById('wclap-progress');
@@ -44,7 +57,75 @@ canvas{position:absolute;touch-action:none}
     Module.HEAPU8.set(bytes, pointer);
     Module._surge_wclap_ui_receive(pointer, bytes.length);
   };
+  // The user folder, mirrored in memory (platform.js syncs the editor's /user with it).
+  let listed = null, sequence = 0;
+  const done = new Map();
+  const userFiles = {
+    list: () => new Promise(resolve => {
+      listed = resolve;
+      const bytes = new Uint8Array(8);
+      bytes[0] = T.UserFiles;
+      new DataView(bytes.buffer).setUint32(4, VERSION, true);
+      post(bytes);
+    }),
+    // ops: [{op, path, data}] (Protocol.h UserFileOp). Resolves when the plug-in
+    // has applied them all; rejects with the first failure.
+    send(ops) {
+      const encoded = ops.map(({op, path, data}) => ({op, path: encoder.encode(path), data: data ?? new Uint8Array()}));
+      const size = 12 + encoded.reduce((n, item) => n + 12 + item.path.length + item.data.length, 0);
+      const bytes = new Uint8Array(size), view = new DataView(bytes.buffer), id = ++sequence;
+      bytes[0] = T.UserFileOps;
+      view.setUint32(4, id, true);
+      view.setUint32(8, encoded.length, true);
+      let at = 12;
+      for (const item of encoded) {
+        bytes[at] = item.op;
+        view.setUint32(at + 4, item.path.length, true);
+        bytes.set(item.path, at + 8);
+        view.setUint32(at + 8 + item.path.length, item.data.length, true);
+        bytes.set(item.data, at + 12 + item.path.length);
+        at += 12 + item.path.length + item.data.length;
+      }
+      return new Promise((resolve, reject) => { done.set(id, {resolve, reject}); post(bytes); });
+    },
+  };
+  const parseList = buffer => {
+    const view = new DataView(buffer), bytes = new Uint8Array(buffer), entries = [];
+    let at = 12;
+    for (let i = 0, count = view.getUint32(8, true); i < count; ++i) {
+      const kind = view.getUint8(at), mtime = view.getFloat64(at + 4, true), pathSize = view.getUint32(at + 12, true);
+      const path = decoder.decode(bytes.subarray(at + 16, at + 16 + pathSize));
+      const dataSize = view.getUint32(at + 16 + pathSize, true);
+      entries.push({kind, mtime, path, data: bytes.slice(at + 20 + pathSize, at + 20 + pathSize + dataSize)});
+      at += 20 + pathSize + dataSize;
+    }
+    return {available: view.getUint8(4) === 1, entries};
+  };
+  // Messages the page answers itself, before or without the editor.
+  const intercept = buffer => {
+    const type = new Uint8Array(buffer, 0, 1)[0];
+    if (type === T.UserFileList && listed) { listed(parseList(buffer)); listed = null; return true; }
+    if (type === T.UserFilesDone) {
+      const view = new DataView(buffer), waiting = done.get(view.getUint32(4, true));
+      if (waiting) {
+        done.delete(view.getUint32(4, true));
+        if (view.getUint8(8)) waiting.resolve();
+        else waiting.reject(new Error(decoder.decode(new Uint8Array(buffer, 12))));
+      }
+      return true;
+    }
+    if (type === T.Scale) {
+      // The host's GUI scale overrides the device pixel ratio (BrowserWindowing.cpp
+      // sizes the canvas backing store by SurgeHost.pixelRatio()).
+      const scale = new DataView(buffer).getFloat64(4, true);
+      globalThis.SurgeWclapPage.hostScale = scale > 0 ? scale : 0;
+      return true;
+    }
+    return false;
+  };
   globalThis.SurgeWclapPage = {
+    hostScale: 0,
+    userFiles,
     send(buffer) { window.parent.postMessage(buffer, '*', [buffer]); },
     // The editor is up and has said Hello: plug-in messages can be delivered.
     ready() {
@@ -55,6 +136,7 @@ canvas{position:absolute;touch-action:none}
   };
   addEventListener('message', event => {
     if (event.source !== window.parent || !(event.data instanceof ArrayBuffer)) return;
+    if (intercept(event.data)) return;
     if (receiving) deliver(event.data); else pending.push(event.data);
   });
   if (!globalThis.crossOriginIsolated) {
@@ -76,6 +158,10 @@ canvas{position:absolute;touch-action:none}
     document.body.append(script);
   });
   (async () => {
+    // A plug-in that does not answer (an older module) leaves user files in memory.
+    const user = await Promise.race([userFiles.list(),
+      new Promise(resolve => setTimeout(() => resolve({available: false, entries: [], unanswered: true}), 10000))]);
+    if (user.unanswered) console.warn('Surge XT: the plug-in did not list its user folder; user files stay in memory.');
     const [support, library, glue, wasm] = await Promise.all([
       load('support.js'), load('library.js'), load('surge-xt-wclap-ui.js'), load('surge-xt-wclap-ui.wasm', 'bytes')]);
     message.textContent = 'Starting Surge XT…';
@@ -85,6 +171,7 @@ canvas{position:absolute;touch-action:none}
     const glueBlob = new Blob([glue], {type: 'text/javascript'});
     globalThis.Module = {
       surgeWclap: true,
+      surgeWclapUser: user,
       // Threads start from the same script; the .data package and anything
       // else resolve next to this page.
       mainScriptUrlOrBlob: glueBlob,

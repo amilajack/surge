@@ -8,6 +8,7 @@
 // bundle, so the module can read its own files) and maps the calls onto WASI.
 // Whatever a host does not grant (writes to a read-only preopen) fails with the
 // host's errno. The module has no other files and no working directory but "/".
+#include "Wasi.h"
 #include <emscripten/syscalls.h>
 #include <wasi/api.h>
 #include <cerrno>
@@ -172,12 +173,24 @@ int pathStat(int dirfd, const char *path, struct stat *buf, bool follow)
 }
 
 // fd_readdir resumes from a cookie, getdents from the descriptor's position.
+
 std::vector<__wasi_dircookie_t> &cookies()
 {
     static std::vector<__wasi_dircookie_t> list;
     return list;
 }
 } // namespace
+
+bool Surge::Wclap::Wasi::hasPreopen(const char *path)
+{
+    if (!path)
+        return false;
+    const auto wanted = normalize(path);
+    for (const auto &preopen : preopens())
+        if (preopen.path == wanted)
+            return true;
+    return false;
+}
 
 extern "C"
 {
@@ -371,7 +384,7 @@ extern "C"
         if (fd < 0)
             return fd;
         const int result = __syscall_ftruncate64(fd, length);
-        __wasi_fd_close(fd);
+        (void)__wasi_fd_close(fd);
         return result;
     }
 

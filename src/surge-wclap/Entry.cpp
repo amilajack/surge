@@ -1,8 +1,9 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
-// clap_entry and the plug-in factory of the Surge XT WCLAP. One module instance
-// hosts any number of plug-in instances: code, tables and the parameter layout
-// are shared; each instance owns only its engine.
+// clap_entry, the plug-in factory and the preset discovery factory of the Surge XT
+// WCLAP. One module instance hosts any number of plug-in instances: code, tables and
+// the parameter layout are shared; each instance owns only its engine.
 #include "Plugin.h"
+#include "Presets.h"
 #include "version.h"
 #include <cstring>
 
@@ -44,7 +45,15 @@ void deinit() {}
 
 const void *getFactory(const char *id)
 {
-    return id && std::strcmp(id, CLAP_PLUGIN_FACTORY_ID) == 0 ? &factory : nullptr;
+    if (!id)
+        return nullptr;
+    if (std::strcmp(id, CLAP_PLUGIN_FACTORY_ID) == 0)
+        return &factory;
+    // Surge XT patches, as the desktop CLAP indexes them (Presets.h).
+    if (std::strcmp(id, CLAP_PRESET_DISCOVERY_FACTORY_ID) == 0 ||
+        std::strcmp(id, CLAP_PRESET_DISCOVERY_FACTORY_ID_COMPAT) == 0)
+        return &Presets::factory;
+    return nullptr;
 }
 } // namespace
 

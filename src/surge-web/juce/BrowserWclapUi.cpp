@@ -7,24 +7,33 @@
 // - parameter and macro edits leave as Param/Gesture frames, through the JUCE
 //   parameter listeners a host would use; values from the plug-in are set
 //   without notifying, so nothing echoes;
-// - structural edits (patch loads, oscillators, FX, MSEG, formulas, tuning...)
-//   leave as complete states, detected from patch loads, the undo history and the
-//   parameters' extended settings; modulation routings leave as frames;
-// - the plug-in answers Hello with a Snapshot, and streams telemetry (meters,
-//   voices, keys, oscilloscope audio) that the stand-in shows as its own.
+// - structural edits (MSEG, step sequences, formulas, wavetables, names, tuning...)
+//   leave as the parts of the patch they changed (Delta, StateParts.h), which the
+//   plug-in applies in place, so held notes keep playing; patch loads, and edits no
+//   part describes, leave as complete states. Edits are detected from patch loads,
+//   the undo history and the parameters' extended settings; modulation routings
+//   leave as frames;
+// - the plug-in answers Hello with its output state (the host's sample rate and
+//   whether it processes) and a Snapshot, and streams telemetry (meters, voices,
+//   keys, oscilloscope audio) that the stand-in shows as its own;
+// - the host sizes the window: the editor zooms to fit it, and tells the plug-in
+//   its size and its size at 100 % (for the host's resize hints).
 #include "SurgeSynthProcessor.h"
 #include "SurgeSynthEditor.h"
 #include "SurgeGUIEditor.h"
 #include "UndoManager.h"
 #include "../../surge-wclap/Protocol.h"
+#include "../../surge-wclap/StateParts.h"
 #include "tinyxml/tinyxml.h"
 #include <emscripten.h>
 #include <algorithm>
+#include <cmath>
 #include <cstring>
 #include <unordered_map>
 #include <vector>
 
 namespace Protocol = Surge::Wclap::Protocol;
+namespace StateParts = Surge::Wclap::StateParts;
 
 namespace
 {
@@ -101,6 +110,27 @@ class Bridge final : public juce::AudioProcessorParameter::Listener,
             applyTelemetry(telemetry);
             break;
         }
+        case Protocol::OutputState:
+        {
+            Protocol::OutputStateFrame state;
+            if (!frame.get(state))
+                return;
+            applyOutputState(state, std::string(reinterpret_cast<const char *>(frame.rest()),
+                                                frame.remaining()));
+            break;
+        }
+        case Protocol::Resize:
+        {
+            uint32_t width, height;
+            if (!frame.get(width) || !frame.get(height))
+                return;
+            fitToWindow(int(width), int(height));
+            break;
+        }
+        case Protocol::NeedState:
+            // A Delta did not reproduce this patch in the plug-in: send all of it.
+            sendState(currentState());
+            break;
         case Protocol::ScopeAudio:
         {
             const auto frames = frame.remaining() / 8;
@@ -131,7 +161,7 @@ class Bridge final : public juce::AudioProcessorParameter::Listener,
             s.patchid_queue.load() < 0 && !s.has_patchid_file)
         {
             knownGeneration = generation;
-            sendStateIfChanged();
+            sendStateIfChanged(true);
         }
         // After a structural edit, follow the edit (a drag continues without new
         // undo records) until it has been quiet for a while.
@@ -143,13 +173,15 @@ class Bridge final : public juce::AudioProcessorParameter::Listener,
         if (now >= nextSlowCheck)
         {
             nextSlowCheck = now + 500;
-            // Extended settings (tempo sync, extend, deactivate, deform...) change
-            // without parameter notifications or undo records on some paths.
+            // Extended settings (tempo sync, extend, deactivate, deform...) and the
+            // tuning change without parameter notifications or undo records on
+            // some paths.
             if (const auto fingerprint = extendedSettings(); fingerprint != knownSettings)
             {
                 knownSettings = fingerprint;
                 sendStateIfChanged();
             }
+            keepSizeWithZoom();
             sendEditorStateIfChanged();
             sendSizeIfChanged();
             const bool scope = s.storage.audioOut.subscribed();
@@ -160,14 +192,15 @@ class Bridge final : public juce::AudioProcessorParameter::Listener,
                 frame.put(uint8_t(scope ? 1 : 0));
                 send(frame.bytes);
             }
-            if (now - lastTelemetry > 1000)
-                s.remoteAudioActive = false;
         }
         nowMs = now;
     }
 
     float meter(int channel) { return synth().vu_peak[channel]; }
+    bool audioActive() { return synth().remoteAudioActive; }
     double scopeFrames{0};
+    // Structural edits sent as parts, and complete states sent.
+    uint32_t deltasSent{0}, statesSent{0};
     bool isConnected() const { return connected; }
 
   private:
@@ -178,11 +211,14 @@ class Bridge final : public juce::AudioProcessorParameter::Listener,
     bool applyingRemote{false}, connected{false}, scopeSubscribed{false};
     unsigned knownGeneration{0};
     uint64_t knownSettings{0};
-    double watchUntil{0}, nextWatch{0}, nextSlowCheck{0}, lastTelemetry{-1e9}, nowMs{0};
+    double watchUntil{0}, nextWatch{0}, nextSlowCheck{0}, nowMs{0};
     std::vector<uint8_t> lastState;
     std::string lastEditorState;
-    int lastWidth{0}, lastHeight{0};
+    int lastWidth{0}, lastHeight{0}, lastBaseWidth{0}, lastBaseHeight{0};
     uint8_t keys[16]{};
+    // The parts of the patch the plug-in holds (what this page last sent or got).
+    std::unordered_map<uint32_t, std::string> sentParts;
+    double sampleRate{0};
 
     SurgeSynthesizer &synth() { return *processor.surge; }
 
@@ -202,17 +238,60 @@ class Bridge final : public juce::AudioProcessorParameter::Listener,
         return {data, data + block.getSize()};
     }
 
-    void sendStateIfChanged()
+    void rememberParts()
+    {
+        sentParts.clear();
+        for (auto &part : StateParts::collect(synth()))
+            sentParts[part.key()] = std::move(part.data);
+    }
+
+    void sendState(std::vector<uint8_t> state)
+    {
+        lastState = std::move(state);
+        Protocol::Writer frame(Protocol::State, lastState.size());
+        frame.append(lastState.data(), lastState.size());
+        send(frame.bytes);
+        ++statesSent;
+        rememberParts();
+    }
+
+    // A patch load goes as a complete state (the plug-in reloads, retriggering held
+    // notes, as the desktop does). An edit goes as the parts it changed, with the
+    // digest of the state they make; an edit no part shows (already sent as
+    // parameter or modulation frames) as the state, which the plug-in finds it holds.
+    void sendStateIfChanged(bool patchLoad = false)
     {
         if (!connected)
             return;
         auto state = currentState();
         if (state == lastState)
             return;
-        lastState = std::move(state);
-        Protocol::Writer frame(Protocol::State, lastState.size());
-        frame.append(lastState.data(), lastState.size());
-        send(frame.bytes);
+        if (!patchLoad)
+        {
+            std::vector<StateParts::Part> changed;
+            for (auto &part : StateParts::collect(synth()))
+                if (auto known = sentParts.find(part.key());
+                    known == sentParts.end() || known->second != part.data)
+                    changed.push_back(std::move(part));
+            if (!changed.empty())
+            {
+                size_t size = 12;
+                for (const auto &part : changed)
+                    size += 8 + part.data.size();
+                Protocol::Writer frame(Protocol::Delta, size);
+                frame.put(StateParts::digest(state.data(), state.size()))
+                    .put(uint32_t(changed.size()));
+                for (const auto &part : changed)
+                    StateParts::write(frame, part);
+                send(frame.bytes);
+                ++deltasSent;
+                for (auto &part : changed)
+                    sentParts[part.key()] = std::move(part.data);
+                lastState = std::move(state);
+                return;
+            }
+        }
+        sendState(std::move(state));
     }
 
     void structuralEdit()
@@ -241,6 +320,19 @@ class Bridge final : public juce::AudioProcessorParameter::Listener,
             mix(uint64_t(p->midictrl + 1));
         }
         mix(uint64_t(synth().storage.getPatch().fx_disable.val.i));
+        // Tunings load without an undo record (SurgeGUIEditor::loadSCLFile).
+        auto &storage = synth().storage;
+        const auto text = [&](const std::string &value) {
+            for (const unsigned char c : value)
+                mix(c);
+            mix(value.size());
+        };
+        mix(storage.isStandardScale);
+        mix(storage.isStandardMapping);
+        text(storage.currentScale.rawText);
+        text(storage.currentMapping.rawText);
+        text(storage.currentMapping.name);
+        mix(storage.getPatch().patchTuning.tuningStoredInPatch);
         return hash;
     }
 
@@ -266,18 +358,92 @@ class Bridge final : public juce::AudioProcessorParameter::Listener,
         send(frame.bytes);
     }
 
+    // The editor's size at 100 %: Surge's base size, taller with the virtual keyboard.
+    void baseSize(int &width, int &height)
+    {
+        width = BASE_WINDOW_SIZE_X;
+        height = BASE_WINDOW_SIZE_Y;
+        if (auto *gui = editor.browserGUIEditor(); gui && gui->getShowVirtualKeyboard())
+            height += SurgeSynthEditor::extraYSpaceForVirtualKeyboard;
+    }
+
     void sendSizeIfChanged()
     {
         if (!connected)
             return;
         const int width = editor.getWidth(), height = editor.getHeight();
-        if (width == lastWidth && height == lastHeight)
+        int baseWidth, baseHeight;
+        baseSize(baseWidth, baseHeight);
+        if (width == lastWidth && height == lastHeight && baseWidth == lastBaseWidth &&
+            baseHeight == lastBaseHeight)
             return;
         lastWidth = width;
         lastHeight = height;
-        Protocol::Writer frame(Protocol::Resize);
+        lastBaseWidth = baseWidth;
+        lastBaseHeight = baseHeight;
+        Protocol::Writer frame(Protocol::Resize, 16);
         frame.put(uint32_t(width)).put(uint32_t(height));
+        frame.put(uint32_t(baseWidth)).put(uint32_t(baseHeight));
         send(frame.bytes);
+    }
+
+    // The host resized the window: zoom to the largest whole percent that fits, as
+    // the desktop editor does when its host resizes it (SurgeSynthEditor::resized).
+    void fitToWindow(int width, int height)
+    {
+        auto *gui = editor.browserGUIEditor();
+        if (!gui || width <= 0 || height <= 0)
+            return;
+        int baseWidth, baseHeight;
+        baseSize(baseWidth, baseHeight);
+        // The largest zoom whose editor fits (sizes as SurgeGUIEditor::setZoomFactor
+        // computes them), in Surge's range: 25 % (SurgeGUIEditor::minimumZoom) to
+        // 500 % (Zoom to Largest).
+        const auto fits = [&](int z) {
+            const float factor = float(double(z) * 0.01);
+            return int(factor * float(baseWidth)) <= width && int(factor * float(baseHeight)) <= height;
+        };
+        int zoom = int(std::floor(std::min(double(width) * 100.0 / baseWidth,
+                                           double(height) * 100.0 / baseHeight)));
+        if (fits(zoom + 1))
+            ++zoom;
+        zoom = std::clamp(zoom, 25, 500);
+        if (zoom != int(gui->getZoomFactor()))
+            gui->resizeWindow(float(zoom));
+        sendEditorStateIfChanged();
+        sendSizeIfChanged();
+    }
+
+    // The editor's size follows its zoom: a restored instance zoom (from a snapshot)
+    // changes the zoom without resizing the editor (SurgeGUIEditor's
+    // loadFromDawExtraState), and here nothing else sizes it.
+    void keepSizeWithZoom()
+    {
+        auto *gui = editor.browserGUIEditor();
+        if (!gui)
+            return;
+        int baseWidth, baseHeight;
+        baseSize(baseWidth, baseHeight);
+        const float zoom = gui->getZoomFactor() * 0.01f;
+        if (editor.getWidth() != int(zoom * baseWidth) || editor.getHeight() != int(zoom * baseHeight))
+            gui->resizeWindow(gui->getZoomFactor());
+    }
+
+    void applyOutputState(const Protocol::OutputStateFrame &state, const std::string &host)
+    {
+        auto &s = synth();
+        // The About screen shows the host and the rate the plug-in runs at.
+        if (state.sampleRate > 0 && state.sampleRate != sampleRate)
+        {
+            sampleRate = state.sampleRate;
+            s.setSamplerate(float(sampleRate));
+        }
+        if (!host.empty())
+            s.hostProgram = host;
+        // The output meter says whether the host is running the plug-in, not just
+        // whether telemetry arrived lately.
+        s.remoteAudioActive = state.processing != 0;
+        s.processRunning = 0;
     }
 
     void applySnapshot(const uint8_t *data, size_t size)
@@ -290,6 +456,7 @@ class Bridge final : public juce::AudioProcessorParameter::Listener,
         knownGeneration = s.browserPatchGeneration.load(std::memory_order_acquire);
         knownSettings = extendedSettings();
         lastState = currentState();
+        rememberParts();
         connected = true;
         watchUntil = 0;
         s.refresh_editor = true;
@@ -304,9 +471,7 @@ class Bridge final : public juce::AudioProcessorParameter::Listener,
         std::copy(std::begin(telemetry.vuPeak), std::end(telemetry.vuPeak), s.vu_peak);
         s.cpu_level.store(telemetry.cpuLevel);
         s.storage.activeVoiceCount.store(int(telemetry.activeVoices));
-        s.remoteAudioActive = true;
         s.processRunning = 0;
-        lastTelemetry = nowMs;
         for (int scene = 0; scene < n_scenes; ++scene)
         {
             s.storage.heldKeys[scene].lowest.store(telemetry.heldLowest[scene]);
@@ -432,6 +597,20 @@ extern "C" EMSCRIPTEN_KEEPALIVE float surge_wclap_ui_meter()
 extern "C" EMSCRIPTEN_KEEPALIVE double surge_wclap_ui_scope_frames()
 {
     return Bridge::instance ? Bridge::instance->scopeFrames : 0;
+}
+// Whether the editor's output meter shows the host running the plug-in, and the
+// structural edits it sent as parts (deltas) and as complete states.
+extern "C" EMSCRIPTEN_KEEPALIVE int surge_wclap_ui_audio_active()
+{
+    return Bridge::instance && Bridge::instance->audioActive();
+}
+extern "C" EMSCRIPTEN_KEEPALIVE uint32_t surge_wclap_ui_deltas_sent()
+{
+    return Bridge::instance ? Bridge::instance->deltasSent : 0;
+}
+extern "C" EMSCRIPTEN_KEEPALIVE uint32_t surge_wclap_ui_states_sent()
+{
+    return Bridge::instance ? Bridge::instance->statesSent : 0;
 }
 extern "C" EMSCRIPTEN_KEEPALIVE int surge_wclap_ui_connected()
 {

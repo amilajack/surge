@@ -11,7 +11,8 @@ cmrc_add_resource_library(surge-wclap-resources
   WHENCE ${CMAKE_SOURCE_DIR}/resources/data/patches_factory/Templates
   "${CMAKE_SOURCE_DIR}/resources/data/patches_factory/Templates/Init Saw.fxp")
 
-add_executable(surge-xt-wclap Entry.cpp Plugin.cpp Params.cpp Random.cpp Wasi.cpp)
+add_executable(surge-xt-wclap Entry.cpp Plugin.cpp Params.cpp Presets.cpp Random.cpp StateParts.cpp
+  UserFiles.cpp Wasi.cpp)
 target_include_directories(surge-xt-wclap PRIVATE ${SURGE_CLAP_INCLUDE} ${CMAKE_CURRENT_SOURCE_DIR})
 target_link_libraries(surge-xt-wclap PRIVATE surge-web-engine surge-wclap-resources)
 set_target_properties(surge-xt-wclap PROPERTIES

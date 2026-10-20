@@ -6,11 +6,19 @@
 // function of every instance on the one agent that owns the module (a worker or an
 // AudioWorklet). Main-thread and audio-thread calls never overlap, so state loads,
 // effect construction and patch changes complete synchronously, between blocks.
+//
+// Audio ports are the desktop plug-in's: the main stereo output, the Scene A and
+// Scene B outputs (each scene before the global effects, as SurgeSynthProcessor's
+// extra buses), and the stereo sidechain input that the vocoder and the audio input
+// oscillator read.
 #include "Plugin.h"
 #include "EngineCore.h"
 #include "Params.h"
+#include "Presets.h"
 #include "Protocol.h"
 #include "Random.h"
+#include "StateParts.h"
+#include "UserFiles.h"
 #include "dsp/SurgeVoice.h"
 #include "PatchFileHeaderStructs.h"
 #include "tinyxml/tinyxml.h"
@@ -100,17 +108,19 @@ class SurgeWclap final : public Surge::Web::EngineCore::Listener
         plugin.plugin_data = this;
         plugin.init = [](const clap_plugin_t *p) { return self(p)->init(); };
         plugin.destroy = [](const clap_plugin_t *p) { delete self(p); };
-        plugin.activate = [](const clap_plugin_t *p, double rate, uint32_t, uint32_t) {
-            return self(p)->activate(rate);
+        plugin.activate = [](const clap_plugin_t *p, double rate, uint32_t, uint32_t maxFrames) {
+            return self(p)->activate(rate, maxFrames);
         };
-        plugin.deactivate = [](const clap_plugin_t *) {};
+        plugin.deactivate = [](const clap_plugin_t *p) { self(p)->deactivate(); };
         plugin.start_processing = [](const clap_plugin_t *p) {
-            self(p)->processing = true;
+            self(p)->setProcessing(true);
             return true;
         };
-        plugin.stop_processing = [](const clap_plugin_t *p) { self(p)->processing = false; };
+        plugin.stop_processing = [](const clap_plugin_t *p) { self(p)->setProcessing(false); };
         plugin.reset = [](const clap_plugin_t *p) { self(p)->reset(); };
         plugin.process = [](const clap_plugin_t *p, const clap_process_t *process) {
+            // The engine runs in process() (not inlined here), so this handler's try
+            // region holds one call and does not constrain the engine's code.
             try
             {
                 return self(p)->process(process);
@@ -141,12 +151,19 @@ class SurgeWclap final : public Surge::Web::EngineCore::Listener
     const clap_host_gui_t *hostGui{};
     const clap_host_webview_t *hostWebview{};
     const clap_host_log_t *hostLog{};
+    const clap_host_preset_load_t *hostPresetLoad{};
+    const clap_host_voice_info_t *hostVoiceInfo{};
 
     RandomStreams random;
     std::unique_ptr<Surge::Web::EngineCore> engine;
     const ParamTable *params{};
 
-    bool processing{false};
+    bool activated{false}, processing{false};
+    uint32_t maxFrames{0};
+    // The editor shows the host's processing state; changes reach it from the main thread.
+    bool outputStateChanged{false};
+    uint32_t reportedVoices{0};
+    bool voicesChanged{false};
     uint32_t blockPos{0};
     bool inputLatent{false}; // sticky, as the desktop plug-in: unaligned hosts delay input
     float latent[2][block]{};
@@ -158,8 +175,14 @@ class SurgeWclap final : public Surge::Web::EngineCore::Listener
     bool guiCreated{false}, guiVisible{true}, pageOpen{false};
     bool callbackRequested{false}, scopeSubscribed{false};
     uint32_t framesSinceTelemetry{0};
-    uint32_t width{913}, height{635};
+    // The window in CSS pixels, and the editor's size at 100 % zoom (Surge's 913 x 569,
+    // taller with the virtual keyboard), which sizes are snapped to.
+    uint32_t width{913}, height{569};
+    uint32_t baseWidth{913}, baseHeight{569};
+    double guiScale{0}; // clap.gui set_scale; 0 follows the device pixel ratio
     std::vector<float> pageValues; // what the page shows, by ParamTable index
+    // Structural edits the page made as Delta frames and as complete states.
+    uint32_t deltasApplied{0}, statesLoaded{0};
 
     static SurgeWclap *self(const clap_plugin_t *p)
     {
@@ -202,6 +225,13 @@ class SurgeWclap final : public Surge::Web::EngineCore::Listener
         hostWebview =
             static_cast<const clap_host_webview_t *>(host->get_extension(host, CLAP_EXT_WEBVIEW));
         hostLog = static_cast<const clap_host_log_t *>(host->get_extension(host, CLAP_EXT_LOG));
+        hostPresetLoad = static_cast<const clap_host_preset_load_t *>(
+            host->get_extension(host, CLAP_EXT_PRESET_LOAD));
+        if (!hostPresetLoad)
+            hostPresetLoad = static_cast<const clap_host_preset_load_t *>(
+                host->get_extension(host, CLAP_EXT_PRESET_LOAD_COMPAT));
+        hostVoiceInfo = static_cast<const clap_host_voice_info_t *>(
+            host->get_extension(host, CLAP_EXT_VOICE_INFO));
         random.seedFromHost();
         RandomScope scope(random);
         return guarded("Surge XT failed to start", [&] {
@@ -212,6 +242,7 @@ class SurgeWclap final : public Surge::Web::EngineCore::Listener
                 throw std::runtime_error("The default patch did not load");
             synth().storage.lastLoadedPatch = "/factory/patches_factory/Templates/Init Saw.fxp";
             synth().storage.getPatch().isDirty = false;
+            reportedVoices = voiceCount();
         });
     }
 
@@ -228,12 +259,12 @@ class SurgeWclap final : public Surge::Web::EngineCore::Listener
         synth().measureCpuLevel = pageOpen;
     }
 
-    bool activate(double rate)
+    bool activate(double rate, uint32_t frames)
     {
         if (!engine || !std::isfinite(rate) || rate < 8000 || rate > 768000)
             return false;
         RandomScope scope(random);
-        return guarded("Surge XT could not activate", [&] {
+        const bool ok = guarded("Surge XT could not activate", [&] {
             if (rate != engine->sampleRate)
             {
                 // A new engine at the new rate, with the same patch: setSamplerate
@@ -250,6 +281,43 @@ class SurgeWclap final : public Surge::Web::EngineCore::Listener
             inputLatent = false;
             std::memset(latent, 0, sizeof(latent));
         });
+        if (ok)
+        {
+            activated = true;
+            maxFrames = frames;
+            if (pageOpen)
+                sendOutputState();
+        }
+        return ok;
+    }
+
+    void deactivate()
+    {
+        activated = false;
+        processing = false;
+        if (pageOpen)
+            sendOutputState();
+    }
+
+    // Audio thread: the editor hears about it from the main thread.
+    void setProcessing(bool on)
+    {
+        processing = on;
+        outputStateChanged = true;
+        requestCallback();
+    }
+
+    // The voices the patch can play at once (clap.voice-info): the polyphony limit,
+    // or one per playing scene when every playing scene is monophonic.
+    uint32_t voiceCount()
+    {
+        auto &patch = synth().storage.getPatch();
+        const bool both = patch.scenemode.val.i != sm_single;
+        const int first = both ? 0 : std::clamp(patch.scene_active.val.i, 0, n_scenes - 1);
+        bool mono = true;
+        for (int scene = first; scene <= (both ? n_scenes - 1 : first); ++scene)
+            mono = mono && patch.scene[scene].polymode.val.i != pm_poly;
+        return mono ? (both ? 2u : 1u) : uint32_t(std::max(1, patch.polylimit.val.i));
     }
 
     void reset()
@@ -486,16 +554,43 @@ class SurgeWclap final : public Surge::Web::EngineCore::Listener
         }
     }
 
-    clap_process_status process(const clap_process_t *process)
+    // An output bus of this call: the main output, Scene A or Scene B.
+    struct Bus
+    {
+        float *left{nullptr}, *right{nullptr};
+        const float *source[2]{};
+        bool silent{true};
+    };
+
+    __attribute__((noinline)) clap_process_status process(const clap_process_t *process)
     {
         if (!engine || process->audio_outputs_count < 1 ||
             process->audio_outputs[0].channel_count < 1 || !process->audio_outputs[0].data32)
             return CLAP_PROCESS_ERROR;
         RandomScope scope(random);
         auto &s = synth();
-        auto &output = process->audio_outputs[0];
-        float *outL = output.data32[0];
-        float *outR = output.channel_count > 1 ? output.data32[1] : outL;
+        // The main output, then the scene outputs the host connected (stereo, as the
+        // desktop plug-in's buses; SurgeSynthProcessor::isBusesLayoutSupported).
+        Bus buses[3];
+        uint32_t busCount = 1;
+        {
+            auto &main = process->audio_outputs[0];
+            buses[0].left = main.data32[0];
+            buses[0].right = main.channel_count > 1 ? main.data32[1] : nullptr;
+            buses[0].source[0] = s.output[0];
+            buses[0].source[1] = s.output[1];
+        }
+        for (uint32_t port = 1; port < 3 && port < process->audio_outputs_count; ++port)
+        {
+            const auto &bus = process->audio_outputs[port];
+            if (bus.channel_count < 2 || !bus.data32 || !bus.data32[0] || !bus.data32[1])
+                continue;
+            buses[busCount].left = bus.data32[0];
+            buses[busCount].right = bus.data32[1];
+            buses[busCount].source[0] = s.sceneout[port - 1][0];
+            buses[busCount].source[1] = s.sceneout[port - 1][1];
+            ++busCount;
+        }
         const float *inL = nullptr, *inR = nullptr;
         if (process->audio_inputs_count >= 1 && process->audio_inputs[0].channel_count >= 1 &&
             process->audio_inputs[0].data32)
@@ -528,7 +623,6 @@ class SurgeWclap final : public Surge::Web::EngineCore::Listener
             }
         };
         emitOutgoing(process->out_events);
-        bool silent = true;
         uint32_t at = 0;
         while (at < frames)
         {
@@ -561,11 +655,16 @@ class SurgeWclap final : public Surge::Web::EngineCore::Listener
                 framesSinceTelemetry += block;
             }
             const uint32_t n = std::min(block - blockPos, frames - at);
-            std::memcpy(outL + at, s.output[0] + blockPos, sizeof(float) * n);
-            if (outR != outL)
-                std::memcpy(outR + at, s.output[1] + blockPos, sizeof(float) * n);
-            for (uint32_t i = 0; silent && i < n; ++i)
-                silent = s.output[0][blockPos + i] == 0.f && s.output[1][blockPos + i] == 0.f;
+            for (uint32_t b = 0; b < busCount; ++b)
+            {
+                auto &bus = buses[b];
+                const float *l = bus.source[0] + blockPos, *r = bus.source[1] + blockPos;
+                std::memcpy(bus.left + at, l, sizeof(float) * n);
+                if (bus.right)
+                    std::memcpy(bus.right + at, r, sizeof(float) * n);
+                for (uint32_t i = 0; bus.silent && i < n; ++i)
+                    bus.silent = l[i] == 0.f && r[i] == 0.f;
+            }
             if (inputLatent && inL)
             {
                 std::memcpy(latent[0] + blockPos, inL + at, sizeof(float) * n);
@@ -576,16 +675,30 @@ class SurgeWclap final : public Surge::Web::EngineCore::Listener
         }
         applyBefore(UINT64_MAX);
         emitOutgoing(process->out_events);
-        if (silent)
-            output.constant_mask = (uint64_t(1) << output.channel_count) - 1;
-        else
-            output.constant_mask = 0;
+        // Connected buses report their silence; a scene bus the host left without
+        // buffers is not touched.
+        for (uint32_t port = 0, b = 0; port < 3 && port < process->audio_outputs_count; ++port)
+        {
+            auto &output = process->audio_outputs[port];
+            if (b < busCount && output.data32 && output.data32[0] == buses[b].left)
+            {
+                output.constant_mask =
+                    buses[b].silent ? (uint64_t(1) << output.channel_count) - 1 : 0;
+                ++b;
+            }
+        }
         if (pageOpen && guiVisible && framesSinceTelemetry >= uint32_t(s.storage.samplerate / 30))
             requestCallback();
+        if (const auto voices = voiceCount(); voices != reportedVoices)
+        {
+            reportedVoices = voices;
+            voicesChanged = true;
+            requestCallback();
+        }
         // A silent instrument may sleep until its next event: hosts with many
         // tracks skip idle instances (effect tails and drones are not silent).
-        // While its editor is open it stays awake, so its meters keep running.
-        return pageOpen ? CLAP_PROCESS_CONTINUE : CLAP_PROCESS_CONTINUE_IF_NOT_QUIET;
+        // While its editor is visible it stays awake, so its meters keep running.
+        return pageOpen && guiVisible ? CLAP_PROCESS_CONTINUE : CLAP_PROCESS_CONTINUE_IF_NOT_QUIET;
     }
 
     void paramsFlush(const clap_input_events_t *in, const clap_output_events_t *out)
@@ -632,7 +745,19 @@ class SurgeWclap final : public Surge::Web::EngineCore::Listener
                     hostParams->rescan(host, CLAP_PARAM_RESCAN_VALUES | CLAP_PARAM_RESCAN_TEXT |
                                                  CLAP_PARAM_RESCAN_INFO);
             }
-            if (pageOpen && guiVisible)
+            if (voicesChanged)
+            {
+                voicesChanged = false;
+                if (hostVoiceInfo)
+                    hostVoiceInfo->changed(host);
+            }
+            if (outputStateChanged)
+            {
+                outputStateChanged = false;
+                if (pageOpen)
+                    sendOutputState();
+            }
+            if (pageOpen && guiVisible && processing)
                 sendTelemetry();
         });
     }
@@ -713,6 +838,42 @@ class SurgeWclap final : public Surge::Web::EngineCore::Listener
                 synth().storage.audioOut.unsubscribe();
         }
         scopeSubscribed = false;
+    }
+
+    void sendOutputState()
+    {
+        Protocol::OutputStateFrame state{};
+        state.sampleRate = activated ? engine->sampleRate : 0.;
+        state.active = activated;
+        state.processing = activated && processing;
+        state.maxFrames = maxFrames;
+        const std::string name = host->name ? host->name : "";
+        Protocol::Writer frame(Protocol::OutputState, sizeof(state) + name.size());
+        frame.put(state).append(name.data(), name.size());
+        send(frame.bytes);
+    }
+
+    void sendScale()
+    {
+        Protocol::Writer frame(Protocol::Scale, 8);
+        frame.put(guiScale);
+        send(frame.bytes);
+    }
+
+    void sendSize()
+    {
+        Protocol::Writer frame(Protocol::Resize, 8);
+        frame.put(width).put(height);
+        send(frame.bytes);
+    }
+
+    // The editor is on screen: ask the host to process even while the patch is
+    // silent and the host would let it sleep, so meters, the oscilloscope and
+    // the voice count run (CLAP host request_process; any thread).
+    void keepAwake()
+    {
+        if (pageOpen && guiVisible)
+            host->request_process(host);
     }
 
     void sendSnapshot()
@@ -814,9 +975,47 @@ class SurgeWclap final : public Surge::Web::EngineCore::Listener
                 return false;
             pageOpen = true;
             s.measureCpuLevel = true;
+            sendOutputState();
+            if (guiScale > 0)
+                sendScale();
             sendSnapshot();
+            keepAwake();
             return true;
         }
+        case Protocol::UserFiles:
+        {
+            // Before the editor starts: its user folder, or none.
+            uint32_t version = 0;
+            if (!frame.get(version) || version != Protocol::version)
+                return false;
+            pageOpen = true;
+            std::vector<std::string> skipped;
+            const auto list = UserFiles::list(&skipped);
+            for (const auto &path : skipped)
+                log(CLAP_LOG_WARNING,
+                    ("User file left out of the editor (too large): " + path).c_str());
+            send(list);
+            return true;
+        }
+        case Protocol::UserFileOps:
+        {
+            const auto result = UserFiles::apply(frame);
+            Protocol::Reader reply(result.data(), result.size());
+            uint32_t sequence;
+            uint8_t ok = 0;
+            reply.get(sequence);
+            reply.get(ok);
+            if (!ok)
+                log(CLAP_LOG_ERROR,
+                    ("Saving user files failed: " +
+                     std::string(reinterpret_cast<const char *>(result.data()) + 12,
+                                 result.size() - 12))
+                        .c_str());
+            send(result);
+            return true;
+        }
+        case Protocol::Delta:
+            return applyDelta(frame);
         case Protocol::Param:
         {
             clap_id id;
@@ -855,6 +1054,8 @@ class SurgeWclap final : public Surge::Web::EngineCore::Listener
             }
             if (!engine->loadState(frame.rest(), frame.remaining()))
                 return false;
+            ++statesLoaded;
+            reportPatchLoad();
             // The page made this patch: it already shows its values.
             pageValues.resize(params->entries.size());
             for (size_t i = 0; i < params->entries.size(); ++i)
@@ -896,6 +1097,8 @@ class SurgeWclap final : public Surge::Web::EngineCore::Listener
                 s.playNote(char(channel), char(key), char(std::min<int>(velocity, 127)), 0, -1);
             else
                 s.releaseNote(char(channel), char(key), char(std::min<int>(velocity, 127)), -1);
+            // A sleeping plug-in has to wake to play it.
+            host->request_process(host);
             return true;
         }
         case Protocol::EditorState:
@@ -915,16 +1118,31 @@ class SurgeWclap final : public Surge::Web::EngineCore::Listener
         }
         case Protocol::Resize:
         {
-            uint32_t w, h;
+            // The editor's size changed (its zoom, the virtual keyboard), and its size
+            // at 100 %, which host resizes snap to.
+            uint32_t w, h, bw = baseWidth, bh = baseHeight;
             if (!frame.get(w) || !frame.get(h) || w < 64 || h < 64 || w > 16384 || h > 16384)
                 return false;
+            if (frame.remaining() >= 8 && (!frame.get(bw) || !frame.get(bh) || bw < 64 ||
+                                           bh < 64 || bw > 4096 || bh > 4096))
+                return false;
+            if (bw != baseWidth || bh != baseHeight)
+            {
+                baseWidth = bw;
+                baseHeight = bh;
+                if (hostGui && guiCreated)
+                    hostGui->resize_hints_changed(host);
+            }
             if (w != width || h != height)
             {
                 width = w;
                 height = h;
-                if (hostGui && guiCreated)
+                // A size the host chose (set_size) is the host's; anything else is
+                // the editor's own zoom, which the host follows.
+                if (!hostSized && hostGui && guiCreated)
                     hostGui->request_resize(host, width, height);
             }
+            hostSized = false;
             return true;
         }
         case Protocol::Scope:
@@ -945,6 +1163,203 @@ class SurgeWclap final : public Surge::Web::EngineCore::Listener
         default:
             return false;
         }
+    }
+
+    // A structural edit as the parts it changed, applied in place (StateParts.h): the
+    // engine's voices keep playing, as when the desktop editor edits the engine's
+    // storage. When the result is not the page's patch, the page sends its state.
+    bool applyDelta(Protocol::Reader &frame)
+    {
+        uint64_t digest;
+        uint32_t count;
+        if (!frame.get(digest) || !frame.get(count) || count > 4096)
+            return false;
+        std::vector<StateParts::Part> parts(count);
+        for (auto &part : parts)
+            if (!StateParts::read(frame, part))
+                return false;
+        bool applied = true, names = false;
+        for (const auto &part : parts)
+        {
+            applied = StateParts::apply(synth(), part) && applied;
+            names = names || part.kind == StateParts::Macro;
+        }
+        auto &s = synth();
+        s.storage.getPatch().isDirty = true;
+        if (digest)
+        {
+            const auto state = engine->saveState();
+            if (!applied || StateParts::digest(state.data(), state.size()) != digest)
+            {
+                log(CLAP_LOG_WARNING, "An edit from the editor did not apply in place; the "
+                                      "editor sends the whole patch instead");
+                send(Protocol::Writer(Protocol::NeedState).bytes);
+                return true;
+            }
+        }
+        else if (!applied)
+            return false;
+        ++deltasApplied;
+        if (names && hostParams)
+            hostParams->rescan(host, CLAP_PARAM_RESCAN_INFO | CLAP_PARAM_RESCAN_TEXT);
+        markDirty();
+        return true;
+    }
+
+    // The editor loaded a patch file: hosts that follow presets (clap.preset-load)
+    // hear which one, by the path a preset discovery location gives it.
+    std::string reportedPreset;
+    void reportPatchLoad()
+    {
+        if (!hostPresetLoad)
+            return;
+        auto path = synth().storage.lastLoadedPatch.u8string();
+        const std::string factoryPrefix = "/factory/patches_factory/";
+        if (path.compare(0, factoryPrefix.size(), factoryPrefix) == 0)
+            path = Presets::factoryLocation() + "/" + path.substr(factoryPrefix.size());
+        else if (path.compare(0, Presets::userLocation().size() + 1,
+                              Presets::userLocation() + "/") != 0)
+            return;
+        if (path == reportedPreset)
+            return;
+        reportedPreset = path;
+        hostPresetLoad->loaded(host, CLAP_PRESET_DISCOVERY_LOCATION_FILE, path.c_str(), nullptr);
+    }
+
+    // clap.preset-load: a Surge XT patch file from a preset discovery location.
+    bool loadPreset(uint32_t kind, const char *location, const char *key)
+    {
+        const auto fail = [&](const std::string &message) {
+            log(CLAP_LOG_ERROR, message.c_str());
+            if (hostPresetLoad)
+                hostPresetLoad->on_error(host, kind, location, key, 0, message.c_str());
+            return false;
+        };
+        if (!engine || kind != CLAP_PRESET_DISCOVERY_LOCATION_FILE || !location)
+            return fail("Surge XT presets are files");
+        const std::string path(location);
+        std::vector<uint8_t> bytes;
+        Presets::PatchInfo info;
+        std::string error;
+        if (!Presets::readFile(path, bytes))
+            return fail(path + ": unable to read the file");
+        if (!Presets::readPatchInfo(bytes, info, error))
+            return fail(path + ": " + error);
+        const auto factory = Presets::factoryLocation();
+        const bool isFactory = path.compare(0, factory.size() + 1, factory + "/") == 0;
+        auto category = Presets::categoryOf(path, isFactory ? factory : Presets::userLocation());
+        auto name = path.substr(path.find_last_of('/') + 1);
+        if (name.size() > 4 && name.compare(name.size() - 4, 4, ".fxp") == 0)
+            name.resize(name.size() - 4);
+        RandomScope scope(random);
+        bool loaded = false;
+        guarded("Loading the preset failed",
+                [&] { loaded = engine->loadPatchFile(bytes.data(), bytes.size(), name, category); });
+        if (!loaded)
+            return fail(path + ": the patch did not load");
+        // The editor's patch browser knows factory patches by its own path.
+        synth().storage.lastLoadedPatch =
+            isFactory ? "/factory/patches_factory/" + path.substr(factory.size() + 1) : path;
+        synth().storage.getPatch().isDirty = false;
+        if (hostParams)
+            hostParams->rescan(host, CLAP_PARAM_RESCAN_VALUES | CLAP_PARAM_RESCAN_TEXT |
+                                         CLAP_PARAM_RESCAN_INFO);
+        if (pageOpen)
+            sendSnapshot();
+        markDirty();
+        reportedPreset = path;
+        if (hostPresetLoad)
+            hostPresetLoad->loaded(host, kind, location, key);
+        return true;
+    }
+
+    // clap.remote-controls: the desktop plug-in's pages (SurgeSynthProcessor::
+    // remoteControlsPageFill): the macros, then each scene's mixer and filters.
+    static constexpr uint32_t remotePages = 5;
+    bool remotePage(uint32_t index, clap_remote_controls_page_t *page)
+    {
+        if (!engine || !params || !page || index >= remotePages)
+            return false;
+        *page = {};
+        page->page_id = clap_id(index + 2054);
+        page->is_for_preset = false;
+        for (auto &id : page->param_ids)
+            id = CLAP_INVALID_ID;
+        const auto name = [](char *to, const char *text) {
+            std::strncpy(to, text, CLAP_NAME_SIZE - 1);
+        };
+        auto &s = synth();
+        const auto idOf = [&](Parameter &parameter) {
+            const auto *entry = params->forSynthId(s.idForParameter(&parameter).getSynthSideId());
+            return entry ? entry->id : CLAP_INVALID_ID;
+        };
+        if (index == 0)
+        {
+            name(page->section_name, "Global");
+            name(page->page_name, "Macros");
+            for (int i = 0; i < CLAP_REMOTE_CONTROLS_COUNT && i < n_customcontrollers; ++i)
+                page->param_ids[i] = params->forMacro(i)->id;
+            return true;
+        }
+        const int scene = index >= 3 ? 1 : 0;
+        auto &sc = s.storage.getPatch().scene[scene];
+        name(page->section_name, scene ? "Scene B" : "Scene A");
+        if (index == 1 || index == 3)
+        {
+            name(page->page_name, scene ? "Scene B Mixer" : "Scene A Mixer");
+            page->param_ids[0] = idOf(sc.level_o1);
+            page->param_ids[1] = idOf(sc.level_o2);
+            page->param_ids[2] = idOf(sc.level_o3);
+            page->param_ids[4] = idOf(sc.level_noise);
+            page->param_ids[5] = idOf(sc.level_ring_12);
+            page->param_ids[6] = idOf(sc.level_ring_23);
+            page->param_ids[7] = idOf(sc.level_pfg);
+        }
+        else
+        {
+            name(page->page_name, scene ? "Scene B Filters" : "Scene A Filters");
+            page->param_ids[0] = idOf(sc.filterunit[0].cutoff);
+            page->param_ids[1] = idOf(sc.filterunit[0].resonance);
+            page->param_ids[2] = idOf(sc.filterunit[1].cutoff);
+            page->param_ids[3] = idOf(sc.filterunit[1].resonance);
+            page->param_ids[4] = idOf(sc.wsunit.drive);
+            page->param_ids[6] = idOf(sc.filter_balance);
+            page->param_ids[7] = idOf(sc.feedback);
+        }
+        return true;
+    }
+
+    // ---- editor size ------------------------------------------------------
+    // Surge zooms in whole percents from 25 % (SurgeGUIEditor::minimumZoom); the
+    // largest it offers is 500 % ("Zoom to Largest").
+    static constexpr int minimumZoom = 25, maximumZoom = 500;
+    bool hostSized{false}; // the page's next size report answers a host set_size
+
+    // The editor's size at a zoom, computed as SurgeGUIEditor::setZoomFactor does.
+    void sizeForZoom(int zoom, uint32_t &w, uint32_t &h) const
+    {
+        const float factor = float(double(zoom) * 0.01);
+        w = uint32_t(factor * float(baseWidth));
+        h = uint32_t(factor * float(baseHeight));
+    }
+
+    // The largest zoom whose editor fits in the size (so the size of a zoom adjusts
+    // to itself).
+    int zoomFitting(uint32_t w, uint32_t h) const
+    {
+        int zoom = int(std::floor(std::min(double(w) * 100.0 / baseWidth,
+                                           double(h) * 100.0 / baseHeight)));
+        uint32_t fw, fh;
+        sizeForZoom(zoom + 1, fw, fh);
+        if (fw <= w && fh <= h)
+            ++zoom;
+        return std::clamp(zoom, minimumZoom, maximumZoom);
+    }
+
+    bool adjustSize(uint32_t &w, uint32_t &h) const
+    {
+        sizeForZoom(zoomFitting(w, h), w, h);
+        return true;
     }
 
     // The editor view (zoom, tabs, overlays) of a raw state, without loading it.
@@ -1070,15 +1485,20 @@ struct Extensions
         },
     };
 
+    // The desktop plug-in's buses and port ids (clap-juce-extensions): outputs
+    // "Output" (1, main), "Scene A" (2) and "Scene B" (3); input "Sidechain" (32768),
+    // not main, as SurgeSynthProcessor::isInputMain says. Not in place: the input of
+    // a block is kept after its output is written.
     static constexpr clap_plugin_audio_ports_t audioPorts{
-        [](const clap_plugin_t *, bool) -> uint32_t { return 1; },
+        [](const clap_plugin_t *, bool input) -> uint32_t { return input ? 1 : 3; },
         [](const clap_plugin_t *, uint32_t index, bool input, clap_audio_port_info_t *info) {
-            if (index != 0 || !info)
+            if (!info || index >= (input ? 1u : 3u))
                 return false;
+            static const char *const outputs[] = {"Output", "Scene A", "Scene B"};
             *info = {};
-            info->id = input ? 1 : 0;
-            std::strncpy(info->name, input ? "Audio Input" : "Output", sizeof(info->name) - 1);
-            info->flags = CLAP_AUDIO_PORT_IS_MAIN;
+            info->id = input ? clap_id(1 << 15) : clap_id(1 + index);
+            std::strncpy(info->name, input ? "Sidechain" : outputs[index], sizeof(info->name) - 1);
+            info->flags = !input && index == 0 ? CLAP_AUDIO_PORT_IS_MAIN : 0;
             info->channel_count = 2;
             info->port_type = CLAP_PORT_STEREO;
             info->in_place_pair = CLAP_INVALID_ID;
@@ -1124,7 +1544,7 @@ struct Extensions
             auto *plugin = self(p);
             if (!plugin->engine || !info)
                 return false;
-            info->voice_count = uint32_t(plugin->synth().storage.getPatch().polylimit.val.i);
+            info->voice_count = plugin->voiceCount();
             info->voice_capacity = MAX_VOICES;
             info->flags = CLAP_VOICE_INFO_SUPPORTS_OVERLAPPING_NOTES;
             return true;
@@ -1145,7 +1565,15 @@ struct Extensions
         [](const clap_plugin_t *p, const char *api, bool) {
             if (!api || std::strcmp(api, CLAP_WINDOW_API_WEBVIEW) != 0)
                 return false;
-            self(p)->guiCreated = true;
+            auto *plugin = self(p);
+            plugin->guiCreated = true;
+            // Open at the zoom saved with the instance, as the desktop editor does.
+            if (plugin->engine && !plugin->pageOpen)
+                if (const int zoom = plugin->synth()
+                                         .storage.getPatch()
+                                         .dawExtraState.editor.instanceZoomFactor;
+                    zoom >= SurgeWclap::minimumZoom && zoom <= SurgeWclap::maximumZoom)
+                    plugin->sizeForZoom(zoom, plugin->width, plugin->height);
             return true;
         },
         [](const clap_plugin_t *p) {
@@ -1153,7 +1581,17 @@ struct Extensions
             plugin->guiCreated = false;
             plugin->closePage();
         },
-        [](const clap_plugin_t *, double) { return false; },
+        // The host's scale overrides the window's device pixel ratio, by which the
+        // page sizes its canvas backing store, so the editor renders sharp.
+        [](const clap_plugin_t *p, double scale) {
+            if (!std::isfinite(scale) || scale <= 0 || scale > 8)
+                return false;
+            auto *plugin = self(p);
+            plugin->guiScale = scale;
+            if (plugin->pageOpen)
+                plugin->sendScale();
+            return true;
+        },
         [](const clap_plugin_t *p, uint32_t *width, uint32_t *height) {
             if (!width || !height)
                 return false;
@@ -1161,23 +1599,62 @@ struct Extensions
             *height = self(p)->height;
             return true;
         },
-        // The editor sets its size (zoom); the host follows request_resize.
-        [](const clap_plugin_t *) { return false; },
-        [](const clap_plugin_t *, clap_gui_resize_hints_t *) { return false; },
-        [](const clap_plugin_t *, uint32_t *, uint32_t *) { return false; },
+        [](const clap_plugin_t *) { return true; },
+        // Any size, keeping the editor's aspect ratio; sizes snap to Surge's zooms.
+        [](const clap_plugin_t *p, clap_gui_resize_hints_t *hints) {
+            if (!hints)
+                return false;
+            hints->can_resize_horizontally = true;
+            hints->can_resize_vertically = true;
+            hints->preserve_aspect_ratio = true;
+            hints->aspect_ratio_width = self(p)->baseWidth;
+            hints->aspect_ratio_height = self(p)->baseHeight;
+            return true;
+        },
+        [](const clap_plugin_t *p, uint32_t *width, uint32_t *height) {
+            return width && height && self(p)->adjustSize(*width, *height);
+        },
+        // The editor zooms to fit the host's window (it stays at the top left when a
+        // size was not adjusted); its own zoom changes come back as request_resize.
         [](const clap_plugin_t *p, uint32_t width, uint32_t height) {
-            return width == self(p)->width && height == self(p)->height;
+            if (width < 64 || height < 64 || width > 16384 || height > 16384)
+                return false;
+            auto *plugin = self(p);
+            if (width == plugin->width && height == plugin->height)
+                return true;
+            plugin->width = width;
+            plugin->height = height;
+            if (plugin->pageOpen)
+            {
+                plugin->hostSized = true;
+                plugin->sendSize();
+            }
+            return true;
         },
         [](const clap_plugin_t *, const clap_window_t *) { return true; },
         [](const clap_plugin_t *, const clap_window_t *) { return true; },
         [](const clap_plugin_t *, const char *) {},
         [](const clap_plugin_t *p) {
             self(p)->guiVisible = true;
+            self(p)->keepAwake();
             return true;
         },
         [](const clap_plugin_t *p) {
             self(p)->guiVisible = false;
             return true;
+        },
+    };
+
+    static constexpr clap_plugin_remote_controls_t remoteControls{
+        [](const clap_plugin_t *) -> uint32_t { return SurgeWclap::remotePages; },
+        [](const clap_plugin_t *p, uint32_t index, clap_remote_controls_page_t *page) {
+            return self(p)->remotePage(index, page);
+        },
+    };
+
+    static constexpr clap_plugin_preset_load_t presetLoad{
+        [](const clap_plugin_t *p, uint32_t kind, const char *location, const char *key) {
+            return self(p)->loadPreset(kind, location, key);
         },
     };
 
@@ -1225,6 +1702,11 @@ const void *SurgeWclap::extension(const char *id)
         return &Extensions::gui;
     if (!std::strcmp(id, CLAP_EXT_WEBVIEW))
         return &Extensions::webview;
+    if (!std::strcmp(id, CLAP_EXT_REMOTE_CONTROLS) ||
+        !std::strcmp(id, CLAP_EXT_REMOTE_CONTROLS_COMPAT))
+        return &Extensions::remoteControls;
+    if (!std::strcmp(id, CLAP_EXT_PRESET_LOAD) || !std::strcmp(id, CLAP_EXT_PRESET_LOAD_COMPAT))
+        return &Extensions::presetLoad;
     return nullptr;
 }
 } // namespace

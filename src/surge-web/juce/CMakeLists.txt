@@ -75,7 +75,8 @@ set_target_properties(surge-xt-browser PROPERTIES SUFFIX .html RUNTIME_OUTPUT_DI
 # the same processor and editor on a stand-in engine that never renders, connected
 # to the plug-in by clap.webview/3 messages. The page loads it from a blob URL.
 add_executable(surge-xt-wclap-ui BrowserMain.cpp BrowserAudio.cpp BrowserWam.cpp BrowserWavetables.cpp
-  BrowserAudioThread.c BrowserAllocationAudit.c BrowserWclapUi.cpp)
+  BrowserAudioThread.c BrowserAllocationAudit.c BrowserWclapUi.cpp
+  ${CMAKE_SOURCE_DIR}/src/surge-wclap/StateParts.cpp)
 target_link_libraries(surge-xt-wclap-ui PRIVATE surge-xt-browser-editor)
 target_compile_definitions(surge-xt-wclap-ui PRIVATE SURGE_WCLAP_UI=1)
 target_include_directories(surge-xt-wclap-ui PRIVATE ${CMAKE_SOURCE_DIR}/src/surge-wclap)
@@ -83,7 +84,7 @@ target_link_options(surge-xt-wclap-ui PRIVATE "SHELL:--pre-js ${CMAKE_SOURCE_DIR
   -sINITIAL_MEMORY=268435456 -sALLOW_MEMORY_GROWTH=1 -sMAXIMUM_MEMORY=2147483648
   -sSTACK_SIZE=2097152 -sPTHREAD_POOL_SIZE=8 -sEXIT_RUNTIME=0 -sFORCE_FILESYSTEM=1
   --preload-file ${CMAKE_SOURCE_DIR}/resources/fonts@/fonts
-  "SHELL:--pre-js ${CMAKE_SOURCE_DIR}/web/browser/platform.js"
+  "SHELL:--pre-js ${CMAKE_SOURCE_DIR}/web/browser/platform.js" -lidbfs.js
   "-sEXPORTED_RUNTIME_METHODS=['ccall','FS','stringToNewUTF8','specialHTMLTargets','HEAPU8','HEAPU16','HEAPF32']")
 foreach(function malloc calloc realloc free posix_memalign aligned_alloc memalign)
   target_link_options(surge-xt-wclap-ui PRIVATE -Wl,--wrap=${function})
