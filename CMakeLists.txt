@@ -29,8 +29,13 @@ if(EMSCRIPTEN)
     # no pthreads, no JavaScript runtime, standard Wasm exception handling
     # (exnref: try_table/throw_ref, not the legacy try/catch/rethrow, which
     # wasmtime cannot compile).
-    add_compile_options(-msimd128 -fwasm-exceptions -sWASM_LEGACY_EXCEPTIONS=0)
-    add_link_options(-msimd128 -fwasm-exceptions -sWASM_LEGACY_EXCEPTIONS=0)
+    # Relaxed SIMD: the fused multiply-adds the DSP asks for (FusedMultiplyAdd.h) are
+    # one relaxed_madd instead of Wasm's software fma. Contraction is off, so relaxed
+    # SIMD changes nothing the code does not ask for: LLVM would otherwise fuse vector
+    # multiply-adds, and the effects' feedback paths would drift from native renders.
+    add_compile_options(-msimd128 -mrelaxed-simd -ffp-contract=off
+      -fwasm-exceptions -sWASM_LEGACY_EXCEPTIONS=0)
+    add_link_options(-msimd128 -mrelaxed-simd -fwasm-exceptions -sWASM_LEGACY_EXCEPTIONS=0)
     if(ENABLE_LTO)
       # Link-time code generation needs Wasm exception handling enabled in the
       # backend too; without it LLVM drops every landing pad and a C++ throw traps.

@@ -22,6 +22,7 @@
 
 #if !defined(_M_ARM64EC)
 
+#include "FusedMultiplyAdd.h"
 #include "BBDEnsembleEffect.h"
 
 #include "sst/basic-blocks/mechanics/block-ops.h"
@@ -36,7 +37,7 @@ inline float ensembleDelayTime(float scale1, float value1, float scale2, float v
 #if SURGE_WEB
     // Match the native ARM64 fmadd followed by fadd. Rounding here controls
     // which BBD clock steps fall within the current audio sample.
-    return std::fma(scale1, value1, scale2 * value2) + center;
+    return surge::fusedMultiplyAdd(scale1, value1, scale2 * value2) + center;
 #else
     return scale1 * value1 + scale2 * value2 + center;
 #endif

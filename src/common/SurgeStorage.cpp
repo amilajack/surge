@@ -22,6 +22,7 @@
 
 #include "DSPUtils.h"
 #include "SurgeStorage.h"
+#include "FusedMultiplyAdd.h"
 #include <set>
 #include <numeric>
 #include <algorithm>
@@ -3383,9 +3384,9 @@ void SurgeStorage::note_to_omega_ignoring_tuning(float x, float &sinu, float &co
 #if SURGE_WEB
     // Preserve the native ARM64 interpolation's single rounding. Small cosine
     // differences become significant in high-resonance filter coefficients.
-    sinu = std::fma(1 - a, table_note_omega_ignoring_tuning[0][e],
+    sinu = surge::fusedMultiplyAdd(1 - a, table_note_omega_ignoring_tuning[0][e],
                     a * table_note_omega_ignoring_tuning[0][(e + 1) & 0x1ff]);
-    cosi = std::fma(1 - a, table_note_omega_ignoring_tuning[1][e],
+    cosi = surge::fusedMultiplyAdd(1 - a, table_note_omega_ignoring_tuning[1][e],
                     a * table_note_omega_ignoring_tuning[1][(e + 1) & 0x1ff]);
 #else
     sinu = (1 - a) * table_note_omega_ignoring_tuning[0][e] +
