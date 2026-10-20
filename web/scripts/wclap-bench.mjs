@@ -2,7 +2,8 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 // Per-instance cost of the Surge XT WCLAP against native Surge.
 //
-//   node web/scripts/wclap-bench.mjs [--instances 1,2,16,100] [--blocks 750] [--frames 64] [--out report.json]
+//   node web/scripts/wclap-bench.mjs [--instances 1,2,16,100] [--blocks 750] [--frames 64]
+//     [--patches eight|daw] [--out report.json]
 //
 // For each count, one module instance hosts that many plug-in instances (as a DAW
 // DSP thread does). Instance i loads patch i of a fixed factory list through
@@ -11,6 +12,8 @@
 // module's linear memory per instance (its high-water mark; voices are allocated
 // as they are first played). The native numbers come from the reference harness
 // (surge-engine-reference --bench) running the same engine, patches and chords.
+// --patches daw uses the 23 factory patches of the DAW's Surge XT x100 song
+// (abelton-live-design tests/bench/surge-100/song.mjs) instead of the eight below.
 import fs from 'node:fs';
 import path from 'node:path';
 import {execFileSync} from 'node:child_process';
@@ -24,6 +27,7 @@ const {values} = parseArgs({allowNegative: true, options: {
   instances: {type: 'string', default: '1,2,16,100'}, blocks: {type: 'string', default: '750'},
   frames: {type: 'string', default: '64'}, out: {type: 'string'}, module: {type: 'string'},
   harness: {type: 'string'}, native: {type: 'boolean', default: true},
+  patches: {type: 'string', default: 'eight'},
 }});
 const counts = values.instances.split(',').map(Number);
 const blocks = Number(values.blocks), frames = Number(values.frames), rate = 48000;
@@ -31,8 +35,15 @@ const modulePath = values.module ?? [path.join(root, 'build-wclap/surge-xt.wclap
 const harness = values.harness ?? path.join(root, 'build-reference/src/surge-web/surge-engine-reference');
 const factory = path.join(root, 'resources/data/patches_factory');
 // The first patch of eight categories: light and heavy, wavetable, FM, effects.
-const patches = ['Templates/Init Saw.fxp', ...['Basses', 'Brass', 'Keys', 'Leads', 'Pads', 'Plucks', 'Polysynths'].map(category =>
+const eight = () => ['Templates/Init Saw.fxp', ...['Basses', 'Brass', 'Keys', 'Leads', 'Pads', 'Plucks', 'Polysynths'].map(category =>
   category + '/' + fs.readdirSync(path.join(factory, category)).filter(name => name.endsWith('.fxp')).sort()[0])];
+const daw = () => ['Pads/Pad 1', 'Pads/MKS-70 Warm Pad', 'Pads/Bell Pad', 'Polysynths/Juno-60 Strings',
+  'Polysynths/Jupiter-8', 'Polysynths/Fast Poly', 'Polysynths/Anthemish 1', 'Polysynths/Gentle',
+  'Keys/EP 1', 'Keys/Organ 1', 'Keys/DX EP', 'Plucks/FM Pluck', 'Plucks/Bell 1', 'Plucks/Clean', 'Plucks/Diamonds',
+  'Leads/Classic Lead 1', 'Leads/Crisp PWM', 'Leads/Fuji', 'Basses/Bass 1', 'Basses/FM Bass 1', 'Basses/Rubber Bass',
+  'Basses/Deep End', 'Templates/Init Saw'].map(name => name + '.fxp');
+const patches = {eight, daw}[values.patches]?.();
+if (!patches) throw Error(`--patches: eight or daw, not ${values.patches}`);
 
 const percentiles = samples => {
   samples.sort((a, b) => a - b);
