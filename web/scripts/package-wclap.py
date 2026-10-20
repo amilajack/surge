@@ -134,9 +134,21 @@ def publish_library(destination):
     try:
         for name in FACTORY:
             shutil.copytree(ROOT / 'resources/data' / name, stage / name)
-        library.publish(stage, destination)
+        # The factory patches are files in factory/ (the plug-in's preset discovery
+        # location); the editor's library reads them there instead of as objects.
+        library.publish(stage, destination, beside={'patches_factory/': '../../factory/'})
     finally:
         shutil.rmtree(stage)
+
+
+def copy_patches(target):
+    """factory/patches_factory: the patches as files, which hosts crawl for presets."""
+    source = ROOT / 'resources/data/patches_factory'
+    for file in sorted(source.rglob('*')):
+        if file.is_file() and file.suffix.lower() == '.fxp':
+            destination = target / 'factory/patches_factory' / file.relative_to(source)
+            destination.parent.mkdir(parents=True, exist_ok=True)
+            shutil.copyfile(file, destination)
 
 
 def assemble(target, dsp, ui):
@@ -151,6 +163,7 @@ def assemble(target, dsp, ui):
     support = ''.join(f'// --- {name}\n' + (ROOT / 'web/browser' / name).read_text() + '\n' for name in SUPPORT)
     (target / 'ui/support.js').write_text(support)
     shutil.copyfile(ROOT / 'web/browser/library.js', target / 'ui/library.js')
+    copy_patches(target)
     publish_library(target / 'ui/library')
     shutil.copyfile(ROOT / 'LICENSE', target / 'LICENSE')
     shutil.copyfile(ROOT / 'web/wclap/licenses/AGPL-3.0.txt', target / 'licenses/AGPL-3.0.txt')
