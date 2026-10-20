@@ -29,15 +29,15 @@
 namespace mech = sst::basic_blocks::mechanics;
 namespace sdsp = sst::basic_blocks::dsp;
 
+// The voice sum is accumulated as floats: the same additions as the SSE scalar (_ss)
+// intrinsics, without a vector blend per sample where SSE is emulated (SIMDe on Wasm).
 #define MWriteOutputs(x)                                                                           \
     d.OutL = SIMD_MM(add_ps)(d.OutL, d.dOutL);                                                     \
     d.OutR = SIMD_MM(add_ps)(d.OutR, d.dOutR);                                                     \
     auto outL = SIMD_MM(mul_ps)(x, d.OutL);                                                        \
     auto outR = SIMD_MM(mul_ps)(x, d.OutR);                                                        \
-    SIMD_MM(store_ss)                                                                              \
-    (&OutL[k], SIMD_MM(add_ss)(SIMD_MM(load_ss)(&OutL[k]), mech::sum_ps_to_ss(outL)));             \
-    SIMD_MM(store_ss)                                                                              \
-    (&OutR[k], SIMD_MM(add_ss)(SIMD_MM(load_ss)(&OutR[k]), mech::sum_ps_to_ss(outR)));
+    OutL[k] = OutL[k] + mech::sum_ps_to_float(outL);                                               \
+    OutR[k] = OutR[k] + mech::sum_ps_to_float(outR);
 
 #define MWriteOutputsDual(x, y)                                                                    \
     d.OutL = SIMD_MM(add_ps)(d.OutL, d.dOutL);                                                     \
@@ -46,10 +46,8 @@ namespace sdsp = sst::basic_blocks::dsp;
     d.Out2R = SIMD_MM(add_ps)(d.Out2R, d.dOut2R);                                                  \
     auto outL = vMAdd(x, d.OutL, vMul(y, d.Out2L));                                                \
     auto outR = vMAdd(x, d.OutR, vMul(y, d.Out2R));                                                \
-    SIMD_MM(store_ss)                                                                              \
-    (&OutL[k], SIMD_MM(add_ss)(SIMD_MM(load_ss)(&OutL[k]), mech::sum_ps_to_ss(outL)));             \
-    SIMD_MM(store_ss)                                                                              \
-    (&OutR[k], SIMD_MM(add_ss)(SIMD_MM(load_ss)(&OutR[k]), mech::sum_ps_to_ss(outR)));
+    OutL[k] = OutL[k] + mech::sum_ps_to_float(outL);                                               \
+    OutR[k] = OutR[k] + mech::sum_ps_to_float(outR);
 
 #if 0 // DEBUG
 #define AssertReasonableAudioFloat(x) assert(x<32.f && x> - 32.f);

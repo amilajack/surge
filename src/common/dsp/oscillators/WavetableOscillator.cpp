@@ -396,9 +396,8 @@ void WavetableOscillator::convolute(int voice, bool FM, bool stereo)
 
     unsigned int m = ((ipos >> 16) & 0xff) * (FIRipol_N << 1);
     unsigned int lipolui16 = (ipos & 0xffff);
-    auto lipol128 = SIMD_MM(setzero_ps)();
-    lipol128 = SIMD_MM(cvtsi32_ss)(lipol128, lipolui16);
-    lipol128 = SIMD_MM(shuffle_ps)(lipol128, lipol128, SIMD_MM_SHUFFLE(0, 0, 0, 0));
+    // A splat, not a scalar conversion and a shuffle (one vector op where SSE is emulated).
+    const auto lipol128 = SIMD_MM(set1_ps)(float(lipolui16));
 
     float g, gR;
     int wt_inc = (1 << mipmap[voice]);
@@ -460,10 +459,8 @@ void WavetableOscillator::convolute(int voice, bool FM, bool stereo)
 
     if (stereo)
     {
-        auto g128L = SIMD_MM(load_ss)(&g);
-        g128L = SIMD_MM(shuffle_ps)(g128L, g128L, SIMD_MM_SHUFFLE(0, 0, 0, 0));
-        auto g128R = SIMD_MM(load_ss)(&gR);
-        g128R = SIMD_MM(shuffle_ps)(g128R, g128R, SIMD_MM_SHUFFLE(0, 0, 0, 0));
+        const auto g128L = SIMD_MM(set1_ps)(g);
+        const auto g128R = SIMD_MM(set1_ps)(gR);
 
         for (int k = 0; k < FIRipol_N; k += 4)
         {
@@ -483,8 +480,7 @@ void WavetableOscillator::convolute(int voice, bool FM, bool stereo)
     }
     else
     {
-        auto g128 = SIMD_MM(load_ss)(&g);
-        g128 = SIMD_MM(shuffle_ps)(g128, g128, SIMD_MM_SHUFFLE(0, 0, 0, 0));
+        const auto g128 = SIMD_MM(set1_ps)(g);
 
         for (int k = 0; k < FIRipol_N; k += 4)
         {
@@ -814,22 +810,25 @@ void WavetableOscillator::process_block(float pitch0, float drift, bool stereo, 
     float hpfblock alignas(16)[BLOCK_SIZE_OS];
     li_hpf.store_block(hpfblock, BLOCK_SIZE_OS_QUAD);
 
+    // A scalar recurrence, on floats: see ClassicOscillator::process_block.
+    float out = SIMD_MM(cvtss_f32)(osc_out), outR = SIMD_MM(cvtss_f32)(osc_outR);
     for (int k = 0; k < BLOCK_SIZE_OS; k++)
     {
-        auto hpf = SIMD_MM(load_ss)(&hpfblock[k]);
-        auto ob = SIMD_MM(load_ss)(&oscbuffer[bufpos + k]);
-        auto a = SIMD_MM(mul_ss)(osc_out, hpf);
-        osc_out = SIMD_MM(add_ss)(a, ob);
-        SIMD_MM(store_ss)(&output[k], osc_out);
+        const float hpf = hpfblock[k];
+        const float a = out * hpf;
+        out = a + oscbuffer[bufpos + k];
+        output[k] = out;
 
         if (stereo)
         {
-            auto ob = SIMD_MM(load_ss)(&oscbufferR[bufpos + k]);
-            auto a = SIMD_MM(mul_ss)(osc_outR, hpf);
-            osc_outR = SIMD_MM(add_ss)(a, ob);
-            SIMD_MM(store_ss)(&outputR[k], osc_outR);
+            const float aR = outR * hpf;
+            outR = aR + oscbufferR[bufpos + k];
+            outputR[k] = outR;
         }
     }
+    // Only lane 0 of these registers ever carries a value.
+    osc_out = SIMD_MM(set_ss)(out);
+    osc_outR = SIMD_MM(set_ss)(outR);
 
     mech::clear_block<BLOCK_SIZE_OS>(&oscbuffer[bufpos]);
     if (stereo)

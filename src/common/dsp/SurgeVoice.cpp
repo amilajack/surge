@@ -1256,8 +1256,9 @@ bool SurgeVoice::process_block(QuadFilterChainState &Q, int Qe)
 
     for (int i = 0; i < BLOCK_SIZE_OS; i++)
     {
-        SIMD_MM(store_ss)(((float *)&Q.DL[i] + Qe), SIMD_MM(load_ss)(&output[0][i]));
-        SIMD_MM(store_ss)(((float *)&Q.DR[i] + Qe), SIMD_MM(load_ss)(&output[1][i]));
+        // Plain float copies into this voice's lane (no SSE scalar load/store pair).
+        reinterpret_cast<float *>(&Q.DL[i])[Qe] = output[0][i];
+        reinterpret_cast<float *>(&Q.DR[i])[Qe] = output[1][i];
     }
     SetQFB(&Q, Qe);
 
