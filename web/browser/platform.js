@@ -120,7 +120,9 @@ if (typeof window !== 'undefined') {
       } catch (error) {
         platform.storageState = 'error';
         platform.storageError = error;
-        platform.report('Unable to save browser storage. Changes remain in memory; export your work before closing. ' + String(error));
+        platform.report((Module['surgeWclap']
+          ? "Unable to save to the plug-in's user folder. Changes remain in this window; export your work before closing it. "
+          : 'Unable to save browser storage. Changes remain in memory; export your work before closing. ') + String(error));
         throw error;
       } finally {
         platform.pendingFlush = null;
