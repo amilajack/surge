@@ -26,9 +26,16 @@ if(EMSCRIPTEN)
   set(SURGE_ENGINE_ONLY ON)
   if(SURGE_WCLAP)
     # A WCLAP owns non-shared memory and runs every CLAP call on one host agent:
-    # no pthreads, no JavaScript runtime, native Wasm exception handling.
-    add_compile_options(-msimd128 -fwasm-exceptions)
-    add_link_options(-msimd128 -fwasm-exceptions)
+    # no pthreads, no JavaScript runtime, standard Wasm exception handling
+    # (exnref: try_table/throw_ref, not the legacy try/catch/rethrow, which
+    # wasmtime cannot compile).
+    add_compile_options(-msimd128 -fwasm-exceptions -sWASM_LEGACY_EXCEPTIONS=0)
+    add_link_options(-msimd128 -fwasm-exceptions -sWASM_LEGACY_EXCEPTIONS=0)
+    if(ENABLE_LTO)
+      # Link-time code generation needs Wasm exception handling enabled in the
+      # backend too; without it LLVM drops every landing pad and a C++ throw traps.
+      add_link_options("SHELL:-Wl,-mllvm,-wasm-enable-eh" "SHELL:-Wl,-mllvm,-exception-model=wasm")
+    endif()
     add_compile_definitions(SURGE_WCLAP=1)
   else()
     # All objects sharing the AudioWorklet memory must use the same ABI.

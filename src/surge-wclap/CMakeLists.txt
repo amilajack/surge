@@ -23,4 +23,7 @@ target_link_options(surge-xt-wclap PRIVATE
   -sSTACK_SIZE=1048576 -sALLOW_TABLE_GROWTH=1
   -sEXPORTED_FUNCTIONS=['_malloc','_free']
   -Wl,--export=clap_entry
-  -Wl,--export-table)
+  -Wl,--export-table
+  # A name section, so profilers (V8's, wasmtime's, perf) attribute time to
+  # functions. It costs no run time and about 0.5 MB.
+  --profiling-funcs)

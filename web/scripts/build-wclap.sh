@@ -19,6 +19,6 @@ if [[ -e "$root/.git" ]]; then
   git -C "$root" submodule update --init --recursive
 fi
 build="${SURGE_WCLAP_BUILD:-$root/build-wclap}"
-emcmake cmake -S "$root" -B "$build" -DSURGE_WCLAP=ON -DENABLE_LTO=OFF \
+emcmake cmake -S "$root" -B "$build" -DSURGE_WCLAP=ON -DENABLE_LTO=ON \
   -DSURGE_BUILD_TESTRUNNER=OFF -DSURGE_SKIP_WERROR=ON -DCMAKE_BUILD_TYPE=Release
 cmake --build "$build" --target surge-xt-wclap --parallel "${SURGE_BUILD_JOBS:-4}"
