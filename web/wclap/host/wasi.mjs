@@ -1,7 +1,10 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 // A small WASI preview1 implementation for hosting WCLAP modules in Node, workers
-// and AudioWorklets. The file system is one read-only preopened directory ("/")
-// served by a synchronous backend: { stat(path), read(path), list(path) }.
+// and AudioWorklets. The file system is a read-only preopened directory ("/", the
+// bundle) served by a synchronous backend: { stat(path), read(path), list(path) },
+// and optionally a writable one ("/user", the plug-in's private folder) whose
+// backend also has write(path, bytes), mkdir(path), unlink(path), rmdir(path) and
+// rename(from, to) (memoryFiles() keeps one in memory).
 // random_get draws from a seeded generator when a seed is given, so a host can
 // make every render of a module bit-identical.
 
@@ -69,15 +72,17 @@ function normalize(path) {
 export class Wasi {
   // files: synchronous backend; seed: BigInt/number for random_get, or undefined
   // for crypto randomness; log: (stream, text) for stdout/stderr lines.
-  constructor({files, seed, random, log = (stream, text) => console[stream === 2 ? 'error' : 'log'](text), now} = {}) {
+  constructor({files, user, seed, random, log = (stream, text) => console[stream === 2 ? 'error' : 'log'](text), now} = {}) {
     this.files = files;
+    this.user = user ?? null;
     this.random = random ?? (seed === undefined ? null : seededBytes(seed));
     this.log = log;
     this.now = now ?? (() => (globalThis.performance?.now?.() ?? Date.now()));
     this.memory = null;
     this.fds = new Map([[0, {kind: 'stdin'}], [1, {kind: 'stdout', text: ''}], [2, {kind: 'stdout', text: ''}],
       [3, {kind: 'dir', path: '/', preopen: '/'}]]);
-    this.nextFd = 4;
+    if (this.user) this.fds.set(4, {kind: 'dir', path: '/user', preopen: '/user'});
+    this.nextFd = this.user ? 5 : 4;
     this.imports = {wasi_snapshot_preview1: this.functions()};
   }
   bind(memory) { this.memory = memory; }
@@ -91,9 +96,16 @@ export class Wasi {
     const relative = this.string(pointer, length);
     return normalize(relative.startsWith('/') ? relative : base.path + '/' + relative);
   }
+  // The backend holding an absolute path and the path within it.
+  backend(path) {
+    if (this.user && (path === '/user' || path.startsWith('/user/')))
+      return {store: this.user, path: path.slice(5) || '/', writable: true};
+    return {store: this.files, path, writable: false};
+  }
   stat(path) {
-    if (path === '/') return {type: 'dir', size: 0};
-    return this.files.stat(path);
+    if (path === '/' || (this.user && path === '/user')) return {type: 'dir', size: 0};
+    const {store, path: inner} = this.backend(path);
+    return store.stat(inner);
   }
   writeFilestat(pointer, stat, ino = 0) {
     const v = this.view();
@@ -102,6 +114,15 @@ export class Wasi {
     v.setUint8(pointer + 16, stat.type === 'dir' ? FILETYPE.DIRECTORY : stat.type === 'char' ? FILETYPE.CHARACTER_DEVICE : FILETYPE.REGULAR_FILE);
     v.setBigUint64(pointer + 24, 1n, true);
     v.setBigUint64(pointer + 32, BigInt(stat.size ?? 0), true);
+    const ns = BigInt(Math.round((stat.mtime ?? 0) * 1e6));
+    for (const offset of [40, 48, 56]) v.setBigUint64(pointer + offset, ns, true);
+  }
+  // A written file reaches its backend when it is closed or synced.
+  flush(entry) {
+    if (entry?.kind === 'file' && entry.dirty) {
+      this.backend(entry.path).store.write(this.backend(entry.path).path, entry.data.slice(0, entry.length));
+      entry.dirty = false;
+    }
   }
 
   functions() {
@@ -165,18 +186,27 @@ export class Wasi {
       fd_filestat_get(fd, pointer) {
         const entry = wasi.fds.get(fd);
         if (!entry) return ERRNO.BADF;
-        wasi.writeFilestat(pointer, entry.kind === 'file' ? {type: 'file', size: entry.data.length}
+        wasi.writeFilestat(pointer, entry.kind === 'file' ? {type: 'file', size: entry.length ?? entry.data.length, mtime: entry.mtime}
           : entry.kind === 'dir' ? {type: 'dir'} : {type: 'char'}, fd);
         return ERRNO.SUCCESS;
       },
-      fd_filestat_set_size() { return ERRNO.ROFS; },
+      fd_filestat_set_size(fd, size) {
+        const entry = wasi.fds.get(fd);
+        if (!entry || entry.kind !== 'file') return ERRNO.BADF;
+        if (!entry.writable) return ERRNO.ROFS;
+        entry.length = Number(size);
+        if (entry.data.length < entry.length) { const grown = new Uint8Array(entry.length); grown.set(entry.data); entry.data = grown; }
+        entry.dirty = true;
+        return ERRNO.SUCCESS;
+      },
       fd_filestat_set_times() { return ERRNO.ROFS; },
       fd_advise() { return ERRNO.SUCCESS; },
       fd_allocate() { return ERRNO.ROFS; },
-      fd_datasync() { return ERRNO.SUCCESS; },
-      fd_sync() { return ERRNO.SUCCESS; },
+      fd_datasync(fd) { wasi.flush(wasi.fds.get(fd)); return ERRNO.SUCCESS; },
+      fd_sync(fd) { wasi.flush(wasi.fds.get(fd)); return ERRNO.SUCCESS; },
       fd_close(fd) {
-        if (!wasi.fds.has(fd) || fd < 3) return ERRNO.BADF;
+        if (!wasi.fds.has(fd) || fd < 3 || wasi.fds.get(fd).preopen) return ERRNO.BADF;
+        wasi.flush(wasi.fds.get(fd));
         wasi.fds.delete(fd);
         return ERRNO.SUCCESS;
       },
@@ -184,7 +214,7 @@ export class Wasi {
         const entry = wasi.fds.get(fd);
         if (!entry) return ERRNO.BADF;
         if (entry.kind !== 'file') return ERRNO.INVAL;
-        const base = whence === 0 ? 0 : whence === 1 ? entry.position : entry.data.length;
+        const base = whence === 0 ? 0 : whence === 1 ? entry.position : (entry.length ?? entry.data.length);
         const position = base + Number(offset);
         if (position < 0) return ERRNO.INVAL;
         entry.position = position;
@@ -203,8 +233,9 @@ export class Wasi {
         if (entry.kind === 'dir') return ERRNO.ISDIR;
         let total = 0;
         if (entry.kind === 'file') {
+          const end = entry.length ?? entry.data.length;
           total = iovs(pointer, count, (base, length) => {
-            const chunk = entry.data.subarray(entry.position, entry.position + length);
+            const chunk = entry.data.subarray(entry.position, Math.min(end, entry.position + length));
             wasi.bytes().set(chunk, base);
             entry.position += chunk.length;
             return chunk.length;
@@ -217,6 +248,24 @@ export class Wasi {
       fd_write(fd, pointer, count, done) {
         const entry = wasi.fds.get(fd);
         if (!entry) return ERRNO.BADF;
+        if (entry.kind === 'file') {
+          if (!entry.writable) return ERRNO.ROFS;
+          const written = iovs(pointer, count, (base, length) => {
+            const at = entry.append ? entry.length : entry.position;
+            if (entry.data.length < at + length) {
+              const grown = new Uint8Array(Math.max(at + length, entry.data.length * 2, 4096));
+              grown.set(entry.data.subarray(0, entry.length));
+              entry.data = grown;
+            }
+            entry.data.set(wasi.bytes().subarray(base, base + length), at);
+            entry.position = at + length;
+            entry.length = Math.max(entry.length, at + length);
+            entry.dirty = true;
+            return length;
+          });
+          wasi.view().setUint32(done, written, true);
+          return ERRNO.SUCCESS;
+        }
         if (entry.kind !== 'stdout') return ERRNO.ROFS;
         const total = iovs(pointer, count, (base, length) => {
           entry.text += utf8Decode(wasi.bytes().subarray(base, base + length));
@@ -234,7 +283,8 @@ export class Wasi {
       fd_readdir(fd, pointer, length, cookie, used) {
         const entry = wasi.fds.get(fd);
         if (!entry || entry.kind !== 'dir') return ERRNO.BADF;
-        const names = ['.', '..', ...(wasi.files.list?.(entry.path) ?? [])];
+        const {store, path: inner} = wasi.backend(entry.path);
+        const names = ['.', '..', ...(store.list?.(inner) ?? [])];
         const out = wasi.bytes(), v = wasi.view();
         let at = 0;
         for (let index = Number(cookie); index < names.length; ++index) {
@@ -260,20 +310,28 @@ export class Wasi {
       path_open(fd, dirflags, pointer, length, oflags, rightsBase, rightsInheriting, fdflags, result) {
         const path = wasi.resolve(fd, pointer, length);
         if (!path) return ERRNO.BADF;
-        if (oflags & (OFLAGS.CREAT | OFLAGS.TRUNC) || rightsBase & 64n) {
-          // Writes, creation and truncation: the bundle is read-only.
-          if (!wasi.stat(path) || oflags & (OFLAGS.CREAT | OFLAGS.TRUNC)) return ERRNO.ROFS;
-          if (rightsBase & 64n) return ERRNO.ROFS;
-        }
-        const stat = wasi.stat(path);
-        if (!stat) return ERRNO.NOENT;
-        if (oflags & OFLAGS.DIRECTORY && stat.type !== 'dir') return ERRNO.NOTDIR;
+        const {store, path: inner, writable} = wasi.backend(path);
+        const writes = (oflags & (OFLAGS.CREAT | OFLAGS.TRUNC)) || (rightsBase & 64n);
+        // Writes, creation and truncation: only the user folder is writable.
+        if (writes && !writable) return ERRNO.ROFS;
+        let stat = wasi.stat(path);
+        if (stat && oflags & OFLAGS.EXCL && oflags & OFLAGS.CREAT) return ERRNO.EXIST;
+        if (!stat && !(oflags & OFLAGS.CREAT)) return ERRNO.NOENT;
+        if (stat && oflags & OFLAGS.DIRECTORY && stat.type !== 'dir') return ERRNO.NOTDIR;
         let entry;
-        if (stat.type === 'dir') entry = {kind: 'dir', path};
-        else {
-          const data = wasi.files.read(path);
+        if (stat?.type === 'dir') {
+          if (writes) return ERRNO.ISDIR;
+          entry = {kind: 'dir', path};
+        } else {
+          let data = stat && !(oflags & OFLAGS.TRUNC) ? store.read(inner) : new Uint8Array();
           if (!data) return ERRNO.NOENT;
-          entry = {kind: 'file', path, data, position: 0};
+          if (!stat) {
+            const parent = inner.slice(0, inner.lastIndexOf('/')) || '/';
+            if (store.stat(parent)?.type !== 'dir') return ERRNO.NOENT;
+          }
+          data = new Uint8Array(data);
+          entry = {kind: 'file', path, data, length: data.length, position: 0, writable: !!writes,
+            append: !!(fdflags & 1), dirty: writes && (!stat || !!(oflags & OFLAGS.TRUNC)), mtime: stat?.mtime};
         }
         const opened = wasi.nextFd++;
         wasi.fds.set(opened, entry);
@@ -290,10 +348,43 @@ export class Wasi {
       },
       path_filestat_set_times() { return ERRNO.ROFS; },
       path_readlink() { return ERRNO.INVAL; },
-      path_create_directory() { return ERRNO.ROFS; },
-      path_remove_directory() { return ERRNO.ROFS; },
-      path_unlink_file() { return ERRNO.ROFS; },
-      path_rename() { return ERRNO.ROFS; },
+      path_create_directory(fd, pointer, length) {
+        const path = wasi.resolve(fd, pointer, length);
+        if (!path) return ERRNO.BADF;
+        const {store, path: inner, writable} = wasi.backend(path);
+        if (!writable) return ERRNO.ROFS;
+        if (wasi.stat(path)) return ERRNO.EXIST;
+        return store.mkdir(inner) ? ERRNO.SUCCESS : ERRNO.NOENT;
+      },
+      path_remove_directory(fd, pointer, length) {
+        const path = wasi.resolve(fd, pointer, length);
+        if (!path) return ERRNO.BADF;
+        const {store, path: inner, writable} = wasi.backend(path);
+        if (!writable) return ERRNO.ROFS;
+        const stat = wasi.stat(path);
+        if (!stat) return ERRNO.NOENT;
+        if (stat.type !== 'dir') return ERRNO.NOTDIR;
+        return store.rmdir(inner) ? ERRNO.SUCCESS : 55; // ENOTEMPTY
+      },
+      path_unlink_file(fd, pointer, length) {
+        const path = wasi.resolve(fd, pointer, length);
+        if (!path) return ERRNO.BADF;
+        const {store, path: inner, writable} = wasi.backend(path);
+        if (!writable) return ERRNO.ROFS;
+        const stat = wasi.stat(path);
+        if (!stat) return ERRNO.NOENT;
+        if (stat.type === 'dir') return ERRNO.ISDIR;
+        store.unlink(inner);
+        return ERRNO.SUCCESS;
+      },
+      path_rename(fd, pointer, length, newFd, newPointer, newLength) {
+        const from = wasi.resolve(fd, pointer, length), to = wasi.resolve(newFd, newPointer, newLength);
+        if (!from || !to) return ERRNO.BADF;
+        const a = wasi.backend(from), b = wasi.backend(to);
+        if (!a.writable || !b.writable) return ERRNO.ROFS;
+        if (!wasi.stat(from)) return ERRNO.NOENT;
+        return a.store.rename(a.path, b.path) ? ERRNO.SUCCESS : ERRNO.NOENT;
+      },
       path_link() { return ERRNO.ROFS; },
       path_symlink() { return ERRNO.ROFS; },
       sock_accept() { return ERRNO.NOSYS; },
@@ -323,6 +414,53 @@ export async function nodeFiles(root) {
       try { return fs.readdirSync(real(p)).sort(); } catch { return []; }
     },
   };
+}
+
+// A writable folder in memory, for the "/user" preopen: path -> {type, data, mtime}.
+export function memoryFiles(initial = {}) {
+  const entries = new Map([['/', {type: 'dir', mtime: Date.now()}]]);
+  const parentOf = p => p.slice(0, p.lastIndexOf('/')) || '/';
+  const store = {
+    entries,
+    stat(p) { const e = entries.get(p); return e ? {type: e.type, size: e.data?.length ?? 0, mtime: e.mtime} : null; },
+    read(p) { const e = entries.get(p); return e?.type === 'file' ? e.data : null; },
+    list(p) {
+      const prefix = p === '/' ? '/' : p + '/';
+      return [...entries.keys()].filter(k => k !== p && k.startsWith(prefix) && !k.slice(prefix.length).includes('/'))
+        .map(k => k.slice(prefix.length)).sort();
+    },
+    write(p, data) {
+      if (entries.get(parentOf(p))?.type !== 'dir') return false;
+      entries.set(p, {type: 'file', data: new Uint8Array(data), mtime: Date.now()});
+      return true;
+    },
+    mkdir(p) {
+      if (entries.get(parentOf(p))?.type !== 'dir' || entries.has(p)) return false;
+      entries.set(p, {type: 'dir', mtime: Date.now()});
+      return true;
+    },
+    unlink(p) { return entries.get(p)?.type === 'file' && entries.delete(p); },
+    rmdir(p) { return entries.get(p)?.type === 'dir' && store.list(p).length === 0 && entries.delete(p); },
+    rename(from, to) {
+      const e = entries.get(from);
+      if (!e || entries.get(parentOf(to))?.type !== 'dir') return false;
+      if (e.type === 'dir') {
+        for (const key of [...entries.keys()].filter(k => k.startsWith(from + '/'))) {
+          entries.set(to + key.slice(from.length), entries.get(key));
+          entries.delete(key);
+        }
+      }
+      entries.delete(from);
+      entries.set(to, {...e, mtime: Date.now()});
+      return true;
+    },
+  };
+  for (const [p, data] of Object.entries(initial)) {
+    const parts = p.split('/').filter(Boolean);
+    for (let i = 1; i < parts.length; ++i) store.mkdir('/' + parts.slice(0, i).join('/'));
+    store.write('/' + parts.join('/'), typeof data === 'string' ? utf8Encode(data) : data);
+  }
+  return store;
 }
 
 // A bundle served over HTTP, read with synchronous requests (dedicated workers).

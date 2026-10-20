@@ -48,9 +48,10 @@ export const BEATTIME_FACTOR = 2 ** 31;
 export class WclapModule {
   // bytes or module: the module.wasm; files: synchronous bundle reader (wasi.mjs);
   // seed: random_get seed for bit-identical renders; root: the bundle's WASI path.
-  static async load({bytes, module, files, seed, random, root = '/', log} = {}) {
+  // user: a writable backend preopened as "/user" (wasi.mjs memoryFiles()).
+  static async load({bytes, module, files, user, seed, random, root = '/', log} = {}) {
     const compiled = module ?? await WebAssembly.compile(bytes);
-    const wasi = new Wasi({files, seed, random, log});
+    const wasi = new Wasi({files, user, seed, random, log});
     const instance = await WebAssembly.instantiate(compiled, wasi.imports);
     const self = new WclapModule(instance, wasi);
     await self.start(root);
@@ -156,7 +157,7 @@ export class WclapModule {
       paramsClear: [[I32, I32, I32], [], () => {}],
       paramsRequestFlush: [[I32], [], host => { const p = plugin(host); if (p) { p.flushPending = true; p.callbacks.requestFlush?.(); } }],
       stateMarkDirty: [[I32], [], host => call(host, 'markDirty')],
-      guiResizeHintsChanged: [[I32], [], () => {}],
+      guiResizeHintsChanged: [[I32], [], host => call(host, 'resizeHintsChanged')],
       guiRequestResize: [[I32, I32, I32], [I32], (host, w, h) => call(host, 'requestResize', w >>> 0, h >>> 0) ? 1 : 0],
       guiRequestShow: [[I32], [I32], () => 0],
       guiRequestHide: [[I32], [I32], () => 0],
@@ -173,6 +174,28 @@ export class WclapModule {
         if (p?.callbacks.log) p.callbacks.log(severity, text); else console.warn(`[wclap ${severity}] ${text}`);
       }],
       changed: [[I32], [], () => {}],
+      voiceInfoChanged: [[I32], [], host => call(host, 'voiceInfoChanged')],
+      remoteControlsChanged: [[I32], [], host => call(host, 'remoteControlsChanged')],
+      remoteControlsSuggest: [[I32, I32], [], (host, page) => call(host, 'remoteControlsSuggest', page >>> 0)],
+      presetLoadError: [[I32, I32, I32, I32, I32, I32], [], (host, kind, location, key, error, message) =>
+        call(host, 'presetError', {kind, location: this.readString(location >>> 0), key: key ? this.readString(key >>> 0) : null, error, message: this.readString(message >>> 0)})],
+      presetLoaded: [[I32, I32, I32, I32], [], (host, kind, location, key) =>
+        call(host, 'presetLoaded', {kind, location: this.readString(location >>> 0), key: key ? this.readString(key >>> 0) : null})],
+      // Preset discovery: the indexer and the metadata receiver of discoverPresets().
+      declareFiletype: [[I32, I32], [I32], (indexer, filetype) => this.discovery?.filetype(filetype >>> 0) ?? 0],
+      declareLocation: [[I32, I32], [I32], (indexer, location) => this.discovery?.location(location >>> 0) ?? 0],
+      declareSoundpack: [[I32, I32], [I32], () => 1],
+      indexerExtension: [[I32, I32], [I32], () => 0],
+      receiverError: [[I32, I32, I32], [], (r, error, message) => this.discovery?.receive('error', this.readString(message >>> 0))],
+      receiverBegin: [[I32, I32, I32], [I32], (r, name, key) => this.discovery?.receive('begin', this.readString(name >>> 0), key ? this.readString(key >>> 0) : null) ?? 0],
+      receiverPluginId: [[I32, I32], [], (r, id) => this.discovery?.receive('pluginId', this.readString(this.u32(id >>> 0)), this.readString(this.u32((id >>> 0) + 4)))],
+      receiverSoundpack: [[I32, I32], [], (r, id) => this.discovery?.receive('soundpack', this.readString(id >>> 0))],
+      receiverFlags: [[I32, I32], [], (r, flags) => this.discovery?.receive('flags', flags >>> 0)],
+      receiverCreator: [[I32, I32], [], (r, text) => this.discovery?.receive('creator', this.readString(text >>> 0))],
+      receiverDescription: [[I32, I32], [], (r, text) => this.discovery?.receive('description', this.readString(text >>> 0))],
+      receiverTimestamps: [[I32, I64, I64], [], (r, created, modified) => this.discovery?.receive('timestamps', Number(created), Number(modified))],
+      receiverFeature: [[I32, I32], [], (r, text) => this.discovery?.receive('feature', this.readString(text >>> 0))],
+      receiverExtra: [[I32, I32, I32], [], (r, key, value) => this.discovery?.receive('extra', this.readString(key >>> 0), this.readString(value >>> 0))],
     };
     const names = Object.keys(signatures);
     const functions = await forwardingFunctions(names.map(n => ({params: signatures[n][0], results: signatures[n][1], fn: signatures[n][2]})));
@@ -193,6 +216,9 @@ export class WclapModule {
       ['clap.log', struct([index.log])],
       ['clap.latency', struct([index.changed])],
       ['clap.tail', struct([index.changed])],
+      ['clap.voice-info', struct([index.voiceInfoChanged])],
+      ['clap.remote-controls/2', struct([index.remoteControlsChanged, index.remoteControlsSuggest])],
+      ['clap.preset-load/2', struct([index.presetLoadError, index.presetLoaded])],
     ]);
     this.hostStrings = ['Surge WCLAP test host', 'Surge', 'https://github.com/amilajack/surge', '1.0.0'].map(t => this.cString(t));
   }
@@ -217,6 +243,65 @@ export class WclapModule {
     if (!plugin.method(8)(pointer)) { plugin.destroy(); throw Error(`${id}: init failed`); }
     plugin.bindExtensions();
     return plugin;
+  }
+
+  // CLAP preset discovery: every provider's file types and locations, and a
+  // metadata(location) function returning the presets a file describes.
+  discoverPresets() {
+    const id = this.cString('clap.preset-discovery-factory/2');
+    const factory = this.fn(this.u32(this.entry + 20))(id) >>> 0;
+    this.free(id);
+    if (!factory) return null;
+    const providers = [];
+    const count = this.fn(this.u32(factory))(factory) >>> 0;
+    for (let i = 0; i < count; ++i) {
+      const d = this.fn(this.u32(factory + 4))(factory, i) >>> 0;
+      providers.push({id: this.readString(this.u32(d + 12)), name: this.readString(this.u32(d + 16)), vendor: this.readString(this.u32(d + 20))});
+    }
+    const indexer = this.malloc(48);
+    const v = this.view();
+    v.setUint32(indexer, 1, true); v.setUint32(indexer + 4, 2, true); v.setUint32(indexer + 8, 7, true);
+    this.hostStrings.forEach((s, i) => v.setUint32(indexer + 12 + i * 4, s, true));
+    v.setUint32(indexer + 32, this.index.declareFiletype, true);
+    v.setUint32(indexer + 36, this.index.declareLocation, true);
+    v.setUint32(indexer + 40, this.index.declareSoundpack, true);
+    v.setUint32(indexer + 44, this.index.indexerExtension, true);
+    const result = {providers, filetypes: [], locations: []};
+    this.discovery = {
+      filetype: pointer => { result.filetypes.push({name: this.readString(this.u32(pointer)), description: this.readString(this.u32(pointer + 4)), extension: this.readString(this.u32(pointer + 8))}); return 1; },
+      location: pointer => { result.locations.push({flags: this.u32(pointer), name: this.readString(this.u32(pointer + 4)), kind: this.u32(pointer + 8), location: this.readString(this.u32(pointer + 12))}); return 1; },
+    };
+    const pid = this.cString(providers[0].id);
+    const provider = this.fn(this.u32(factory + 8))(factory, indexer, pid) >>> 0;
+    this.free(pid);
+    if (!provider || !this.fn(this.u32(provider + 8))(provider)) throw Error('preset provider init failed');
+    const receiver = this.malloc(44);
+    [0, this.index.receiverError, this.index.receiverBegin, this.index.receiverPluginId, this.index.receiverSoundpack,
+      this.index.receiverFlags, this.index.receiverCreator, this.index.receiverDescription, this.index.receiverTimestamps,
+      this.index.receiverFeature, this.index.receiverExtra].forEach((f, i) => this.view().setUint32(receiver + i * 4, f, true));
+    result.metadata = (location, kind = 0) => {
+      const presets = [], errors = [];
+      this.discovery.receive = (what, ...args) => {
+        if (what === 'error') { errors.push(args[0]); return; }
+        if (what === 'begin') { presets.push({name: args[0], key: args[1], pluginIds: [], creators: [], features: [], extra: {}}); return 1; }
+        const preset = presets.at(-1);
+        if (!preset) return;
+        if (what === 'pluginId') preset.pluginIds.push({abi: args[0], id: args[1]});
+        else if (what === 'flags') preset.flags = args[0];
+        else if (what === 'creator') preset.creators.push(args[0]);
+        else if (what === 'description') preset.description = args[0];
+        else if (what === 'timestamps') preset.timestamps = args;
+        else if (what === 'feature') preset.features.push(args[0]);
+        else if (what === 'extra') preset.extra[args[0]] = args[1];
+        else if (what === 'soundpack') preset.soundpack = args[0];
+      };
+      const path = this.cString(location);
+      const ok = !!this.fn(this.u32(provider + 16))(provider, kind, path, receiver);
+      this.free(path);
+      return {ok, presets, errors};
+    };
+    result.destroy = () => { this.fn(this.u32(provider + 12))(provider); this.free(receiver); this.free(indexer); this.discovery = null; };
+    return result;
   }
 
   // Heap bytes in use by the module (the high-water mark of its linear memory).
@@ -264,7 +349,8 @@ export class WclapPlugin {
   bindExtensions() {
     const ids = {params: 'clap.params', state: 'clap.state', audioPorts: 'clap.audio-ports',
       notePorts: 'clap.note-ports', latency: 'clap.latency', tail: 'clap.tail', render: 'clap.render',
-      gui: 'clap.gui', webview: 'clap.webview/3', voiceInfo: 'clap.voice-info'};
+      gui: 'clap.gui', webview: 'clap.webview/3', voiceInfo: 'clap.voice-info',
+      remoteControls: 'clap.remote-controls/2', presetLoad: 'clap.preset-load/2'};
     this.ext = {};
     for (const [key, id] of Object.entries(ids)) this.ext[key] = this.extension(id);
   }
@@ -275,20 +361,22 @@ export class WclapPlugin {
     this.maxFrames = maxFrames;
     if (!this.process_) {
       const p = this.process_ = {};
+      // One stereo input; three stereo outputs (main, then the plug-in's other buses).
       p.struct = m.malloc(40);
-      p.inputs = m.malloc(24); p.outputs = m.malloc(24);
-      p.inPointers = m.malloc(8); p.outPointers = m.malloc(8);
-      p.buffers = m.malloc(4 * 4 * maxFrames);
+      p.inputs = m.malloc(24); p.outputs = m.malloc(24 * 3);
+      p.inPointers = m.malloc(8); p.outPointers = m.malloc(8 * 3);
+      p.buffers = m.malloc(4 * 8 * maxFrames);
       p.inEvents = m.malloc(12); p.outEvents = m.malloc(8);
       p.transport = m.malloc(104);
       p.arena = m.malloc(1 << 16);
       const v = m.view();
-      for (let c = 0; c < 2; ++c) {
-        v.setUint32(p.inPointers + c * 4, p.buffers + c * 4 * maxFrames, true);
-        v.setUint32(p.outPointers + c * 4, p.buffers + (2 + c) * 4 * maxFrames, true);
-      }
+      for (let c = 0; c < 2; ++c) v.setUint32(p.inPointers + c * 4, p.buffers + c * 4 * maxFrames, true);
+      for (let c = 0; c < 6; ++c) v.setUint32(p.outPointers + c * 4, p.buffers + (2 + c) * 4 * maxFrames, true);
       v.setUint32(p.inputs, p.inPointers, true); v.setUint32(p.inputs + 8, 2, true);
-      v.setUint32(p.outputs, p.outPointers, true); v.setUint32(p.outputs + 8, 2, true);
+      for (let port = 0; port < 3; ++port) {
+        v.setUint32(p.outputs + port * 24, p.outPointers + port * 8, true);
+        v.setUint32(p.outputs + port * 24 + 8, 2, true);
+      }
       v.setUint32(p.inEvents, p.inEvents, true);
       v.setUint32(p.inEvents + 4, m.index.eventsSize, true);
       v.setUint32(p.inEvents + 8, m.index.eventsGet, true);
@@ -306,8 +394,10 @@ export class WclapPlugin {
   }
 
   // events: [{time, type, ...}] sorted by time. input: [Float32Array L, R] or null.
-  // Returns {status, left, right, events} (outputs are views valid until the next call).
-  process(frames, {events = [], transport = null, input = null} = {}) {
+  // outputs: how many output ports to connect (1..3).
+  // Returns {status, left, right, events, constantMask, buses} (outputs are views
+  // valid until the next call; buses: [{left, right, constantMask}] per port).
+  process(frames, {events = [], transport = null, input = null, outputs = 1} = {}) {
     const m = this.module, p = this.process_;
     if (frames > this.maxFrames) throw Error('frames exceed maxFrames');
     let v = m.view();
@@ -325,7 +415,8 @@ export class WclapPlugin {
     v.setUint32(p.struct + 16, input ? p.inputs : 0, true);
     v.setUint32(p.struct + 20, p.outputs, true);
     v.setUint32(p.struct + 24, input ? 1 : 0, true);
-    v.setUint32(p.struct + 28, 1, true);
+    v.setUint32(p.struct + 28, outputs, true);
+    for (let port = 0; port < 3; ++port) v.setBigUint64(p.outputs + port * 24 + 16, 0n, true);
     v.setUint32(p.struct + 32, p.inEvents, true);
     v.setUint32(p.struct + 36, p.outEvents, true);
     if (input) {
@@ -342,9 +433,10 @@ export class WclapPlugin {
     m.output = null;
     this.steadyTime += BigInt(frames);
     const heap = new Float32Array(m.memory.buffer);
-    const left = heap.subarray((p.buffers >> 2) + 2 * this.maxFrames, (p.buffers >> 2) + 2 * this.maxFrames + frames);
-    const right = heap.subarray((p.buffers >> 2) + 3 * this.maxFrames, (p.buffers >> 2) + 3 * this.maxFrames + frames);
-    return {status, left, right, events: out.map(decodeEvent), constantMask: m.view().getBigUint64(p.outputs + 16, true)};
+    const channel = c => heap.subarray((p.buffers >> 2) + c * this.maxFrames, (p.buffers >> 2) + c * this.maxFrames + frames);
+    const buses = Array.from({length: outputs}, (_, port) => ({left: channel(2 + 2 * port), right: channel(3 + 2 * port),
+      constantMask: m.view().getBigUint64(p.outputs + port * 24 + 16, true)}));
+    return {status, left: buses[0].left, right: buses[0].right, buses, events: out.map(decodeEvent), constantMask: buses[0].constantMask};
   }
 
   stopProcessing() { this.method(28)(this.pointer); this.processing = false; }
@@ -452,6 +544,54 @@ export class WclapPlugin {
     finally { m.free(out); }
   }
   guiCanResize() { return !!this.extFn('gui', 6)(this.pointer); }
+  guiSetScale(scale) { return !!this.extFn('gui', 4)(this.pointer, scale); }
+  guiResizeHints() {
+    const m = this.module, out = m.malloc(12);
+    try {
+      if (!this.extFn('gui', 7)(this.pointer, out)) return null;
+      const v = m.view();
+      return {horizontal: !!v.getUint8(out), vertical: !!v.getUint8(out + 1), preserveAspectRatio: !!v.getUint8(out + 2),
+        aspectWidth: v.getUint32(out + 4, true), aspectHeight: v.getUint32(out + 8, true)};
+    } finally { m.free(out); }
+  }
+  guiAdjustSize(width, height) {
+    const m = this.module, out = m.malloc(8);
+    try {
+      m.view().setUint32(out, width, true); m.view().setUint32(out + 4, height, true);
+      return this.extFn('gui', 8)(this.pointer, out, out + 4) ? {width: m.u32(out), height: m.u32(out + 4)} : null;
+    } finally { m.free(out); }
+  }
+  guiSetSize(width, height) { return !!this.extFn('gui', 9)(this.pointer, width, height); }
+  guiShow() { return !!this.extFn('gui', 13)(this.pointer); }
+  guiHide() { return !!this.extFn('gui', 14)(this.pointer); }
+
+  // ---- voice info, remote controls, presets ----
+  voiceInfo() {
+    const m = this.module, out = m.malloc(16);
+    try {
+      if (!this.extFn('voiceInfo', 0)(this.pointer, out)) return null;
+      const v = m.view();
+      return {count: v.getUint32(out, true), capacity: v.getUint32(out + 4, true), flags: Number(v.getBigUint64(out + 8, true))};
+    } finally { m.free(out); }
+  }
+  remotePages() {
+    const m = this.module, count = this.extFn('remoteControls', 0)(this.pointer) >>> 0, pages = [];
+    const page = m.malloc(552);
+    try {
+      for (let i = 0; i < count; ++i) {
+        if (!this.extFn('remoteControls', 1)(this.pointer, i, page)) { pages.push(null); continue; }
+        const v = m.view();
+        pages.push({section: m.readString(page, 256), id: v.getUint32(page + 256, true), name: m.readString(page + 260, 256),
+          params: Array.from({length: 8}, (_, k) => v.getUint32(page + 516 + 4 * k, true)), forPreset: !!v.getUint8(page + 548)});
+      }
+    } finally { m.free(page); }
+    return pages;
+  }
+  loadPreset(location, {kind = 0, key = null} = {}) {
+    const m = this.module, path = m.cString(location), k = key === null ? 0 : m.cString(key);
+    try { return !!this.extFn('presetLoad', 0)(this.pointer, kind, path, k); }
+    finally { m.free(path); if (k) m.free(k); }
+  }
   guiDestroy() { this.extFn('gui', 3)(this.pointer); }
   webviewUri() {
     const m = this.module;

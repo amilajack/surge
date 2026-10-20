@@ -23,10 +23,11 @@ export function juceHash(identifier) {
 }
 
 let compiled;
-export async function loadModule({seed = 1, random, log} = {}) {
+// user: a writable backend preopened as "/user" (wasi.mjs memoryFiles()).
+export async function loadModule({seed = 1, random, log, user} = {}) {
   compiled ??= await WebAssembly.compile(fs.readFileSync(modulePath));
   const files = await nodeFiles(fs.existsSync(bundle) ? bundle : path.dirname(modulePath));
-  return WclapModule.load({module: compiled, files, seed, random, log});
+  return WclapModule.load({module: compiled, files, seed, random, log, user});
 }
 
 // The native harness's schedule: C4 (MIDI velocity 100) before the first block,
