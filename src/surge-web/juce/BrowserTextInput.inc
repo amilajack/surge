@@ -23,7 +23,7 @@
                 target->beginInputMethodTransaction();
         }
         inputFormats.clear();
-        dirty = true;
+        dirty = repaintAll = true;
     }
     void syncInput()
     {
@@ -126,7 +126,7 @@
         target->setHighlightedRegion({jmin(a,b), jmax(a,b)});
         if (!composing) target->beginInputMethodTransaction();
         syncInput();
-        dirty = true;
+        dirty = repaintAll = true;
         return true;
     }
     void compositionInput(int generation, bool begin)
@@ -161,6 +161,6 @@
         if (start < 0) inputFormats.clear();
         else if (style && thickness && end >= start)
             inputFormats.push_back({{start,end},style,thickness});
-        dirty = true;
+        dirty = repaintAll = true;
     }
   private:

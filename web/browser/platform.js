@@ -31,6 +31,9 @@ if (typeof window !== 'undefined') {
       canvas?.remove();
     },
     canvas(id) { return host.canvases.get(id) || document.getElementById(id); },
+    // Canvas backing pixels per CSS pixel: a WCLAP host's GUI scale when it set one
+    // (clap.gui set_scale), else the window's device pixel ratio.
+    pixelRatio() { return globalThis.SurgeWclapPage?.hostScale || window.devicePixelRatio || 1; },
     activeElement() {
       let active = document.activeElement;
       while (active?.shadowRoot?.activeElement) active = active.shadowRoot.activeElement;
