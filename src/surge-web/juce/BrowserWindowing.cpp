@@ -52,10 +52,15 @@ class BrowserPeer final : public ComponentPeer
     const int inputPeerId{++browserPeerId};
     String canvasId;
     Rectangle<int> bounds;
-    bool visible = true, fullscreen = false, dirty = true;
+    bool visible = true, fullscreen = false, dirty = true, repaintAll = true;
     double pixelScale = 1.;
     Image backing;
+    // What needs painting, in component coordinates: only that part of the backing
+    // store is repainted and copied to the canvas (at 2x a full repaint is four
+    // times the pixels, and meters repaint 30 times a second).
+    RectangleList<int> dirtyRegion;
     std::vector<uint8_t> rgba;
+    static double windowPixelRatio() { return EM_ASM_DOUBLE({ return SurgeHost.pixelRatio(); }); }
     static ModifierKeys mouseModifiers(const EmscriptenMouseEvent &event)
     {
         return ModifierKeys((event.shiftKey ? ModifierKeys::shiftModifier : 0) |
@@ -228,7 +233,7 @@ class BrowserPeer final : public ComponentPeer
     {
         bounds = r;
         fullscreen = fs;
-        pixelScale = EM_ASM_DOUBLE({ return window.devicePixelRatio || 1; });
+        pixelScale = windowPixelRatio();
         if (r.getWidth() > 0 && r.getHeight() > 0)
         {
             backing = Image(Image::ARGB, int(std::ceil(r.getWidth() * pixelScale)),
@@ -247,7 +252,7 @@ class BrowserPeer final : public ComponentPeer
             },
             canvasId.toRawUTF8(), r.getX(), r.getY(), r.getWidth(), r.getHeight(),
             backing.getWidth(), backing.getHeight());
-        dirty = true;
+        dirty = repaintAll = true;
         handleMovedOrResized();
     }
     Rectangle<int> getBounds() const override { return bounds; }
@@ -320,10 +325,14 @@ class BrowserPeer final : public ComponentPeer
         if ((getStyleFlags() & windowIgnoresKeyPresses) == 0 && !isFocused())
             EM_ASM({ SurgeHost.canvas(UTF8ToString($0)).focus(); }, canvasId.toRawUTF8());
     }
-    void repaint(const Rectangle<int> &) override { dirty = true; }
+    void repaint(const Rectangle<int> &area) override
+    {
+        dirtyRegion.add(area);
+        dirty = true;
+    }
     void performAnyPendingRepaintsNow() override
     {
-        if (pixelScale != EM_ASM_DOUBLE({ return window.devicePixelRatio || 1; }))
+        if (pixelScale != windowPixelRatio())
             setBounds(bounds, fullscreen);
         callVBlankListeners(emscripten_get_now() / 1000.);
         if (dirty || (inputActive && (!isFocused() ||
@@ -332,30 +341,57 @@ class BrowserPeer final : public ComponentPeer
         if (!dirty || !visible || backing.isNull())
             return;
         dirty = false;
-        backing.clear(backing.getBounds());
-        auto context = backing.createLowLevelContext();
-        context->addTransform(AffineTransform::scale(float(pixelScale)));
-        handlePaint(*context);
+        // Composition underlines are drawn over the whole window: repaint all of it.
+        const auto window = bounds.withZeroOrigin();
+        const auto area = repaintAll || !inputFormats.empty()
+                              ? window
+                              : dirtyRegion.getBounds().getIntersection(window);
+        repaintAll = false;
+        dirtyRegion.clear();
+        if (area.isEmpty())
+            return;
+        // The backing pixels that cover the area.
+        const int x0 = std::max(0, int(std::floor(area.getX() * pixelScale)));
+        const int y0 = std::max(0, int(std::floor(area.getY() * pixelScale)));
+        const int x1 = std::min(backing.getWidth(), int(std::ceil(area.getRight() * pixelScale)));
+        const int y1 = std::min(backing.getHeight(), int(std::ceil(area.getBottom() * pixelScale)));
+        if (x1 <= x0 || y1 <= y0)
+            return;
+        const Rectangle<int> pixels(x0, y0, x1 - x0, y1 - y0);
+        backing.clear(pixels);
+        {
+            auto context = backing.createLowLevelContext();
+            context->clipToRectangle(pixels);
+            context->addTransform(AffineTransform::scale(float(pixelScale)));
+            handlePaint(*context);
+        }
         paintInput();
-        Image::BitmapData pixels(backing, Image::BitmapData::readOnly);
-        for (int y = 0; y < backing.getHeight(); ++y)
-            for (int x = 0; x < backing.getWidth(); ++x)
+        // Premultiplied ARGB to the canvas's straight RGBA, for the area only.
+        Image::BitmapData data(backing, x0, y0, pixels.getWidth(), pixels.getHeight(),
+                               Image::BitmapData::readOnly);
+        rgba.resize(size_t(pixels.getWidth()) * pixels.getHeight() * 4);
+        auto *out = rgba.data();
+        for (int y = 0; y < pixels.getHeight(); ++y)
+        {
+            const auto *line = data.getLinePointer(y);
+            for (int x = 0; x < pixels.getWidth(); ++x, out += 4)
             {
-                const auto color = pixels.getPixelColour(x, y);
-                const auto offset = (size_t(y) * backing.getWidth() + x) * 4;
-                rgba[offset] = color.getRed();
-                rgba[offset + 1] = color.getGreen();
-                rgba[offset + 2] = color.getBlue();
-                rgba[offset + 3] = color.getAlpha();
+                auto pixel = *reinterpret_cast<const PixelARGB *>(line + x * data.pixelStride);
+                pixel.unpremultiply();
+                out[0] = pixel.getRed();
+                out[1] = pixel.getGreen();
+                out[2] = pixel.getBlue();
+                out[3] = pixel.getAlpha();
             }
+        }
         EM_ASM(
             {
                 const c = SurgeHost.canvas(UTF8ToString($0));
-                const image = c.getContext('2d').createImageData(c.width, c.height);
-                image.data.set(HEAPU8.subarray($1, $1 + c.width * c.height * 4));
-                c.getContext('2d').putImageData(image, 0, 0);
+                const image = c.getContext('2d').createImageData($3, $4);
+                image.data.set(HEAPU8.subarray($5, $5 + $3 * $4 * 4));
+                c.getContext('2d').putImageData(image, $1, $2);
             },
-            canvasId.toRawUTF8(), rgba.data());
+            canvasId.toRawUTF8(), x0, y0, pixels.getWidth(), pixels.getHeight(), rgba.data());
     }
     void setAlpha(float alpha) override
     {

@@ -21,7 +21,11 @@ StarChild::StarChild(audioMasterCallback audioMaster) :
 
 	int count;
 
-	for(count = 0; count < 44101; count++) {d[count] = 0.0;}
+	// Every element and dCount: the delay used to start from whatever memory held,
+	// so renders depended on the heap (Surge: deterministic WCLAP renders).
+	for(count = 0; count < 45102; count++) {d[count] = 0.0;}
+	dCount = 0;
+	for(count = 0; count < 171; count++) {p[count] = 0; t[count] = 0; outL[count] = 0.0; outR[count] = 0.0;}
 
 	for(count = 0; count < 11; count++) {wearL[count] = 0.0; wearR[count] = 0.0; factor[count] = 0.0;}
 

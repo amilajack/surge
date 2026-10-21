@@ -77,9 +77,11 @@ static bool prepareEvaluator(SurgeStorage *storage, FormulaModulatorStorage *fs,
         if (stateData.audioState == nullptr)
         {
 #if HAS_LUA
-#if SURGE_WEB
+#if SURGE_WEB && !SURGE_WCLAP
             // Sized for the factory formula library with ample headroom; beyond
             // it, allocations fall back to the heap (and the callback audit sees them).
+            // (A WCLAP has no allocation-free callback to protect, and 16 MiB per
+            // instance would exhaust a module's 4 GiB address space at 100 tracks.)
             stateData.audioArena = std::make_unique<LuaArena>(std::size_t(16) << 20);
             stateData.audioState = lua_newstate(&LuaArena::allocate, stateData.audioArena.get());
 #else

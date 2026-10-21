@@ -70,7 +70,8 @@ if (typeof window !== 'undefined') {
     SurgeRuntime.record('factory-startup-start');
     addRunDependency('surge-factory-index');
     SurgeFactory.ready = (async () => {
-      const {FactoryLibrary} = await import('./library.js');
+      // A WCLAP page loads the library itself (it has no URL to import from).
+      const {FactoryLibrary} = globalThis.SurgeFactoryLibrary ? {FactoryLibrary: globalThis.SurgeFactoryLibrary} : await import('./library.js');
       const library = await FactoryLibrary.open('./library/manifest.json', message => SurgeBrowser.reportFile(message));
       await library.installPatchIndex(FS);
       library.installWavetableCatalog(FS);

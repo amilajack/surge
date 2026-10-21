@@ -383,9 +383,8 @@ template <bool FM> void ClassicOscillator::convolute(int voice, bool stereo)
     */
     unsigned int m = ((ipos >> 16) & 0xff) * (FIRipol_N << 1);
     unsigned int lipolui16 = (ipos & 0xffff);
-    auto lipol128 = SIMD_MM(setzero_ps)();
-    lipol128 = SIMD_MM(cvtsi32_ss)(lipol128, lipolui16);
-    lipol128 = SIMD_MM(shuffle_ps)(lipol128, lipol128, SIMD_MM_SHUFFLE(0, 0, 0, 0));
+    // A splat, not a scalar conversion and a shuffle (one vector op where SSE is emulated).
+    const auto lipol128 = SIMD_MM(set1_ps)(float(lipolui16));
 
     int k;
     const float s = 0.99952f;
@@ -495,10 +494,8 @@ template <bool FM> void ClassicOscillator::convolute(int voice, bool stereo)
 
     if (stereo)
     {
-        auto g128L = SIMD_MM(load_ss)(&g);
-        g128L = SIMD_MM(shuffle_ps)(g128L, g128L, SIMD_MM_SHUFFLE(0, 0, 0, 0));
-        auto g128R = SIMD_MM(load_ss)(&gR);
-        g128R = SIMD_MM(shuffle_ps)(g128R, g128R, SIMD_MM_SHUFFLE(0, 0, 0, 0));
+        const auto g128L = SIMD_MM(set1_ps)(g);
+        const auto g128R = SIMD_MM(set1_ps)(gR);
 
         for (k = 0; k < FIRipol_N; k += 4)
         {
@@ -521,8 +518,7 @@ template <bool FM> void ClassicOscillator::convolute(int voice, bool stereo)
         /*
         ** This is SSE for the convolution described above
         */
-        auto g128 = SIMD_MM(load_ss)(&g);
-        g128 = SIMD_MM(shuffle_ps)(g128, g128, SIMD_MM_SHUFFLE(0, 0, 0, 0));
+        const auto g128 = SIMD_MM(set1_ps)(g);
 
         for (k = 0; k < FIRipol_N; k += 4)
         {
@@ -714,45 +710,53 @@ void ClassicOscillator::process_block(float pitch0, float drift, bool stereo, bo
 
     /*
     ** And the DC offset and pitch-scaled output attenuation
+    **
+    ** This loop is a scalar recurrence. It is written on floats rather than with the SSE
+    ** scalar (_ss) intrinsics it once used: those compute the same single operations, but
+    ** where SSE is emulated (SIMDe on Wasm) each one becomes a vector operation plus a lane
+    ** blend on the loop's critical path. One operation per statement, so no compiler fuses
+    ** a multiply into an add and the results stay those of the intrinsics.
     */
-    auto mdc = SIMD_MM(load_ss)(&dc);
-    auto oa = SIMD_MM(load_ss)(&out_attenuation);
-    oa = SIMD_MM(mul_ss)(oa, SIMD_MM(load_ss)(&pitchmult));
+    float mdc = dc;
+    float oa = out_attenuation;
+    oa = oa * pitchmult;
 
     /*
     ** The Coefs here are from the character filter, and are set in ::init
     */
-    const auto mmone = SIMD_MM(set_ss)(1.0f);
-    auto char_b0 = SIMD_MM(load_ss)(&(charFilt.CoefB0));
-    auto char_b1 = SIMD_MM(load_ss)(&(charFilt.CoefB1));
-    auto char_a1 = SIMD_MM(load_ss)(&(charFilt.CoefA1));
+    const float char_b0 = charFilt.CoefB0;
+    const float char_b1 = charFilt.CoefB1;
+    const float char_a1 = charFilt.CoefA1;
+    float out = SIMD_MM(cvtss_f32)(osc_out), out2 = SIMD_MM(cvtss_f32)(osc_out2);
+    float outR = SIMD_MM(cvtss_f32)(osc_outR), out2R = SIMD_MM(cvtss_f32)(osc_out2R);
 
     for (k = 0; k < BLOCK_SIZE_OS; k++)
     {
-        auto dcb = SIMD_MM(load_ss)(&dcbuffer[bufpos + k]);
-        auto hpf = SIMD_MM(load_ss)(&hpfblock[k]);
-        auto ob = SIMD_MM(load_ss)(&oscbuffer[bufpos + k]);
+        const float dcb = dcbuffer[bufpos + k];
+        const float hpf = hpfblock[k];
+        float ob = oscbuffer[bufpos + k];
 
         /*
         ** a = prior output * HPF value
         */
-        auto a = SIMD_MM(mul_ss)(osc_out, hpf);
+        float a = out * hpf;
 
         /*
         ** mdc += DC level
         */
-        mdc = SIMD_MM(add_ss)(mdc, dcb);
+        mdc = mdc + dcb;
 
         /*
         ** output buffer += DC * out attenuation
         */
-        ob = SIMD_MM(sub_ss)(ob, SIMD_MM(mul_ss)(mdc, oa));
+        const float dcOut = mdc * oa;
+        ob = ob - dcOut;
 
         /*
         ** Stow away the last output and make the new output the oscbuffer + the filter controbution
         */
-        auto LastOscOut = osc_out;
-        osc_out = SIMD_MM(add_ss)(a, ob);
+        const float lastOut = out;
+        out = a + ob;
 
         /*
         ** So at that point osc_out = a + ob; = prior_out * HPF + oscbuffer + DC * attenuation;
@@ -765,39 +769,50 @@ void ClassicOscillator::process_block(float pitch0, float drift, bool stereo, bo
         **
         ** which is the classic biquad formula.
         */
-
-        osc_out2 = SIMD_MM(add_ss)(SIMD_MM(mul_ss)(osc_out2, char_a1),
-                                   SIMD_MM(add_ss)(SIMD_MM(mul_ss)(osc_out, char_b0),
-                                                   SIMD_MM(mul_ss)(LastOscOut, char_b1)));
+        {
+            const float feedback = out2 * char_a1;
+            const float current = out * char_b0;
+            const float last = lastOut * char_b1;
+            const float input = current + last;
+            out2 = feedback + input;
+        }
 
         /*
         ** And so store the output of the HPF as the output
         */
-        SIMD_MM(store_ss)(&output[k], osc_out2);
+        output[k] = out2;
 
         // And do it all again if we are stereo
         if (stereo)
         {
-            ob = SIMD_MM(load_ss)(&oscbufferR[bufpos + k]);
+            ob = oscbufferR[bufpos + k];
 
-            a = SIMD_MM(mul_ss)(osc_outR, hpf);
+            a = outR * hpf;
 
-            ob = SIMD_MM(sub_ss)(ob, SIMD_MM(mul_ss)(mdc, oa));
-            auto LastOscOutR = osc_outR;
-            osc_outR = SIMD_MM(add_ss)(a, ob);
+            ob = ob - dcOut;
+            const float lastOutR = outR;
+            outR = a + ob;
 
-            osc_out2R = SIMD_MM(add_ss)(SIMD_MM(mul_ss)(osc_out2R, char_a1),
-                                        SIMD_MM(add_ss)(SIMD_MM(mul_ss)(osc_outR, char_b0),
-                                                        SIMD_MM(mul_ss)(LastOscOutR, char_b1)));
+            const float feedback = out2R * char_a1;
+            const float current = outR * char_b0;
+            const float last = lastOutR * char_b1;
+            const float input = current + last;
+            out2R = feedback + input;
 
-            SIMD_MM(store_ss)(&outputR[k], osc_out2R);
+            outputR[k] = out2R;
         }
     }
+
+    // Only lane 0 of these registers ever carries a value.
+    osc_out = SIMD_MM(set_ss)(out);
+    osc_out2 = SIMD_MM(set_ss)(out2);
+    osc_outR = SIMD_MM(set_ss)(outR);
+    osc_out2R = SIMD_MM(set_ss)(out2R);
 
     /*
     ** Store the DC accumulation
     */
-    SIMD_MM(store_ss)(&dc, mdc);
+    dc = mdc;
 
     /*
     ** And clean up and advance our buffer pointer

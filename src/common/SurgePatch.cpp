@@ -3374,369 +3374,7 @@ void SurgePatch::load_xml(const void *data, int datasize, bool is_preset)
             std::string sval;
             TiXmlElement *p;
 
-            // This is the non-legacy way to save editor state
-            p = TINYXML_SAFE_TO_ELEMENT(de->FirstChild("editor"));
-
-            if (p)
-            {
-                if (p->QueryIntAttribute("current_scene", &ival) == TIXML_SUCCESS)
-                {
-                    dawExtraState.editor.current_scene = ival;
-                }
-
-                if (p->QueryIntAttribute("current_fx", &ival) == TIXML_SUCCESS)
-                {
-                    dawExtraState.editor.current_fx = ival;
-                }
-
-                if (p->QueryIntAttribute("modsource", &ival) == TIXML_SUCCESS)
-                {
-                    dawExtraState.editor.modsource = (modsources)ival;
-                }
-
-                if (p->QueryIntAttribute("isMSEGOpen", &ival) == TIXML_SUCCESS)
-                {
-                    dawExtraState.editor.isMSEGOpen = ival;
-                }
-                else
-                {
-                    dawExtraState.editor.isMSEGOpen = false;
-                }
-
-                dawExtraState.editor.activeOverlays.clear();
-
-                auto overs = TINYXML_SAFE_TO_ELEMENT(p->FirstChild("overlays"));
-
-                if (overs)
-                {
-                    auto curro = TINYXML_SAFE_TO_ELEMENT(overs->FirstChild("overlay"));
-
-                    while (curro)
-                    {
-                        DAWExtraStateStorage::EditorState::OverlayState os;
-                        int tv;
-
-                        if (curro->QueryIntAttribute("whichOverlay", &tv) == TIXML_SUCCESS)
-                        {
-                            os.whichOverlay = tv;
-                        }
-
-                        if (curro->QueryIntAttribute("isTornOut", &tv) == TIXML_SUCCESS)
-                        {
-                            os.isTornOut = tv;
-                        }
-
-                        if (curro->QueryIntAttribute("tearOut_x", &tv) == TIXML_SUCCESS)
-                        {
-                            os.tearOutPosition.first = tv;
-                        }
-
-                        if (curro->QueryIntAttribute("tearOut_y", &tv) == TIXML_SUCCESS)
-                        {
-                            os.tearOutPosition.second = tv;
-                        }
-
-                        dawExtraState.editor.activeOverlays.push_back(os);
-                        curro = TINYXML_SAFE_TO_ELEMENT(curro->NextSiblingElement("overlay"));
-                    }
-                }
-
-                // Just to be sure, even though constructor should do this
-                dawExtraState.editor.msegStateIsPopulated = false;
-
-                for (int sc = 0; sc < n_scenes; sc++)
-                {
-                    std::string con = "current_osc_" + std::to_string(sc);
-
-                    if (p->QueryIntAttribute(con, &ival) == TIXML_SUCCESS)
-                    {
-                        dawExtraState.editor.current_osc[sc] = ival;
-                    }
-
-                    con = "modsource_editor_" + std::to_string(sc);
-
-                    if (p->QueryIntAttribute(con, &ival) == TIXML_SUCCESS)
-                    {
-                        dawExtraState.editor.modsource_editor[sc] = (modsources)ival;
-                    }
-
-                    for (int lf = 0; lf < n_lfos; ++lf)
-                    {
-                        std::string msns =
-                            "mseg_state_" + std::to_string(sc) + "_" + std::to_string(lf);
-                        auto mss = TINYXML_SAFE_TO_ELEMENT(p->FirstChild(msns));
-
-                        if (mss)
-                        {
-                            auto q = &(dawExtraState.editor.msegEditState[sc][lf]);
-                            double dv;
-                            int vv;
-
-                            dawExtraState.editor.msegStateIsPopulated = true;
-
-                            if (!userPrefRestoreMSEGFromPatch &&
-                                mss->QueryDoubleAttribute("hSnap", &dv) == TIXML_SUCCESS)
-                            {
-                                msegs[sc][lf].hSnap = dv;
-                            }
-
-                            if (mss->QueryDoubleAttribute("hSnapDefault", &dv) == TIXML_SUCCESS)
-                            {
-                                // This is a case where we have the hSnapDefault in the DAW extra
-                                // state from the majority of the 18 run so at least try
-                                if (msegs[sc][lf].hSnapDefault == MSEGStorage::defaultHSnapDefault)
-                                {
-                                    msegs[sc][lf].hSnapDefault = dv;
-                                }
-                            }
-
-                            if (!userPrefRestoreMSEGFromPatch &&
-                                mss->QueryDoubleAttribute("vSnap", &dv) == TIXML_SUCCESS)
-                            {
-                                msegs[sc][lf].vSnap = dv;
-                            }
-
-                            if (mss->QueryDoubleAttribute("vSnapDefault", &dv) == TIXML_SUCCESS)
-                            {
-                                if (msegs[sc][lf].vSnapDefault == MSEGStorage::defaultVSnapDefault)
-                                {
-                                    msegs[sc][lf].vSnapDefault = dv;
-                                }
-                            }
-
-                            if (mss->QueryIntAttribute("timeEditMode", &vv) == TIXML_SUCCESS)
-                            {
-                                q->timeEditMode = vv;
-                            }
-                        }
-                    }
-
-                    auto loadCodeEditorState =
-                        [this](TiXmlElement *fss,
-                               DAWExtraStateStorage::EditorState::CodeEditorState &q) {
-                            int i;
-                            bool b;
-                            std::string s;
-
-                            if (fss->QueryIntAttribute("scroll", &i) == TIXML_SUCCESS)
-                            {
-                                q.scroll = i;
-                            }
-
-                            if (fss->QueryIntAttribute("caretPosition", &i) == TIXML_SUCCESS)
-                            {
-                                q.caretPosition = i;
-                            }
-
-                            if (fss->QueryIntAttribute("selectStart", &i) == TIXML_SUCCESS)
-                            {
-                                q.selectStart = i;
-                            }
-
-                            if (fss->QueryIntAttribute("selectEnd", &i) == TIXML_SUCCESS)
-                            {
-                                q.selectEnd = i;
-                            }
-
-                            // popup ( find&replace,goto line etc )
-
-                            if (fss->QueryBoolAttribute("popupOpen", &b) == TIXML_SUCCESS)
-                            {
-                                q.popupOpen = b;
-                            }
-
-                            if (fss->QueryIntAttribute("popupType", &i) == TIXML_SUCCESS)
-                            {
-                                q.popupType = i;
-                            }
-
-                            if (fss->QueryBoolAttribute("popupCaseSensitive", &b) == TIXML_SUCCESS)
-                            {
-                                q.popupCaseSensitive = b;
-                            }
-
-                            if (fss->QueryBoolAttribute("popupWholeWord", &b) == TIXML_SUCCESS)
-                            {
-                                q.popupWholeWord = b;
-                            }
-
-                            if (fss->QueryStringAttribute("popupText1", &s) == TIXML_SUCCESS)
-                            {
-                                q.popupText1 = s;
-                            }
-
-                            if (fss->QueryStringAttribute("popupText2", &s) == TIXML_SUCCESS)
-                            {
-                                q.popupText2 = s;
-                            }
-
-                            if (fss->QueryIntAttribute("popupCurrentResult", &i) == TIXML_SUCCESS)
-                            {
-                                q.popupCurrentResult = i;
-                            }
-                        };
-
-                    for (int lf = 0; lf < n_lfos; ++lf)
-                    {
-                        std::string fsns =
-                            "formula_state_" + std::to_string(sc) + "_" + std::to_string(lf);
-                        auto fss = TINYXML_SAFE_TO_ELEMENT(p->FirstChild(fsns));
-
-                        if (fss)
-                        {
-                            auto q = &(dawExtraState.editor.formulaEditState[sc][lf]);
-
-                            int i;
-                            bool b;
-                            std::string s;
-
-                            q->codeOrPrelude = 0;
-                            q->debuggerOpen = false;
-
-                            // debugger
-
-                            if (fss->QueryIntAttribute("codeOrPrelude", &i) == TIXML_SUCCESS)
-                            {
-                                q->codeOrPrelude = i;
-                            }
-
-                            if (fss->QueryIntAttribute("debuggerOpen", &i) == TIXML_SUCCESS)
-                            {
-                                q->debuggerOpen = i;
-                            }
-
-                            if (fss->QueryBoolAttribute("debuggerBuiltInVariablesOpen", &b) ==
-                                TIXML_SUCCESS)
-                            {
-                                q->debuggerBuiltInVariablesOpen = b;
-                            }
-
-                            if (fss->QueryBoolAttribute("debuggerUserVariablesOpen", &b) ==
-                                TIXML_SUCCESS)
-                            {
-                                q->debuggerUserVariablesOpen = b;
-                            }
-
-                            if (fss->QueryStringAttribute("debuggerFilterText", &s) ==
-                                TIXML_SUCCESS)
-                            {
-                                q->debuggerFilterText = s;
-                            }
-
-                            if (fss->QueryIntAttribute("debuggerGroupState", &i) == TIXML_SUCCESS)
-                            {
-                                for (int c = 0; c < 8; c++)
-                                {
-                                    q->debuggerGroupState[c] = (i & (1 << c)) > 0;
-                                }
-                            }
-
-                            // code editor
-
-                            loadCodeEditorState(fss, q->codeEditor);
-                        }
-                    }
-
-                    for (int osc = 0; osc < n_oscs; osc++)
-                    {
-                        std::string wsns =
-                            "wtse_state_" + std::to_string(sc) + "_" + std::to_string(osc);
-                        auto wss = TINYXML_SAFE_TO_ELEMENT(p->FirstChild(wsns));
-
-                        if (wss)
-                        {
-                            auto q = &(dawExtraState.editor.wavetableScriptEditState[sc][osc]);
-                            int i;
-                            bool b;
-                            std::string s;
-
-                            q->codeOrPrelude = 0;
-
-                            if (wss->QueryIntAttribute("codeOrPrelude", &i) == TIXML_SUCCESS)
-                            {
-                                q->codeOrPrelude = i;
-                            }
-
-                            loadCodeEditorState(wss, q->codeEditor);
-                        }
-                    }
-                } // end of scene loop
-
-                {
-                    auto mes = &(dawExtraState.editor.modulationEditorState);
-                    auto node = TINYXML_SAFE_TO_ELEMENT(p->FirstChild("modulation_editor"));
-
-                    mes->sortOrder = 0;
-                    mes->filterOn = 0;
-                    mes->filterString = "";
-                    mes->filterInt = 0;
-
-                    if (node)
-                    {
-                        int val;
-
-                        if (node->QueryIntAttribute("sortOrder", &val) == TIXML_SUCCESS)
-                        {
-                            mes->sortOrder = val;
-                        }
-
-                        if (node->QueryIntAttribute("filterOn", &val) == TIXML_SUCCESS)
-                        {
-                            mes->filterOn = val;
-                        }
-
-                        if (node->QueryIntAttribute("filterInt", &val) == TIXML_SUCCESS)
-                        {
-                            mes->filterInt = val;
-                        }
-
-                        if (node->Attribute("filterString"))
-                        {
-                            mes->filterString = std::string(node->Attribute("filterString"));
-                        }
-                    }
-                }
-
-                {
-                    auto tes = &(dawExtraState.editor.tuningOverlayState);
-                    auto node = TINYXML_SAFE_TO_ELEMENT(p->FirstChild("tuning_overlay"));
-
-                    tes->editMode = 0;
-
-                    if (node)
-                    {
-                        int val;
-
-                        if (node->QueryIntAttribute("editMode", &val) == TIXML_SUCCESS)
-                        {
-                            tes->editMode = val;
-                        }
-                    }
-                }
-                {
-                    auto oos = &(dawExtraState.editor.oscilloscopeOverlayState);
-                    auto node = TINYXML_SAFE_TO_ELEMENT(p->FirstChild("oscilloscope_overlay"));
-
-                    if (node)
-                    {
-                        node->QueryIntAttribute("mode", &oos->mode);
-                        node->QueryFloatAttribute("trigger_speed", &oos->trigger_speed);
-                        node->QueryFloatAttribute("trigger_level", &oos->trigger_level);
-                        node->QueryFloatAttribute("trigger_limit", &oos->trigger_limit);
-                        node->QueryFloatAttribute("time_window", &oos->time_window);
-                        node->QueryFloatAttribute("amp_window", &oos->amp_window);
-                        node->QueryIntAttribute("trigger_type", &oos->trigger_type);
-                        node->QueryBoolAttribute("dc_kill", &oos->dc_kill);
-                        node->QueryBoolAttribute("sync_draw", &oos->sync_draw);
-                        node->QueryIntAttribute("keytrack_source", &oos->keytrack_source);
-                        node->QueryFloatAttribute("keytrack_cycles", &oos->keytrack_cycles);
-
-                        node->QueryFloatAttribute("noise_floor", &oos->noise_floor);
-                        node->QueryFloatAttribute("max_db", &oos->max_db);
-                        node->QueryFloatAttribute("decay_rate", &oos->decay_rate);
-                    }
-                }
-            } // end of editor populated block
+            loadEditorStateXml(de, userPrefRestoreMSEGFromPatch);
 
             p = TINYXML_SAFE_TO_ELEMENT(de->FirstChild("mpeEnabled"));
 
@@ -4483,154 +4121,7 @@ unsigned int SurgePatch::save_xml(void **data) // allocates mem, must be freed b
 
     if (dawExtraState.isPopulated)
     {
-        // This has a lecacy name since it was from before we moved into the editor object
-        TiXmlElement izf("instanceZoomFactor");
-        izf.SetAttribute("v", dawExtraState.editor.instanceZoomFactor);
-        dawExtraXML.InsertEndChild(izf);
-
-        TiXmlElement eds("editor");
-        eds.SetAttribute("current_scene", dawExtraState.editor.current_scene);
-        eds.SetAttribute("current_fx", dawExtraState.editor.current_fx);
-        eds.SetAttribute("modsource", dawExtraState.editor.modsource);
-
-        TiXmlElement over("overlays");
-        for (auto ol : dawExtraState.editor.activeOverlays)
-        {
-            TiXmlElement ox("overlay");
-            ox.SetAttribute("whichOverlay", ol.whichOverlay);
-            ox.SetAttribute("isTornOut", ol.isTornOut);
-            ox.SetAttribute("tearOut_x", ol.tearOutPosition.first);
-            ox.SetAttribute("tearOut_y", ol.tearOutPosition.second);
-            over.InsertEndChild(ox);
-        }
-        eds.InsertEndChild(over);
-
-        auto saveCodeEditorState = [this](TiXmlElement *fss,
-                                          DAWExtraStateStorage::EditorState::CodeEditorState &q) {
-            // document editor
-            fss->SetAttribute("scroll", q.scroll);
-            fss->SetAttribute("caretPosition", q.caretPosition);
-            fss->SetAttribute("selectStart", q.selectStart);
-            fss->SetAttribute("selectEnd", q.selectEnd);
-
-            // popup
-            fss->SetAttribute("popupOpen", q.popupOpen);
-            fss->SetAttribute("popupType", q.popupType);
-            fss->SetAttribute("popupCaseSensitive", q.popupCaseSensitive);
-            fss->SetAttribute("popupWholeWord", q.popupWholeWord);
-            fss->SetAttribute("popupText1", q.popupText1);
-            fss->SetAttribute("popupText2", q.popupText2);
-            fss->SetAttribute("popupCurrentResult", q.popupCurrentResult);
-        };
-
-        for (int sc = 0; sc < n_scenes; sc++)
-        {
-            std::string con = "current_osc_" + std::to_string(sc);
-            eds.SetAttribute(con, dawExtraState.editor.current_osc[sc]);
-            con = "modsource_editor_" + std::to_string(sc);
-            eds.SetAttribute(con, dawExtraState.editor.modsource_editor[sc]);
-
-            if (dawExtraState.editor.msegStateIsPopulated)
-            {
-                for (int lf = 0; lf < n_lfos; ++lf)
-                {
-                    auto q = &(dawExtraState.editor.msegEditState[sc][lf]);
-                    std::string msns =
-                        "mseg_state_" + std::to_string(sc) + "_" + std::to_string(lf);
-                    TiXmlElement mss(msns);
-                    /*
-                     * We still write this from model to DAS even though we don't read it unless
-                     * that one user option is set
-                     */
-                    mss.SetDoubleAttribute("hSnap", msegs[sc][lf].hSnap);
-                    mss.SetDoubleAttribute("vSnap", msegs[sc][lf].vSnap);
-                    mss.SetAttribute("timeEditMode", q->timeEditMode);
-                    eds.InsertEndChild(mss);
-                }
-            }
-
-            for (int lf = 0; lf < n_lfos; ++lf)
-            {
-                auto q = &(dawExtraState.editor.formulaEditState[sc][lf]);
-                std::string fsns = "formula_state_" + std::to_string(sc) + "_" + std::to_string(lf);
-                TiXmlElement fss(fsns);
-
-                // debugger
-                fss.SetAttribute("codeOrPrelude", q->codeOrPrelude);
-                fss.SetAttribute("debuggerOpen", q->debuggerOpen);
-                fss.SetAttribute("debuggerBuiltInVariablesOpen", q->debuggerBuiltInVariablesOpen);
-                fss.SetAttribute("debuggerUserVariablesOpen", q->debuggerUserVariablesOpen);
-
-                int groupStates = 0;
-                for (int i = 0; i < 8; i++)
-                {
-                    groupStates += ((q->debuggerGroupState[i] ? 1 : 0) << i);
-                }
-
-                fss.SetAttribute("debuggerGroupState", groupStates);
-
-                // code editor state
-                saveCodeEditorState(&fss, q->codeEditor);
-
-                eds.InsertEndChild(fss);
-            }
-
-            for (int os = 0; os < n_oscs; ++os)
-            {
-                auto q = &(dawExtraState.editor.wavetableScriptEditState[sc][os]);
-                std::string wsns = "wtse_state_" + std::to_string(sc) + "_" + std::to_string(os);
-                TiXmlElement wss(wsns);
-
-                wss.SetAttribute("codeOrPrelude", q->codeOrPrelude);
-
-                // code editor state
-                saveCodeEditorState(&wss, q->codeEditor);
-
-                eds.InsertEndChild(wss);
-            }
-
-            TiXmlElement modEd("modulation_editor");
-            modEd.SetAttribute("sortOrder", dawExtraState.editor.modulationEditorState.sortOrder);
-            modEd.SetAttribute("filterOn", dawExtraState.editor.modulationEditorState.filterOn);
-            modEd.SetAttribute("filterInt", dawExtraState.editor.modulationEditorState.filterInt);
-            modEd.SetAttribute("filterString",
-                               dawExtraState.editor.modulationEditorState.filterString);
-            eds.InsertEndChild(modEd);
-
-            TiXmlElement tunOl("tuning_overlay");
-            tunOl.SetAttribute("editMode", dawExtraState.editor.tuningOverlayState.editMode);
-            eds.InsertEndChild(tunOl);
-        }
-
-        // Add the oscilloscope settings
-        TiXmlElement scope("oscilloscope_overlay");
-        scope.SetAttribute("mode", dawExtraState.editor.oscilloscopeOverlayState.mode);
-        scope.SetDoubleAttribute("trigger_speed",
-                                 dawExtraState.editor.oscilloscopeOverlayState.trigger_speed);
-        scope.SetDoubleAttribute("trigger_level",
-                                 dawExtraState.editor.oscilloscopeOverlayState.trigger_level);
-        scope.SetDoubleAttribute("trigger_limit",
-                                 dawExtraState.editor.oscilloscopeOverlayState.trigger_limit);
-        scope.SetDoubleAttribute("time_window",
-                                 dawExtraState.editor.oscilloscopeOverlayState.time_window);
-        scope.SetDoubleAttribute("amp_window",
-                                 dawExtraState.editor.oscilloscopeOverlayState.amp_window);
-        scope.SetAttribute("trigger_type",
-                           dawExtraState.editor.oscilloscopeOverlayState.trigger_type);
-        scope.SetAttribute("dc_kill", dawExtraState.editor.oscilloscopeOverlayState.dc_kill);
-        scope.SetAttribute("sync_draw", dawExtraState.editor.oscilloscopeOverlayState.sync_draw);
-        scope.SetAttribute("keytrack_source",
-                           dawExtraState.editor.oscilloscopeOverlayState.keytrack_source);
-        scope.SetDoubleAttribute("keytrack_cycles",
-                                 dawExtraState.editor.oscilloscopeOverlayState.keytrack_cycles);
-        scope.SetDoubleAttribute("noise_floor",
-                                 dawExtraState.editor.oscilloscopeOverlayState.noise_floor);
-        scope.SetDoubleAttribute("max_db", dawExtraState.editor.oscilloscopeOverlayState.max_db);
-        scope.SetDoubleAttribute("decay_rate",
-                                 dawExtraState.editor.oscilloscopeOverlayState.decay_rate);
-        eds.InsertEndChild(scope);
-
-        dawExtraXML.InsertEndChild(eds);
+        saveEditorStateXml(dawExtraXML);
 
         TiXmlElement mpe("mpeEnabled");
         mpe.SetAttribute("v", dawExtraState.mpeEnabled ? 1 : 0);
@@ -5102,4 +4593,517 @@ bool SurgePatch::hasAnySnapshots() const
                 if (scene[sc].osc[osc].wtSnapshots[slot])
                     return true;
     return false;
+}
+
+void SurgePatch::loadEditorStateXml(TiXmlElement *de, bool userPrefRestoreMSEGFromPatch)
+{
+    int ival;
+    TiXmlElement *p;
+
+    // This is the non-legacy way to save editor state
+    p = TINYXML_SAFE_TO_ELEMENT(de->FirstChild("editor"));
+
+    if (p)
+    {
+        if (p->QueryIntAttribute("current_scene", &ival) == TIXML_SUCCESS)
+        {
+            dawExtraState.editor.current_scene = ival;
+        }
+
+        if (p->QueryIntAttribute("current_fx", &ival) == TIXML_SUCCESS)
+        {
+            dawExtraState.editor.current_fx = ival;
+        }
+
+        if (p->QueryIntAttribute("modsource", &ival) == TIXML_SUCCESS)
+        {
+            dawExtraState.editor.modsource = (modsources)ival;
+        }
+
+        if (p->QueryIntAttribute("isMSEGOpen", &ival) == TIXML_SUCCESS)
+        {
+            dawExtraState.editor.isMSEGOpen = ival;
+        }
+        else
+        {
+            dawExtraState.editor.isMSEGOpen = false;
+        }
+
+        dawExtraState.editor.activeOverlays.clear();
+
+        auto overs = TINYXML_SAFE_TO_ELEMENT(p->FirstChild("overlays"));
+
+        if (overs)
+        {
+            auto curro = TINYXML_SAFE_TO_ELEMENT(overs->FirstChild("overlay"));
+
+            while (curro)
+            {
+                DAWExtraStateStorage::EditorState::OverlayState os;
+                int tv;
+
+                if (curro->QueryIntAttribute("whichOverlay", &tv) == TIXML_SUCCESS)
+                {
+                    os.whichOverlay = tv;
+                }
+
+                if (curro->QueryIntAttribute("isTornOut", &tv) == TIXML_SUCCESS)
+                {
+                    os.isTornOut = tv;
+                }
+
+                if (curro->QueryIntAttribute("tearOut_x", &tv) == TIXML_SUCCESS)
+                {
+                    os.tearOutPosition.first = tv;
+                }
+
+                if (curro->QueryIntAttribute("tearOut_y", &tv) == TIXML_SUCCESS)
+                {
+                    os.tearOutPosition.second = tv;
+                }
+
+                dawExtraState.editor.activeOverlays.push_back(os);
+                curro = TINYXML_SAFE_TO_ELEMENT(curro->NextSiblingElement("overlay"));
+            }
+        }
+
+        // Just to be sure, even though constructor should do this
+        dawExtraState.editor.msegStateIsPopulated = false;
+
+        for (int sc = 0; sc < n_scenes; sc++)
+        {
+            std::string con = "current_osc_" + std::to_string(sc);
+
+            if (p->QueryIntAttribute(con, &ival) == TIXML_SUCCESS)
+            {
+                dawExtraState.editor.current_osc[sc] = ival;
+            }
+
+            con = "modsource_editor_" + std::to_string(sc);
+
+            if (p->QueryIntAttribute(con, &ival) == TIXML_SUCCESS)
+            {
+                dawExtraState.editor.modsource_editor[sc] = (modsources)ival;
+            }
+
+            for (int lf = 0; lf < n_lfos; ++lf)
+            {
+                std::string msns = "mseg_state_" + std::to_string(sc) + "_" + std::to_string(lf);
+                auto mss = TINYXML_SAFE_TO_ELEMENT(p->FirstChild(msns));
+
+                if (mss)
+                {
+                    auto q = &(dawExtraState.editor.msegEditState[sc][lf]);
+                    double dv;
+                    int vv;
+
+                    dawExtraState.editor.msegStateIsPopulated = true;
+
+                    if (!userPrefRestoreMSEGFromPatch &&
+                        mss->QueryDoubleAttribute("hSnap", &dv) == TIXML_SUCCESS)
+                    {
+                        msegs[sc][lf].hSnap = dv;
+                    }
+
+                    if (mss->QueryDoubleAttribute("hSnapDefault", &dv) == TIXML_SUCCESS)
+                    {
+                        // This is a case where we have the hSnapDefault in the DAW extra
+                        // state from the majority of the 18 run so at least try
+                        if (msegs[sc][lf].hSnapDefault == MSEGStorage::defaultHSnapDefault)
+                        {
+                            msegs[sc][lf].hSnapDefault = dv;
+                        }
+                    }
+
+                    if (!userPrefRestoreMSEGFromPatch &&
+                        mss->QueryDoubleAttribute("vSnap", &dv) == TIXML_SUCCESS)
+                    {
+                        msegs[sc][lf].vSnap = dv;
+                    }
+
+                    if (mss->QueryDoubleAttribute("vSnapDefault", &dv) == TIXML_SUCCESS)
+                    {
+                        if (msegs[sc][lf].vSnapDefault == MSEGStorage::defaultVSnapDefault)
+                        {
+                            msegs[sc][lf].vSnapDefault = dv;
+                        }
+                    }
+
+                    if (mss->QueryIntAttribute("timeEditMode", &vv) == TIXML_SUCCESS)
+                    {
+                        q->timeEditMode = vv;
+                    }
+                }
+            }
+
+            auto loadCodeEditorState =
+                [this](TiXmlElement *fss, DAWExtraStateStorage::EditorState::CodeEditorState &q) {
+                    int i;
+                    bool b;
+                    std::string s;
+
+                    if (fss->QueryIntAttribute("scroll", &i) == TIXML_SUCCESS)
+                    {
+                        q.scroll = i;
+                    }
+
+                    if (fss->QueryIntAttribute("caretPosition", &i) == TIXML_SUCCESS)
+                    {
+                        q.caretPosition = i;
+                    }
+
+                    if (fss->QueryIntAttribute("selectStart", &i) == TIXML_SUCCESS)
+                    {
+                        q.selectStart = i;
+                    }
+
+                    if (fss->QueryIntAttribute("selectEnd", &i) == TIXML_SUCCESS)
+                    {
+                        q.selectEnd = i;
+                    }
+
+                    // popup ( find&replace,goto line etc )
+
+                    if (fss->QueryBoolAttribute("popupOpen", &b) == TIXML_SUCCESS)
+                    {
+                        q.popupOpen = b;
+                    }
+
+                    if (fss->QueryIntAttribute("popupType", &i) == TIXML_SUCCESS)
+                    {
+                        q.popupType = i;
+                    }
+
+                    if (fss->QueryBoolAttribute("popupCaseSensitive", &b) == TIXML_SUCCESS)
+                    {
+                        q.popupCaseSensitive = b;
+                    }
+
+                    if (fss->QueryBoolAttribute("popupWholeWord", &b) == TIXML_SUCCESS)
+                    {
+                        q.popupWholeWord = b;
+                    }
+
+                    if (fss->QueryStringAttribute("popupText1", &s) == TIXML_SUCCESS)
+                    {
+                        q.popupText1 = s;
+                    }
+
+                    if (fss->QueryStringAttribute("popupText2", &s) == TIXML_SUCCESS)
+                    {
+                        q.popupText2 = s;
+                    }
+
+                    if (fss->QueryIntAttribute("popupCurrentResult", &i) == TIXML_SUCCESS)
+                    {
+                        q.popupCurrentResult = i;
+                    }
+                };
+
+            for (int lf = 0; lf < n_lfos; ++lf)
+            {
+                std::string fsns = "formula_state_" + std::to_string(sc) + "_" + std::to_string(lf);
+                auto fss = TINYXML_SAFE_TO_ELEMENT(p->FirstChild(fsns));
+
+                if (fss)
+                {
+                    auto q = &(dawExtraState.editor.formulaEditState[sc][lf]);
+
+                    int i;
+                    bool b;
+                    std::string s;
+
+                    q->codeOrPrelude = 0;
+                    q->debuggerOpen = false;
+
+                    // debugger
+
+                    if (fss->QueryIntAttribute("codeOrPrelude", &i) == TIXML_SUCCESS)
+                    {
+                        q->codeOrPrelude = i;
+                    }
+
+                    if (fss->QueryIntAttribute("debuggerOpen", &i) == TIXML_SUCCESS)
+                    {
+                        q->debuggerOpen = i;
+                    }
+
+                    if (fss->QueryBoolAttribute("debuggerBuiltInVariablesOpen", &b) ==
+                        TIXML_SUCCESS)
+                    {
+                        q->debuggerBuiltInVariablesOpen = b;
+                    }
+
+                    if (fss->QueryBoolAttribute("debuggerUserVariablesOpen", &b) == TIXML_SUCCESS)
+                    {
+                        q->debuggerUserVariablesOpen = b;
+                    }
+
+                    if (fss->QueryStringAttribute("debuggerFilterText", &s) == TIXML_SUCCESS)
+                    {
+                        q->debuggerFilterText = s;
+                    }
+
+                    if (fss->QueryIntAttribute("debuggerGroupState", &i) == TIXML_SUCCESS)
+                    {
+                        for (int c = 0; c < 8; c++)
+                        {
+                            q->debuggerGroupState[c] = (i & (1 << c)) > 0;
+                        }
+                    }
+
+                    // code editor
+
+                    loadCodeEditorState(fss, q->codeEditor);
+                }
+            }
+
+            for (int osc = 0; osc < n_oscs; osc++)
+            {
+                std::string wsns = "wtse_state_" + std::to_string(sc) + "_" + std::to_string(osc);
+                auto wss = TINYXML_SAFE_TO_ELEMENT(p->FirstChild(wsns));
+
+                if (wss)
+                {
+                    auto q = &(dawExtraState.editor.wavetableScriptEditState[sc][osc]);
+                    int i;
+                    bool b;
+                    std::string s;
+
+                    q->codeOrPrelude = 0;
+
+                    if (wss->QueryIntAttribute("codeOrPrelude", &i) == TIXML_SUCCESS)
+                    {
+                        q->codeOrPrelude = i;
+                    }
+
+                    loadCodeEditorState(wss, q->codeEditor);
+                }
+            }
+        } // end of scene loop
+
+        {
+            auto mes = &(dawExtraState.editor.modulationEditorState);
+            auto node = TINYXML_SAFE_TO_ELEMENT(p->FirstChild("modulation_editor"));
+
+            mes->sortOrder = 0;
+            mes->filterOn = 0;
+            mes->filterString = "";
+            mes->filterInt = 0;
+
+            if (node)
+            {
+                int val;
+
+                if (node->QueryIntAttribute("sortOrder", &val) == TIXML_SUCCESS)
+                {
+                    mes->sortOrder = val;
+                }
+
+                if (node->QueryIntAttribute("filterOn", &val) == TIXML_SUCCESS)
+                {
+                    mes->filterOn = val;
+                }
+
+                if (node->QueryIntAttribute("filterInt", &val) == TIXML_SUCCESS)
+                {
+                    mes->filterInt = val;
+                }
+
+                if (node->Attribute("filterString"))
+                {
+                    mes->filterString = std::string(node->Attribute("filterString"));
+                }
+            }
+        }
+
+        {
+            auto tes = &(dawExtraState.editor.tuningOverlayState);
+            auto node = TINYXML_SAFE_TO_ELEMENT(p->FirstChild("tuning_overlay"));
+
+            tes->editMode = 0;
+
+            if (node)
+            {
+                int val;
+
+                if (node->QueryIntAttribute("editMode", &val) == TIXML_SUCCESS)
+                {
+                    tes->editMode = val;
+                }
+            }
+        }
+        {
+            auto oos = &(dawExtraState.editor.oscilloscopeOverlayState);
+            auto node = TINYXML_SAFE_TO_ELEMENT(p->FirstChild("oscilloscope_overlay"));
+
+            if (node)
+            {
+                node->QueryIntAttribute("mode", &oos->mode);
+                node->QueryFloatAttribute("trigger_speed", &oos->trigger_speed);
+                node->QueryFloatAttribute("trigger_level", &oos->trigger_level);
+                node->QueryFloatAttribute("trigger_limit", &oos->trigger_limit);
+                node->QueryFloatAttribute("time_window", &oos->time_window);
+                node->QueryFloatAttribute("amp_window", &oos->amp_window);
+                node->QueryIntAttribute("trigger_type", &oos->trigger_type);
+                node->QueryBoolAttribute("dc_kill", &oos->dc_kill);
+                node->QueryBoolAttribute("sync_draw", &oos->sync_draw);
+                node->QueryIntAttribute("keytrack_source", &oos->keytrack_source);
+                node->QueryFloatAttribute("keytrack_cycles", &oos->keytrack_cycles);
+
+                node->QueryFloatAttribute("noise_floor", &oos->noise_floor);
+                node->QueryFloatAttribute("max_db", &oos->max_db);
+                node->QueryFloatAttribute("decay_rate", &oos->decay_rate);
+            }
+        }
+    } // end of editor populated block
+}
+
+void SurgePatch::saveEditorStateXml(TiXmlElement &dawExtraXML)
+{
+    // This has a lecacy name since it was from before we moved into the editor object
+    TiXmlElement izf("instanceZoomFactor");
+    izf.SetAttribute("v", dawExtraState.editor.instanceZoomFactor);
+    dawExtraXML.InsertEndChild(izf);
+
+    TiXmlElement eds("editor");
+    eds.SetAttribute("current_scene", dawExtraState.editor.current_scene);
+    eds.SetAttribute("current_fx", dawExtraState.editor.current_fx);
+    eds.SetAttribute("modsource", dawExtraState.editor.modsource);
+
+    TiXmlElement over("overlays");
+    for (auto ol : dawExtraState.editor.activeOverlays)
+    {
+        TiXmlElement ox("overlay");
+        ox.SetAttribute("whichOverlay", ol.whichOverlay);
+        ox.SetAttribute("isTornOut", ol.isTornOut);
+        ox.SetAttribute("tearOut_x", ol.tearOutPosition.first);
+        ox.SetAttribute("tearOut_y", ol.tearOutPosition.second);
+        over.InsertEndChild(ox);
+    }
+    eds.InsertEndChild(over);
+
+    auto saveCodeEditorState = [this](TiXmlElement *fss,
+                                      DAWExtraStateStorage::EditorState::CodeEditorState &q) {
+        // document editor
+        fss->SetAttribute("scroll", q.scroll);
+        fss->SetAttribute("caretPosition", q.caretPosition);
+        fss->SetAttribute("selectStart", q.selectStart);
+        fss->SetAttribute("selectEnd", q.selectEnd);
+
+        // popup
+        fss->SetAttribute("popupOpen", q.popupOpen);
+        fss->SetAttribute("popupType", q.popupType);
+        fss->SetAttribute("popupCaseSensitive", q.popupCaseSensitive);
+        fss->SetAttribute("popupWholeWord", q.popupWholeWord);
+        fss->SetAttribute("popupText1", q.popupText1);
+        fss->SetAttribute("popupText2", q.popupText2);
+        fss->SetAttribute("popupCurrentResult", q.popupCurrentResult);
+    };
+
+    for (int sc = 0; sc < n_scenes; sc++)
+    {
+        std::string con = "current_osc_" + std::to_string(sc);
+        eds.SetAttribute(con, dawExtraState.editor.current_osc[sc]);
+        con = "modsource_editor_" + std::to_string(sc);
+        eds.SetAttribute(con, dawExtraState.editor.modsource_editor[sc]);
+
+        if (dawExtraState.editor.msegStateIsPopulated)
+        {
+            for (int lf = 0; lf < n_lfos; ++lf)
+            {
+                auto q = &(dawExtraState.editor.msegEditState[sc][lf]);
+                std::string msns = "mseg_state_" + std::to_string(sc) + "_" + std::to_string(lf);
+                TiXmlElement mss(msns);
+                /*
+                 * We still write this from model to DAS even though we don't read it unless
+                 * that one user option is set
+                 */
+                mss.SetDoubleAttribute("hSnap", msegs[sc][lf].hSnap);
+                mss.SetDoubleAttribute("vSnap", msegs[sc][lf].vSnap);
+                mss.SetAttribute("timeEditMode", q->timeEditMode);
+                eds.InsertEndChild(mss);
+            }
+        }
+
+        for (int lf = 0; lf < n_lfos; ++lf)
+        {
+            auto q = &(dawExtraState.editor.formulaEditState[sc][lf]);
+            std::string fsns = "formula_state_" + std::to_string(sc) + "_" + std::to_string(lf);
+            TiXmlElement fss(fsns);
+
+            // debugger
+            fss.SetAttribute("codeOrPrelude", q->codeOrPrelude);
+            fss.SetAttribute("debuggerOpen", q->debuggerOpen);
+            fss.SetAttribute("debuggerBuiltInVariablesOpen", q->debuggerBuiltInVariablesOpen);
+            fss.SetAttribute("debuggerUserVariablesOpen", q->debuggerUserVariablesOpen);
+
+            int groupStates = 0;
+            for (int i = 0; i < 8; i++)
+            {
+                groupStates += ((q->debuggerGroupState[i] ? 1 : 0) << i);
+            }
+
+            fss.SetAttribute("debuggerGroupState", groupStates);
+
+            // code editor state
+            saveCodeEditorState(&fss, q->codeEditor);
+
+            eds.InsertEndChild(fss);
+        }
+
+        for (int os = 0; os < n_oscs; ++os)
+        {
+            auto q = &(dawExtraState.editor.wavetableScriptEditState[sc][os]);
+            std::string wsns = "wtse_state_" + std::to_string(sc) + "_" + std::to_string(os);
+            TiXmlElement wss(wsns);
+
+            wss.SetAttribute("codeOrPrelude", q->codeOrPrelude);
+
+            // code editor state
+            saveCodeEditorState(&wss, q->codeEditor);
+
+            eds.InsertEndChild(wss);
+        }
+
+        TiXmlElement modEd("modulation_editor");
+        modEd.SetAttribute("sortOrder", dawExtraState.editor.modulationEditorState.sortOrder);
+        modEd.SetAttribute("filterOn", dawExtraState.editor.modulationEditorState.filterOn);
+        modEd.SetAttribute("filterInt", dawExtraState.editor.modulationEditorState.filterInt);
+        modEd.SetAttribute("filterString", dawExtraState.editor.modulationEditorState.filterString);
+        eds.InsertEndChild(modEd);
+
+        TiXmlElement tunOl("tuning_overlay");
+        tunOl.SetAttribute("editMode", dawExtraState.editor.tuningOverlayState.editMode);
+        eds.InsertEndChild(tunOl);
+    }
+
+    // Add the oscilloscope settings
+    TiXmlElement scope("oscilloscope_overlay");
+    scope.SetAttribute("mode", dawExtraState.editor.oscilloscopeOverlayState.mode);
+    scope.SetDoubleAttribute("trigger_speed",
+                             dawExtraState.editor.oscilloscopeOverlayState.trigger_speed);
+    scope.SetDoubleAttribute("trigger_level",
+                             dawExtraState.editor.oscilloscopeOverlayState.trigger_level);
+    scope.SetDoubleAttribute("trigger_limit",
+                             dawExtraState.editor.oscilloscopeOverlayState.trigger_limit);
+    scope.SetDoubleAttribute("time_window",
+                             dawExtraState.editor.oscilloscopeOverlayState.time_window);
+    scope.SetDoubleAttribute("amp_window",
+                             dawExtraState.editor.oscilloscopeOverlayState.amp_window);
+    scope.SetAttribute("trigger_type", dawExtraState.editor.oscilloscopeOverlayState.trigger_type);
+    scope.SetAttribute("dc_kill", dawExtraState.editor.oscilloscopeOverlayState.dc_kill);
+    scope.SetAttribute("sync_draw", dawExtraState.editor.oscilloscopeOverlayState.sync_draw);
+    scope.SetAttribute("keytrack_source",
+                       dawExtraState.editor.oscilloscopeOverlayState.keytrack_source);
+    scope.SetDoubleAttribute("keytrack_cycles",
+                             dawExtraState.editor.oscilloscopeOverlayState.keytrack_cycles);
+    scope.SetDoubleAttribute("noise_floor",
+                             dawExtraState.editor.oscilloscopeOverlayState.noise_floor);
+    scope.SetDoubleAttribute("max_db", dawExtraState.editor.oscilloscopeOverlayState.max_db);
+    scope.SetDoubleAttribute("decay_rate",
+                             dawExtraState.editor.oscilloscopeOverlayState.decay_rate);
+    eds.InsertEndChild(scope);
+
+    dawExtraXML.InsertEndChild(eds);
 }

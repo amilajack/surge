@@ -31,6 +31,9 @@ if (typeof window !== 'undefined') {
       canvas?.remove();
     },
     canvas(id) { return host.canvases.get(id) || document.getElementById(id); },
+    // Canvas backing pixels per CSS pixel: a WCLAP host's GUI scale when it set one
+    // (clap.gui set_scale), else the window's device pixel ratio.
+    pixelRatio() { return globalThis.SurgeWclapPage?.hostScale || window.devicePixelRatio || 1; },
     activeElement() {
       let active = document.activeElement;
       while (active?.shadowRoot?.activeElement) active = active.shadowRoot.activeElement;
@@ -89,12 +92,13 @@ if (typeof window !== 'undefined') {
       if (element) element.textContent = message;
     },
     changed() {
-      if (platform.restoring) return;
+      if (platform.restoring || platform.storageState === 'memory') return;
       ++platform.generation;
       clearTimeout(platform.flushTimer);
       platform.flushTimer = setTimeout(() => platform.flush().catch(() => {}), 100);
     },
     async flush() {
+      if (platform.storageState === 'memory') return;
       if (platform.storageState === 'unavailable') throw platform.storageError;
       if (platform.pendingFlush) {
         await platform.pendingFlush;
@@ -116,7 +120,9 @@ if (typeof window !== 'undefined') {
       } catch (error) {
         platform.storageState = 'error';
         platform.storageError = error;
-        platform.report('Unable to save browser storage. Changes remain in memory; export your work before closing. ' + String(error));
+        platform.report((Module['surgeWclap']
+          ? "Unable to save to the plug-in's user folder. Changes remain in this window; export your work before closing it. "
+          : 'Unable to save browser storage. Changes remain in memory; export your work before closing. ') + String(error));
         throw error;
       } finally {
         platform.pendingFlush = null;
@@ -380,6 +386,21 @@ if (typeof window !== 'undefined') {
   // close/rename/unlink operations; our queue adds error reporting and retries.
   Module['preRun'] = Module['preRun'] || [];
   Module['preRun'].push(() => {
+    if (Module['surgeWclap']) {
+      FS.mkdirTree('/user');
+      const user = Module['surgeWclapUser'];
+      if (!user?.available) {
+        // A plug-in window has an opaque origin and no storage of its own, and the
+        // host gave the plug-in no user folder: user files live in memory for as
+        // long as the window is open.
+        platform.restoring = false;
+        platform.storageState = 'memory';
+        platform.ready = Promise.resolve();
+        return;
+      }
+      wclapUserFolder(user);
+      return;
+    }
     addRunDependency('surge-user-storage');
     platform.ready = new Promise(resolve => {
       FS.mkdirTree('/user');
@@ -398,8 +419,69 @@ if (typeof window !== 'undefined') {
       });
     });
   });
+  // The WCLAP's user folder: the host's writable /user directory, which the plug-in
+  // owns (src/surge-wclap/UserFiles.h). The editor's /user is a copy made before
+  // Surge reads it; IDBFS's change tracking marks writes, and saving sends the
+  // differences to the plug-in instead of to IndexedDB, through the same queue,
+  // status line and retry as the browser's storage.
+  function wclapUserFolder(user) {
+    const root = '/user';
+    const mtimeOf = stat => stat.mtime instanceof Date ? stat.mtime.getTime() : Number(stat.mtime);
+    // What the plug-in holds, by path below the folder: {folder, mtime}.
+    const remote = new Map();
+    IDBFS.queuePersist = () => platform.changed();
+    FS.mount(IDBFS, {autoPersist: true}, root);
+    const entries = [...user.entries].sort((a, b) => a.path.split('/').length - b.path.split('/').length);
+    for (const entry of entries) {
+      const path = root + '/' + entry.path;
+      if (entry.kind === 2) FS.mkdirTree(path);
+      else {
+        FS.mkdirTree(path.slice(0, path.lastIndexOf('/')));
+        FS.writeFile(path, entry.data);
+      }
+      FS.utime(path, entry.mtime, entry.mtime);
+      // As the file system reports it back (it may round), so unchanged files compare equal.
+      remote.set(entry.path, {folder: entry.kind === 2, mtime: mtimeOf(FS.lstat(path))});
+    }
+    const local = () => {
+      const found = new Map(), walk = folder => {
+        for (const name of FS.readdir(root + (folder ? '/' + folder : ''))) {
+          if (name === '.' || name === '..') continue;
+          const path = folder ? folder + '/' + name : name, stat = FS.lstat(root + '/' + path);
+          if (FS.isDir(stat.mode)) { found.set(path, {folder: true, mtime: mtimeOf(stat)}); walk(path); }
+          else if (FS.isFile(stat.mode)) found.set(path, {folder: false, mtime: mtimeOf(stat)});
+        }
+      };
+      walk('');
+      return found;
+    };
+    const depth = path => path.split('/').length;
+    IDBFS.syncfs = (mount, populate, callback) => {
+      if (populate) return callback(null);
+      const now = local(), ops = [];
+      // Removed files, removed folders (deepest first), new folders (shallowest
+      // first), then new and changed files.
+      for (const [path, was] of remote) if (!was.folder && (!now.has(path) || now.get(path).folder)) ops.push({op: 2, path});
+      [...remote].filter(([path, was]) => was.folder && !now.get(path)?.folder).sort(([a], [b]) => depth(b) - depth(a))
+        .forEach(([path]) => ops.push({op: 4, path}));
+      [...now].filter(([path, is]) => is.folder && !remote.get(path)?.folder).sort(([a], [b]) => depth(a) - depth(b))
+        .forEach(([path]) => ops.push({op: 3, path}));
+      for (const [path, is] of now)
+        if (!is.folder && (remote.get(path)?.folder !== false || remote.get(path).mtime !== is.mtime))
+          ops.push({op: 1, path, data: FS.readFile(root + '/' + path)});
+      if (!ops.length) return callback(null);
+      globalThis.SurgeWclapPage.userFiles.send(ops).then(() => {
+        remote.clear();
+        for (const [path, is] of now) remote.set(path, is);
+        callback(null);
+      }, callback);
+    };
+    platform.restoring = false;
+    platform.storageState = 'saved';
+    platform.ready = Promise.resolve();
+  }
   // A plugin must not hold the host page open; the host owns unload prompts.
-  if (!host.wam) window.addEventListener('beforeunload', event => {
+  if (!host.wam && !Module['surgeWclap']) window.addEventListener('beforeunload', event => {
     if (platform.generation > platform.savedGeneration || platform.storageState === 'error') {
       event.preventDefault(); event.returnValue = '';
     }

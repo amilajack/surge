@@ -11,14 +11,25 @@ file(COPY "${surge_sst_source}/" DESTINATION "${surge_sst_overlay}")
 file(READ "${surge_sst_source}/${surge_lag_relative}" surge_lag_source)
 # Apple ARM64 contracts this expression into a fused multiply-add. Separate
 # Wasm operations drift at steady state for delay lengths such as 11019 samples,
-# changing interpolation phase and audible output. Explicit fma preserves that
-# reference recurrence without relaxing audio-comparison tolerances.
+# changing interpolation phase and audible output. An explicit fused multiply-add
+# preserves that reference recurrence without relaxing audio-comparison tolerances
+# (surge::fusedMultiplyAdd: one relaxed_madd where the build has relaxed SIMD, as
+# the WCLAP does, instead of Wasm's software std::fma).
 string(REPLACE
   "inline void process() { v = v * lpinv + target_v * lp; }"
-  "inline void process() { v = std::fma(v, lpinv, target_v * lp); }"
+  "inline void process() { v = surge::fusedMultiplyAdd(v, lpinv, target_v * lp); }"
   surge_lag_patched "${surge_lag_source}")
+string(REPLACE
+  "#include <cmath>"
+  "#include <cmath>\n#include \"SurgeFusedMultiplyAdd.h\""
+  surge_lag_patched "${surge_lag_patched}")
+if(NOT surge_lag_patched MATCHES "SurgeFusedMultiplyAdd.h")
+  message(FATAL_ERROR "SST Lag.h: the Wasm arithmetic overlay found no include to extend")
+endif()
 file(CONFIGURE OUTPUT "${surge_sst_overlay}/${surge_lag_relative}"
   CONTENT "${surge_lag_patched}" @ONLY)
+configure_file("${CMAKE_SOURCE_DIR}/src/common/FusedMultiplyAdd.h"
+  "${surge_sst_overlay}/sst/basic-blocks/dsp/SurgeFusedMultiplyAdd.h" COPYONLY)
 target_include_directories(sst-basic-blocks BEFORE INTERFACE "${surge_sst_overlay}")
 set_property(DIRECTORY APPEND PROPERTY CMAKE_CONFIGURE_DEPENDS
   "${surge_sst_source}/${surge_lag_relative}")
@@ -36,10 +47,19 @@ file(COPY "${surge_filter_source}/" DESTINATION "${surge_filter_overlay}")
 file(READ "${surge_filter_source}/${surge_filter_relative}" surge_filter_source_text)
 string(REPLACE
   "tC[i] = (1.f - smooth) * tC[i] + smooth * N[i];"
-  "tC[i] = std::fma(1.f - smooth, tC[i], smooth * N[i]);"
+  "tC[i] = surge::fusedMultiplyAdd(1.f - smooth, tC[i], smooth * N[i]);"
   surge_filter_patched "${surge_filter_source_text}")
+string(REPLACE
+  "#include \"FilterCoefficientMaker.h\""
+  "#include \"FilterCoefficientMaker.h\"\n#include \"SurgeFusedMultiplyAdd.h\""
+  surge_filter_patched "${surge_filter_patched}")
+if(NOT surge_filter_patched MATCHES "SurgeFusedMultiplyAdd.h")
+  message(FATAL_ERROR "SST coefficient maker: the Wasm arithmetic overlay found no include to extend")
+endif()
 file(CONFIGURE OUTPUT "${surge_filter_overlay}/${surge_filter_relative}"
   CONTENT "${surge_filter_patched}" @ONLY)
+configure_file("${CMAKE_SOURCE_DIR}/src/common/FusedMultiplyAdd.h"
+  "${surge_filter_overlay}/sst/filters/SurgeFusedMultiplyAdd.h" COPYONLY)
 target_include_directories(sst-filters BEFORE INTERFACE "${surge_filter_overlay}")
 set_property(DIRECTORY APPEND PROPERTY CMAKE_CONFIGURE_DEPENDS
   "${surge_filter_source}/${surge_filter_relative}")

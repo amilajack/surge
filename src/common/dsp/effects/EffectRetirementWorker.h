@@ -38,6 +38,11 @@ class EffectRetirementWorker
     std::array<Slot, capacity> slots_;
     std::atomic<bool> stopping_{false};
     std::atomic<std::uint32_t> retired_{0};
+#if SURGE_WCLAP
+    // A WCLAP has no threads: retirement completes on the caller's agent.
+    void reclaim(Slot &slot);
+#else
     std::thread worker_;
     void run();
+#endif
 };

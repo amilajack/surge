@@ -65,7 +65,13 @@ namespace cutl = sst::cpputils;
 using CMSKey = ControllerModulationSourceVector<1>; // sigh see #4286 for failed first try
 
 SurgeSynthesizer::SurgeSynthesizer(PluginLayer *parent, const std::string &suppliedDataPath)
-    : storage(suppliedDataPath), hpA{cutl::make_array<BiquadFilter, n_hpBQ>(&storage)},
+    : SurgeSynthesizer(parent, SurgeStorage::SurgeStorageConfig::fromDataPath(suppliedDataPath))
+{
+}
+
+SurgeSynthesizer::SurgeSynthesizer(PluginLayer *parent,
+                                   const SurgeStorage::SurgeStorageConfig &config)
+    : storage(config), hpA{cutl::make_array<BiquadFilter, n_hpBQ>(&storage)},
       hpB{cutl::make_array<BiquadFilter, n_hpBQ>(&storage)}, _parent(parent), halfbandA(6, true),
       halfbandB(6, true), halfbandIN(6, true), mpeEnabled(storage.mpeEnabled)
 {
@@ -98,9 +104,14 @@ SurgeSynthesizer::SurgeSynthesizer(PluginLayer *parent, const std::string &suppl
         }
     }
 
+#if SURGE_WCLAP
+    // The WCLAP host seeds libc rand() and the Airwindows source per instance.
+    storage.noiseRng.reseed(Surge::AudioRandomDevice{}());
+#else
     srand((unsigned)time(nullptr));
     // Airwindows effects draw from portable per-instance generators instead of rand().
     AirWinBaseClass::seedRandomSource((uint32_t)time(nullptr));
+#endif
     // TODO: FIX SCENE ASSUMPTION
     memset(storage.getPatch().scenedata[0], 0, sizeof(pdata) * n_scene_params);
     memset(storage.getPatch().scenedata[1], 0, sizeof(pdata) * n_scene_params);
@@ -681,7 +692,7 @@ SurgeVoice *SurgeSynthesizer::getUnusedVoice(int scene)
         if (!voices_usedby[scene][i])
         {
             voices_usedby[scene][i] = scene + 1;
-            return &voices_array[scene][i];
+            return voiceSlot(scene, i);
         }
     }
     return 0;
@@ -732,7 +743,7 @@ void SurgeSynthesizer::freeVoice(SurgeVoice *v)
     int foundScene{-1}, foundIndex{-1};
     for (int i = 0; i < MAX_VOICES; i++)
     {
-        if (voices_usedby[0][i] && (v == &voices_array[0][i]))
+        if (voices_usedby[0][i] && isVoiceSlot(v, 0, i))
         {
             assert(foundScene == -1);
             assert(foundIndex == -1);
@@ -740,7 +751,7 @@ void SurgeSynthesizer::freeVoice(SurgeVoice *v)
             foundIndex = i;
             voices_usedby[0][i] = 0;
         }
-        if (voices_usedby[1][i] && (v == &voices_array[1][i]))
+        if (voices_usedby[1][i] && isVoiceSlot(v, 1, i))
         {
             assert(foundScene == -1);
             assert(foundIndex == -1);
@@ -757,7 +768,7 @@ void SurgeSynthesizer::freeVoice(SurgeVoice *v)
      * default on the same meory just to be pedantic
      */
     v->~SurgeVoice();
-    v = new (&voices_array[foundScene][foundIndex]) SurgeVoice();
+    v = new (voiceSlot(foundScene, foundIndex)) SurgeVoice();
 }
 
 void SurgeSynthesizer::notifyEndedNote(int32_t nid, int16_t key, int16_t chan, bool thisBlock)
@@ -5428,7 +5439,11 @@ void SurgeSynthesizer::process()
 #endif
     processRunning = 0;
 
-#if SURGE_WEB
+#if SURGE_WCLAP
+    // Two clock reads per block are host calls in a WCLAP; take them only while
+    // someone shows the CPU meter.
+    const double process_start = measureCpuLevel ? emscripten_get_now() : 0.;
+#elif SURGE_WEB
     // AudioWorkletGlobalScope has no performance.now(), so libc++ steady_clock
     // fails with ENOSYS. Emscripten supplies a Date.now fallback in this scope.
     const double process_start = emscripten_get_now();
@@ -5941,6 +5956,10 @@ void SurgeSynthesizer::process()
 
     // Calculate how close we are to overloading the CPU
     // (how close is the process() duration to duration)
+#if SURGE_WCLAP
+    if (!measureCpuLevel)
+        return;
+#endif
 #if SURGE_WEB
     // This is a coarse CPU meter, not an audio deadline measurement. Clamp
     // backwards wall-clock adjustments; sample timing uses the audio clock.

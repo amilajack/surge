@@ -8,7 +8,11 @@ import json
 from pathlib import Path
 
 
-def publish(source: Path, destination: Path):
+def publish(source: Path, destination: Path, beside=None):
+    """beside: {'patches_factory/': '../../factory/'} serves the files under a prefix
+    from a plain copy elsewhere in the bundle (entry url = value + path) instead of
+    as objects, so a bundle that ships them as files does not carry them twice."""
+    beside = beside or {}
     entries = []
     patch_index = {}
     objects = destination / 'objects'
@@ -32,14 +36,16 @@ def publish(source: Path, destination: Path):
         if relative.startswith('skins/') and file.name == 'skin.xml':
             patch_index[relative] = data.decode('utf-8')
         digest = hashlib.sha256(data).hexdigest()
-        output = objects / digest
-        if not output.exists() or output.stat().st_size != len(data):
-            temporary = output.with_suffix('.tmp')
-            temporary.write_bytes(data)
-            temporary.replace(output)
+        prefix = next((p for p in beside if relative.startswith(p)), None)
+        if prefix is None:
+            output = objects / digest
+            if not output.exists() or output.stat().st_size != len(data):
+                temporary = output.with_suffix('.tmp')
+                temporary.write_bytes(data)
+                temporary.replace(output)
         entries.append({'path': relative, 'name': file.stem, 'category': file.relative_to(source).parent.as_posix(),
                         'extension': file.suffix.lower(), 'size': len(data), 'sha256': digest,
-                        'url': 'objects/' + digest})
+                        'url': beside[prefix] + relative if prefix is not None else 'objects/' + digest})
     catalog_bytes = gzip.compress(json.dumps(patch_index, ensure_ascii=False, separators=(',', ':')).encode(), mtime=0)
     catalog_hash = hashlib.sha256(catalog_bytes).hexdigest()
     catalog_file = objects / catalog_hash

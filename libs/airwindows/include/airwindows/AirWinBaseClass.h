@@ -34,6 +34,8 @@ struct AirWinBaseClass {
     * and comparison harnesses seed it with a constant.
     */
    static void seedRandomSource( uint32_t seed ) { randomSource().store( seed, std::memory_order_relaxed ); }
+   // The current source state, so a host of several engines can save and restore it.
+   static uint32_t randomSourceState() { return randomSource().load( std::memory_order_relaxed ); }
    int portableRand()
    {
       randomState ^= randomState << 13;

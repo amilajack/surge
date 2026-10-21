@@ -841,6 +841,313 @@ mount/park/remount in a shadow root with real mouse input, host keyboard
 isolation, the single-instance and destroy rules, and the error paths. The
 event queue also has a native unit test (`tests/wam-event-queue.cpp`).
 
+## WebCLAP plug-in (WCLAP)
+
+Surge XT also builds as a [WCLAP](https://github.com/WebCLAP): a CLAP plug-in
+compiled to Wasm, with its editor as a `clap.webview/3` page. A host that runs
+WCLAPs (a DAW's DSP worker, a browser page, a native bridge) loads the bundle:
+
+```
+surge-xt.wclap/
+  module.wasm      the plug-in: CLAP over the headless engine (GPL-3.0-or-later)
+  factory/patches_factory/
+                   the factory patches as .fxp files: the plug-in's preset
+                   discovery location, which hosts crawl
+  ui/index.html    the webview page (get_uri: /ui/index.html)
+  ui/…             the JUCE editor (AGPL-3.0, it links JUCE 8), support scripts,
+                   fonts and the factory library (content-addressed objects; its
+                   patches point at factory/patches_factory instead of copies)
+  LICENSE, licenses/, NOTICES.md, SOURCES.md
+```
+
+Build and package (the editor comes from `build-web`, the module from `build-wclap`):
+
+```sh
+bash web/scripts/build.sh          # includes the surge-xt-wclap-ui target
+bash web/scripts/build-wclap.sh    # build-wclap/wclap/module.wasm
+python3 web/scripts/package-wclap.py
+```
+
+`package-wclap.py` writes `build-wclap/surge-xt.wclap/` and a reproducible
+`surge-xt.wclap.tar.gz` (sorted entries, fixed owners, permissions and gzip
+header, timestamps from the commit) and refuses any shipped file that contains a
+build path; objects compile with `-ffile-prefix-map`.
+
+### The module
+
+- **Exports and imports.** `clap_entry`, `malloc`/`free`, one growable
+  `__indirect_function_table`, `_initialize` and its own memory (not shared,
+  32 MiB initially, growable to 4 GiB). Imports are WASI preview1 only: an
+  Emscripten standalone build (`-sSTANDALONE_WASM -sPURE_WASI`), with the file
+  system calls Emscripten leaves out answered by WASI preopens
+  (`src/surge-wclap/Wasi.cpp`). Exceptions are standard Wasm exceptions
+  (`-sWASM_LEGACY_EXCEPTIONS=0`: `try_table`/`throw_ref`, no legacy `try`,
+  `catch`, `rethrow` or `delegate`), so wasmtime compiles the module as it is.
+  The module uses SIMD128 and relaxed SIMD: a host's engine needs both (V8 has
+  both; wasmtime 49 has both, and with `relaxed_simd_deterministic` renders the
+  same as V8 on arm64). It has a name section, so profilers name its functions.
+- **Build.** Release, full LTO (link-time code generation with Wasm exception
+  handling enabled in the backend: without `-wasm-enable-eh` at link time LLVM
+  drops every landing pad and a C++ throw traps; full rather than CMake's
+  ThinLTO, which names promoted symbols after each object's path and so makes
+  the module depend on the build directory), `-ffp-contract=off`. Where the
+  DSP needs a fused multiply-add to match the native ARM64 build (the one-pole
+  lag, the filter coefficient smoothing, the note-to-omega interpolation, the
+  ensemble's delay time), `surge::fusedMultiplyAdd` is one `relaxed_madd`
+  instead of Wasm's software `fma`; it is single-rounded like `std::fma`
+  wherever the machine has FMA (V8 on arm64 and on x86-64 with FMA3, wasmtime's
+  deterministic mode). Contraction stays off because fusing the effects'
+  feedback paths drifts them from the native renders (the ensemble, vocoder and
+  Star Child parity cases reached 2e-4 relative error). The oscillators' scalar
+  output recurrences are written on floats rather than SSE scalar (`_ss`)
+  intrinsics, which SIMDe emulates with a vector operation and a lane blend each.
+- **One module, many instances.** The factory creates any number of plug-ins in
+  one module instance. Code, the parameter table, CMakeRC resources and
+  configuration are shared; each instance owns only its engine. The engine does
+  not scan the factory library or create a user folder; the default patch (Init
+  Saw) is built in, and every other patch arrives as state. Voices are allocated
+  when first played (an instance holds the voices it has used, not 128), the
+  String oscillator's delay-line pool only when a patch uses it, and the formula
+  interpreter's 16 MiB arena of the browser build is not used.
+- **Threads.** None. The memory is not shared, so a host calls every function of
+  every instance on the one agent that owns the module, and main-thread and
+  audio-thread calls never overlap. State loads, effect construction, convolution
+  kernels and effect retirement complete synchronously, between blocks; the
+  browser build's worker threads are compiled out (`SURGE_WCLAP`). A host may
+  call `process` and the main-thread functions from the same worker.
+- **Determinism.** Every random stream of an instance (oscillator, modulator and
+  effect seeds, libc `rand()` used by the DSP libraries and Lua, the Airwindows
+  source) is per instance and seeded from 12 bytes of WASI `random_get` when the
+  instance is created; the last 4 bytes are the Airwindows source. A host that
+  seeds `random_get` gets bit-identical renders, and an instance renders the same
+  whatever else runs in the module. `clap.render` offline mode is accepted; every
+  path is already synchronous.
+- **Processing.** Engine blocks are 32 frames. When the host delivers multiples
+  of 32 frames, every block renders from that call's own input and events, with
+  no latency. Otherwise output still has no latency (blocks render ahead) and, as
+  in the desktop plug-in, audio input is delayed by 32 frames. Events apply at
+  the start of the 32-frame block that holds them, as in the desktop CLAP. A
+  silent instance returns `CONTINUE_IF_NOT_QUIET` with a constant output mask so
+  hosts with many tracks can skip it. While its editor is visible it returns
+  `CONTINUE`, and opening or showing the editor calls the host's
+  `request_process`, so a plug-in the host let sleep wakes and its meters,
+  oscilloscope and voice count run before a note plays. Notes from the editor's
+  keyboard also wake it.
+- **Audio ports.** The desktop plug-in's buses and port ids
+  (clap-juce-extensions): outputs "Output" (1, main), "Scene A" (2) and "Scene B"
+  (3), stereo, and the stereo input "Sidechain" (32768), which is not a main
+  input (`SurgeSynthProcessor::isInputMain`). The scene outputs carry each scene
+  before the global effects, as `SurgeSynthProcessor`'s extra buses; a host may
+  connect them or not, and the main output is the same either way. The sidechain
+  is what the vocoder and the audio input oscillator read.
+- **Extensions.** `params` (the desktop CLAP's ids, `juce::String::hashCode` of
+  each storage name and `macro_N`, in its order and groups, normalized 0..1,
+  Surge's own text and defaults, monophonic and polyphonic modulation flags),
+  `state` (the desktop `getStateInformation` bytes: a native engine's state loads
+  and saves back byte for byte), `audio-ports` (above), `note-ports` (CLAP, MIDI
+  and MPE; CLAP note ids, note ends, note expressions), `latency` (0), `tail`
+  (2 s, as the desktop plug-in), `render`, `voice-info` (the polyphony limit, or
+  one voice per playing scene when every playing scene is monophonic; the host
+  hears when it changes), `remote-controls` (the desktop plug-in's five pages:
+  the macros, then each scene's mixer and filters, page ids 2054–2058),
+  `preset-load` (below), `gui` (`CLAP_WINDOW_API_WEBVIEW`, below) and
+  `clap.webview/3`. Transport: tempo, play state, position (taken while playing)
+  and time signature. Headers: free-audio/clap 1.2.7.
+- **Presets.** `clap_entry.get_factory` gives a preset discovery factory with one
+  provider, as the desktop CLAP's (`src/surge-wclap/Presets.cpp`): file type
+  `fxp`, the factory location `<bundle>/factory/patches_factory` and, when the
+  host gives the plug-in a user folder, the user location `/user/Patches`. Each
+  patch file is one preset: its name, the plug-in id, factory or user content,
+  its author, comment and license, its category (the folders below the location)
+  as extra info and features, its tags as features, and a user patch's
+  modification time. `preset-load` loads a file location as the desktop plug-in
+  loads a patch file (named by the file and its folder; the global volume and
+  polyphony stay), and tells the host (`clap_host_preset_load.loaded`). A
+  factory or user patch the editor loads is reported the same way.
+- **Editor window.** The host may resize the window to any size: the resize
+  hints keep the editor's aspect ratio (913:569 at 100 %, 913:619 with the
+  virtual keyboard; `resize_hints_changed` when it changes), `adjust_size`
+  snaps to the largest whole-percent zoom that fits, from 25 % to 500 %, and the
+  editor zooms to the window. Zooming in the editor asks the host to follow
+  (`request_resize`); the zoom is saved with the instance and a new window opens
+  at it. `set_scale` overrides the page's device pixel ratio for the canvas
+  backing store (the editor already renders at the device pixel ratio, so it is
+  sharp at 2x); the editor repaints only the parts of the canvas that changed.
+- **Not implemented, as the desktop plug-in:** `param-indication` (Surge's
+  editor has no place for host mapping or automation colours and its desktop
+  CLAP does not offer it), `track-info` (Surge has no use for it), `note-name`
+  (Surge does not name keys), and CLAP `undo` (the desktop plug-in keeps its own
+  undo history and does not implement the CLAP extension).
+- **Resources.** `get_resource` streams any bundle file below the directory
+  `clap_entry.init` received (hosts preopen the bundle; `/module.wasm` and paths
+  with `.`/`..` segments are refused).
+
+### The editor page
+
+`ui/index.html` runs the unchanged JUCE editor (the `surge-xt-wclap-ui` target)
+on a stand-in `SurgeSynthProcessor` that never renders. It reaches the plug-in
+only by posting `ArrayBuffer`s to `window.parent` and receiving them as messages
+(`src/surge-wclap/Protocol.h`, `src/surge-web/juce/BrowserWclapUi.cpp`):
+
+- `Hello` → the plug-in answers with its `OutputState` (the host's sample rate,
+  whether the host has activated it and is processing, the host's name), the
+  host's `Scale` if it set one, and a `Snapshot` (its state); reopening the
+  window restores the current patch. The output meter shows "Audio Output
+  Unavailable" only while the host is not processing the plug-in; the About
+  screen shows the host and the sample rate the plug-in runs at.
+- Parameter and macro edits leave through the JUCE parameter listeners a host
+  would use (`Param`, `Gesture`); the plug-in applies them and gives them to the
+  host as parameter changes with gestures. Values the page does not show yet
+  (host automation, MIDI learn) come back as `Param` frames and are set without
+  notification, so nothing echoes.
+- Structural edits (MSEG, step sequences, formulas, wavetables and their
+  snapshots, oscillator extra settings, macro, modulator and patch names, patch
+  metadata, tunings, an effect's impulse response, undo/redo of any of these)
+  leave as a `Delta`: the parts of the patch that changed
+  (`src/surge-wclap/StateParts.h`), with the digest of the state they make. The
+  plug-in applies them to its storage in place, as the desktop editor edits the
+  engine's, so held notes keep playing, and checks that its state now has the
+  digest; if not, it answers `NeedState` and the page sends its complete state.
+  Patch loads leave as complete states, which the plug-in loads, retriggering
+  held notes as the desktop does. The page detects edits from patch loads, the
+  undo history (`UndoManager::editObserver`) and the parameters' extended
+  settings, and follows a drag until it settles; a state change no part shows
+  (edits already applied as parameters or modulation) goes as the state, which
+  the plug-in finds it holds. Modulation routings leave as `Modulation` frames;
+  editor view state (zoom, tabs, overlays) as `EditorState`, saved with the
+  plug-in state.
+- The host's window size arrives as `Resize`; the editor zooms to fit it and
+  answers with its size and its size at 100 %.
+- The plug-in streams telemetry about 30 times a second while the window is open
+  and visible and the host processes: meters, CPU, voice count, sounding keys
+  (the virtual keyboard lights), held keys for the oscilloscope's key tracking,
+  and the output audio while the oscilloscope is open. The editor's keyboard
+  plays the plug-in.
+
+The page loads everything with `fetch()` relative to itself: `support.js`,
+`library.js`, `surge-xt-wclap-ui.js` (started from a blob, which also starts its
+threads), the `.wasm` and the font package, and the factory library on demand.
+It therefore works where a host serves the bundle at a URL and where it builds a
+`srcdoc` document from `get_resource` and answers the page's `fetch()` through a
+port, in a `sandbox="allow-scripts"` frame with an opaque origin and no network.
+
+### The user folder
+
+An opaque-origin frame has no storage, so the editor keeps user files (user
+patches, `SurgeXTUserDefaults.xml` with the settings, favourites, user
+wavetables, FX and modulator presets, skins, MIDI mappings: everything Surge
+writes below its user data path, `/user` in the browser builds) in a folder the
+**host** gives the plug-in:
+
+- **Contract.** The host preopens a writable directory for the plug-in at the
+  WASI path `/user` (a second preopen beside the bundle), private to this
+  plug-in and kept across sessions and projects, as a desktop plug-in's user
+  data folder. The plug-in only reads and writes below it. Without that preopen
+  the editor keeps user files in memory while its window is open, as before.
+- **Protocol.** Before the editor starts, the page sends `UserFiles`; the plug-in
+  answers `UserFileList`: whether the folder exists, then every file and folder
+  below it with its modification time and bytes. The page copies it into the
+  editor's `/user` before Surge reads its settings. The editor's writes are
+  tracked (IDBFS's change tracking on a memory file system) and, after each
+  burst of changes, the page sends the differences as one `UserFileOps` batch
+  (create folders, write, remove files, remove folders); the plug-in applies
+  them in order, writing each file beside its target and renaming it over
+  (`*.wclap-partial`, never listed), and answers `UserFilesDone`. A failure
+  stops the batch and keeps the editor's copy; the page shows the error with
+  **Retry saving**, and the next save sends the differences again. Paths that
+  are absolute, have empty, `.` or `..` segments or backslashes are refused.
+- **The plug-in's own use.** The DSP reads the same folder: Surge's settings
+  (the engine reads `/user/SurgeXTUserDefaults.xml` when an instance starts),
+  and the user patches its preset discovery declares (`/user/Patches`). A host
+  that gives every instance the same folder shares user patches between them;
+  the editor of each lists what was there when its window opened.
+
+**Threads:** the editor uses Emscripten pthreads and needs `SharedArrayBuffer`,
+so its frame must be cross-origin isolated: a host under COOP/COEP grants it with
+`allow="cross-origin-isolated"` (mark the entry `threads`). Without isolation the
+page says so instead of starting.
+
+### Tests and measurements
+
+```sh
+cmake --build build-reference --target surge-engine-reference   # native harness
+cd web
+npx playwright test tests/wclap-parity.spec.js      # every parity fixture, via clap.state and clap.params
+npx playwright test tests/wclap-webview.spec.js     # CLAP surface and the webview protocol
+npx playwright test tests/wclap-instances.spec.js   # determinism; 2, 16 and 100 instances in one module
+npx playwright test tests/wclap-presets.spec.js     # preset discovery and preset-load (packaged bundle)
+npx playwright test tests/wclap-buses.spec.js       # scene outputs and the sidechain input
+SURGE_TEST_SILENT_OUTPUT=1 npx playwright test tests/wclap-host.spec.js   # the editor in a sandboxed srcdoc frame
+node scripts/wclap-wasmtime-parity.mjs              # V8 and wasmtime (the DAW's desktop configuration) render alike
+node scripts/wclap-bench.mjs --instances 1,2,16,100 --out /tmp/wclap-bench.json
+```
+
+`scripts/wclap-wasmtime-parity.mjs` builds `web/wasmtime-check` (a small Rust
+host on wasmtime 49 configured as the DAW's desktop host: SIMD, relaxed SIMD in
+its deterministic mode, standard exceptions, WASI with the bundle at `/` and a
+`/user` folder) and renders each of the DAW's 23 patches in it and in V8 with the
+same seed: all 23 are bit-identical.
+
+`web/tests/wclap-host/` is the minimal host the last spec drives: `module.wasm`
+in a dedicated worker (the bundle's files through synchronous requests), audio
+through an AudioWorklet that pulls blocks from the worker, and the editor in a
+sandboxed `srcdoc` frame built from `get_resource`, whose `fetch()` is answered
+through a `MessagePort`. Like a DAW with many tracks it lets a quiet plug-in
+sleep (it stops processing while `process` says `CONTINUE_IF_NOT_QUIET` with a
+silent output) until an event arrives or the plug-in calls `request_process`, and
+it gives the plug-in a `/user` folder in memory. The spec covers notes, a mouse
+drag on an editor knob reaching the DSP and the host, host automation moving the
+editor, meters, voice counts, patch and tuning loads in the editor reaching the
+DSP, host state loads updating the editor, reopening the window, that the frame
+makes no network request, the editor waking a sleeping plug-in so its meter runs
+before a note, host resizes and the host scale, a structural edit (a macro
+rename through its menu) reaching the DSP as a delta without a reload, and a
+patch saved in the editor landing in the plug-in's user folder, coming back in a
+new window and being a user preset.
+
+`web/scripts/wclap-bench.mjs` compares the WCLAP with the native engine
+(`surge-engine-reference --bench`): one module hosts N instances, instance i
+loads one of eight factory patches (`--patches daw`: the 23 patches of the DAW's
+Surge XT x100 song) through `clap.state` and holds a three-note chord, and every
+64-frame block processes each instance once.
+
+**The build optimizations** (LTO with Wasm exception handling, standard
+exceptions, relaxed SIMD for the fused multiply-adds, the oscillators' scalar
+recurrences on floats) render the 23 patches bit-identically to the build before
+them and take 0.84x its time per instance-block: modules compared in one Node
+process, blocks alternating between them so machine load affects both alike
+(3,000 blocks of 23 instances, median of the per-block ratios). Against native
+(`--patches daw --instances 23`, six interleaved rounds of 1,500 blocks on an
+Apple Silicon Mac with a load average of 11 to 20, so the fastest round of each
+is the fairest figure):
+
+| 23 DAW patches, µs per instance per block | fastest round mean | fastest round p50 | ratio to native (p50) |
+|---|---:|---:|---:|
+| WCLAP before (5e6bc918) | 24.4 | 20.9 | 1.39 |
+| WCLAP now | 20.6 | 16.9 | 1.12 |
+| native engine | 18.0 | 15.0 | 1 |
+
+What remains is the voice loop (the engine's process, inlined into one function)
+and the delay and reverb effects as V8 compiles them. Measured before the build
+optimizations, on the same Mac with a load average of about 5, Node 26, after two
+seconds of warm-up, 1,500 measured blocks (`web/parity/wclap-performance.json`):
+
+| Instances | WCLAP µs per instance per block (mean / p50 / p99) | Native µs (mean / p50 / p99) | CPU ratio (mean) | WCLAP memory per instance | Native heap per instance |
+|---:|---|---|---:|---:|---:|
+| 1 | 9.7 / 9.0 / 28.3 | 5.5 / 5.3 / 9.9 | 1.74 | in the 32 MiB base | 26.7 MiB |
+| 2 | 9.8 / 9.2 / 25.1 | 6.6 / 6.3 / 13.7 | 1.49 | in the 32 MiB base | 26.7 MiB |
+| 16 | 17.5 / 15.0 / 47.1 | 12.7 / 11.3 / 32.7 | 1.38 | 7.9 MiB (8.2 playing) | 28.4 MiB |
+| 100 | 23.0 / 19.8 / 60.6 | 17.8 / 15.2 / 51.5 | 1.29 | 8.6 MiB (9.0 playing) | 28.3 MiB |
+
+A 64-frame block lasts 1,333 µs at 48 kHz. 100 instances holding chords take
+1.73 cores as a WCLAP and 1.34 natively, so a host spreads them over several DSP
+threads (one module instance per thread). The module's linear memory for 100
+playing instances is 894 MiB of its 4 GiB. An instance is created in about 11 ms.
+Per-instance memory is about a third of native mainly because voices are
+allocated as they are played; the remaining 6.6 MiB of an idle engine is the
+patch model (766 parameters with their names, oscillator wavetable tables,
+MSEG and LFO storage), the synthesizer's FX copies and the storage's tables.
+
 ## Factory asset delivery
 
 The `surge-factory-library` build target publishes all 5,756 files under

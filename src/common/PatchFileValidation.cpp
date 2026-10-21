@@ -149,6 +149,20 @@ bool readValidatedPatch(const fs::path &path, std::vector<char> &data, std::stri
     }
 }
 
+bool validatePatchData(const std::vector<char> &data, std::string &error)
+{
+    error.clear();
+    try
+    {
+        return validateRaw(data, error);
+    }
+    catch (const std::exception &exception)
+    {
+        error = exception.what();
+        return false;
+    }
+}
+
 bool readPatchFile(const fs::path &path, std::vector<char> &data, std::string &error)
 {
     data.clear();

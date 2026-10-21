@@ -86,6 +86,8 @@ class alignas(16) SurgeSynthesizer
         send alignas(16)[n_send_slots][n_scenes];
 
     std::atomic<bool> audio_processing_active;
+    // Set by an editor's stand-in engine while the real engine reports audio (WCLAP).
+    std::atomic<bool> remoteAudioActive{false};
     std::atomic<bool> patchChanged{false};
 
     /*
@@ -122,6 +124,7 @@ class alignas(16) SurgeSynthesizer
         virtual void surgeMacroUpdated(long macroNum, float) = 0;
     };
     SurgeSynthesizer(PluginLayer *parent, const std::string &suppliedDataPath = "");
+    SurgeSynthesizer(PluginLayer *parent, const SurgeStorage::SurgeStorageConfig &config);
     virtual ~SurgeSynthesizer();
 
     // Also see setNoteExpression() which allows you to control all note parameters polyphonically
@@ -226,7 +229,30 @@ class alignas(16) SurgeSynthesizer
                          int host_note_id, int host_originating_channel, int host_originating_key,
                          bool envFromZero = false);
     void notifyEndedNote(int32_t nid, int16_t key, int16_t chan, bool thisBlock = true);
+#if SURGE_WCLAP
+    // A slot's voice is allocated when the slot is first used and kept for reuse:
+    // an instance holds as many voices as it has played at once, not all 128
+    // (17 MB). Many instances share one module's 4 GiB address space.
+    std::array<std::array<std::unique_ptr<SurgeVoice>, MAX_VOICES>, 2> voices_storage;
+    SurgeVoice *voiceSlot(int scene, int index)
+    {
+        auto &slot = voices_storage[scene][index];
+        if (!slot)
+            slot = std::make_unique<SurgeVoice>();
+        return slot.get();
+    }
+    bool isVoiceSlot(const SurgeVoice *v, int scene, int index) const
+    {
+        return v == voices_storage[scene][index].get();
+    }
+#else
     std::array<std::array<SurgeVoice, MAX_VOICES>, 2> voices_array;
+    SurgeVoice *voiceSlot(int scene, int index) { return &voices_array[scene][index]; }
+    bool isVoiceSlot(const SurgeVoice *v, int scene, int index) const
+    {
+        return v == &voices_array[scene][index];
+    }
+#endif
     // TODO: FIX SCENE ASSUMPTION!
     unsigned int voices_usedby[2][MAX_VOICES]; // 0 indicates no user, 1 is scene A, 2 is scene B
 
@@ -535,6 +561,10 @@ class alignas(16) SurgeSynthesizer
     void loadPatch(int id);
     bool loadPatchByPath(const char *fxpPath, int categoryId, const char *name,
                          bool forceIsPreset = true);
+    // The part of loadPatchByPath after reading the file: an FXP's patch chunk.
+    bool loadPatchChunk(const std::vector<char> &data, int categoryId,
+                        const std::string &categoryName, const char *name,
+                        bool forceIsPreset = true);
     void selectRandomPatch();
     std::unique_ptr<std::thread> patchLoadThread;
 
@@ -641,6 +671,9 @@ class alignas(16) SurgeSynthesizer
 
     float vu_peak[8]{};
     std::atomic<float> cpu_level{0.f};
+#if SURGE_WCLAP
+    bool measureCpuLevel{false}; // the WCLAP enables it while its editor is open
+#endif
 
     void populateDawExtraState();
 

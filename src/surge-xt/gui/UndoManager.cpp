@@ -445,10 +445,20 @@ struct UndoManagerImpl
         return "UNK";
     }
 
+    static void notifyEdit(const UndoAction &r)
+    {
+        if (UndoManager::editObserver)
+            UndoManager::editObserver(std::holds_alternative<UndoParam>(r) ||
+                                      std::holds_alternative<UndoMacro>(r) ||
+                                      std::holds_alternative<UndoModulation>(r) ||
+                                      std::holds_alternative<UndoFilterAnalysisMovement>(r));
+    }
+
     void pushUndo(const UndoAction &r)
     {
         if (!doPush)
             return;
+        notifyEdit(r);
 
         auto g = CleanupGuard(this);
         if (undoStack.empty())
@@ -1063,6 +1073,8 @@ struct UndoManagerImpl
 
     bool undoRedoImpl(UndoManager::Target which)
     {
+        if (UndoManager::editObserver)
+            UndoManager::editObserver(false);
         auto dcroug = DontClearRedoOnUndoGuard(this);
         auto *currStack = &undoStack;
         auto *currStackMem = &undoStackMem;

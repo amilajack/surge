@@ -13,6 +13,9 @@ bool readValidatedPatch(const fs::path &path, std::vector<char> &data, std::stri
 // header and a positive chunk size). The loader itself tolerates partially damaged patches,
 // so this does not reject them, and it parses nothing.
 bool readPatchFile(const fs::path &path, std::vector<char> &data, std::string &error);
+// Validate raw patch data (a host's saved state: an FXP chunk without its header)
+// with the same checks as readValidatedPatch.
+bool validatePatchData(const std::vector<char> &data, std::string &error);
 // Validate an imported user file by its extension before it is published to the
 // application: patches, .wt wavetables, .scl/.kbm tuning, and FX and modulator
 // presets. Other extensions are accepted unchanged.

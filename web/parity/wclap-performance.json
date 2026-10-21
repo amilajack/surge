@@ -1,0 +1,181 @@
+{
+  "date": "2026-10-19T22:46:41.777Z",
+  "module": "build-wclap/wclap/module.wasm",
+  "patches": [
+    "Templates/Init Saw.fxp",
+    "Basses/Attacky.fxp",
+    "Brass/Brassy.fxp",
+    "Keys/Artificial 1.fxp",
+    "Leads/Acidofil.fxp",
+    "Pads/Alias Pornography.fxp",
+    "Plucks/80s Gliss.fxp",
+    "Polysynths/1804.fxp"
+  ],
+  "rate": 48000,
+  "results": [
+    {
+      "instances": 1,
+      "wclap": {
+        "instances": 1,
+        "blocks": 1500,
+        "frames": 64,
+        "creationMillisPerInstance": 32.61,
+        "moduleMemoryBase": 33554432,
+        "memoryPerInstanceCreated": 0,
+        "memoryPerInstancePlaying": 0,
+        "moduleMemoryPlaying": 33554432,
+        "microsPerInstanceBlock": {
+          "mean": 9.656,
+          "p50": 9,
+          "p95": 11.792,
+          "p99": 28.333,
+          "max": 63.166
+        },
+        "realtimeFraction": 0.00724
+      },
+      "native": {
+        "instances": 1,
+        "blocks": 1500,
+        "frames": 64,
+        "heapPerInstanceCreated": 27991088,
+        "heapPerInstancePlaying": 27991696,
+        "microsPerInstanceBlock": {
+          "mean": 5.536,
+          "p50": 5.25,
+          "p95": 6.542,
+          "p99": 9.875,
+          "max": 43.333
+        },
+        "realtimeFraction": 0.00415
+      },
+      "ratio": {
+        "cpuMean": 1.74,
+        "cpuP99": 2.87,
+        "memoryPlaying": 0
+      }
+    },
+    {
+      "instances": 2,
+      "wclap": {
+        "instances": 2,
+        "blocks": 1500,
+        "frames": 64,
+        "creationMillisPerInstance": 11.08,
+        "moduleMemoryBase": 33554432,
+        "memoryPerInstanceCreated": 0,
+        "memoryPerInstancePlaying": 0,
+        "moduleMemoryPlaying": 33554432,
+        "microsPerInstanceBlock": {
+          "mean": 9.794,
+          "p50": 9.166,
+          "p95": 12.167,
+          "p99": 25.125,
+          "max": 131.417
+        },
+        "realtimeFraction": 0.01469
+      },
+      "native": {
+        "instances": 2,
+        "blocks": 1500,
+        "frames": 64,
+        "heapPerInstanceCreated": 27980984,
+        "heapPerInstancePlaying": 27981336,
+        "microsPerInstanceBlock": {
+          "mean": 6.56,
+          "p50": 6.25,
+          "p95": 7.833,
+          "p99": 13.708,
+          "max": 43.875
+        },
+        "realtimeFraction": 0.00984
+      },
+      "ratio": {
+        "cpuMean": 1.49,
+        "cpuP99": 1.83,
+        "memoryPlaying": 0
+      }
+    },
+    {
+      "instances": 16,
+      "wclap": {
+        "instances": 16,
+        "blocks": 1500,
+        "frames": 64,
+        "creationMillisPerInstance": 10.56,
+        "moduleMemoryBase": 33554432,
+        "memoryPerInstanceCreated": 7823360,
+        "memoryPerInstancePlaying": 8249344,
+        "moduleMemoryPlaying": 165543936,
+        "microsPerInstanceBlock": {
+          "mean": 17.482,
+          "p50": 15.042,
+          "p95": 35.541,
+          "p99": 47.083,
+          "max": 752.959
+        },
+        "realtimeFraction": 0.20979
+      },
+      "native": {
+        "instances": 16,
+        "blocks": 1500,
+        "frames": 64,
+        "heapPerInstanceCreated": 29737176,
+        "heapPerInstancePlaying": 29737368,
+        "microsPerInstanceBlock": {
+          "mean": 12.653,
+          "p50": 11.292,
+          "p95": 24.584,
+          "p99": 32.708,
+          "max": 118.917
+        },
+        "realtimeFraction": 0.15184
+      },
+      "ratio": {
+        "cpuMean": 1.38,
+        "cpuP99": 1.44,
+        "memoryPlaying": 0.28
+      }
+    },
+    {
+      "instances": 100,
+      "wclap": {
+        "instances": 100,
+        "blocks": 1500,
+        "frames": 64,
+        "creationMillisPerInstance": 13.77,
+        "moduleMemoryBase": 33554432,
+        "memoryPerInstanceCreated": 8600945,
+        "memoryPerInstancePlaying": 9032827,
+        "moduleMemoryPlaying": 936837120,
+        "microsPerInstanceBlock": {
+          "mean": 23.032,
+          "p50": 19.75,
+          "p95": 46.083,
+          "p99": 60.625,
+          "max": 971.708
+        },
+        "realtimeFraction": 1.7274
+      },
+      "native": {
+        "instances": 100,
+        "blocks": 1500,
+        "frames": 64,
+        "heapPerInstanceCreated": 29708475,
+        "heapPerInstancePlaying": 29708480,
+        "microsPerInstanceBlock": {
+          "mean": 17.839,
+          "p50": 15.166,
+          "p95": 35,
+          "p99": 51.5,
+          "max": 2075.834
+        },
+        "realtimeFraction": 1.33789
+      },
+      "ratio": {
+        "cpuMean": 1.29,
+        "cpuP99": 1.18,
+        "memoryPlaying": 0.3
+      }
+    }
+  ]
+}

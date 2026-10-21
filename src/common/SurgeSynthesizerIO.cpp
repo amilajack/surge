@@ -259,6 +259,16 @@ bool SurgeSynthesizer::loadPatchByPath(const char *fxpPath, int categoryId, cons
                             "Load Error");
         return false;
     }
+    return loadPatchChunk(data, categoryId,
+                          categoryId >= 0 ? storage.patch_category[categoryId].name
+                                          : std::string("Drag & Drop"),
+                          patchName, forceIsPreset);
+}
+
+bool SurgeSynthesizer::loadPatchChunk(const std::vector<char> &data, int categoryId,
+                                      const std::string &categoryName, const char *patchName,
+                                      bool forceIsPreset)
+{
     storage.getPatch().dawExtraState.editor.clearAllFormulaStates();
     storage.getPatch().dawExtraState.editor.clearAllWTSEStates();
     storage.getPatch().dawExtraState.editor.clearAllModulationSourceButtonStates();
@@ -266,15 +276,7 @@ bool SurgeSynthesizer::loadPatchByPath(const char *fxpPath, int categoryId, cons
     storage.getPatch().comment = "";
     storage.getPatch().author = "";
 
-    if (categoryId >= 0)
-    {
-        storage.getPatch().category = storage.patch_category[categoryId].name;
-    }
-    else
-    {
-        storage.getPatch().category = "Drag & Drop";
-    }
-
+    storage.getPatch().category = categoryName;
     current_category_id = categoryId;
     storage.getPatch().name = patchName;
 

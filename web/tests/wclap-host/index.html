@@ -1,0 +1,21 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>WCLAP test host</title>
+<!-- SPDX-License-Identifier: GPL-3.0-or-later -->
+<style>
+body{margin:0;background:#1b1c1f;color:#ddd;font:13px system-ui,sans-serif}
+header{display:flex;gap:8px;padding:8px;border-bottom:1px solid #333}
+#window{padding:8px}
+#window iframe{border:1px solid #444;display:block;background:#000}
+#log{margin:8px;max-height:160px;overflow:auto;color:#999}
+</style>
+</head>
+<body>
+<header><button id="start">Start</button><span>Surge XT WCLAP test host (served with COOP/COEP)</span></header>
+<section id="window"></section>
+<pre id="log"></pre>
+<script type="module" src="host.js"></script>
+</body>
+</html>

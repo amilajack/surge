@@ -1,0 +1,19 @@
+[package]
+name = "surge-wclap-wasmtime-check"
+version = "0.1.0"
+edition = "2024"
+publish = false
+
+# Renders the Surge XT WCLAP with wasmtime configured as the DAW's desktop host is
+# (crates/daw-native/src/plugin/wclap/runtime.rs), to compare with V8.
+[dependencies]
+wasmtime = { version = "=49.0.4", default-features = false, features = ["cranelift", "runtime", "std", "threads", "parallel-compilation", "gc", "gc-drc"] }
+wasmtime-wasi = { version = "=49.0.4", default-features = false, features = ["p1"] }
+rand_core = "0.10"
+sha2 = "0.10"
+
+[workspace]
+resolver = "3"
+
+[profile.release]
+debug = false

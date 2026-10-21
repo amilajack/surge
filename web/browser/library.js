@@ -20,11 +20,17 @@ export class FactoryLibrary {
       if (typeof entry.path !== 'string' || entry.path.startsWith('/') ||
           entry.path.split('/').some(part => !part || part === '.' || part === '..') ||
           entry.path.includes('\\') || entry.path.includes('\0') ||
-          !/^[a-f0-9]{64}$/.test(entry.sha256) || entry.url !== 'objects/' + entry.sha256 ||
+          !/^[a-f0-9]{64}$/.test(entry.sha256) || !FactoryLibrary.validUrl(entry) ||
           !Number.isSafeInteger(entry.size) || entry.size < 0 || this.entries.has(entry.path))
         throw Error('Invalid factory index entry');
       this.entries.set(entry.path, Object.freeze({...entry}));
     }
+  }
+  // A content-addressed object, or (the WCLAP bundle) the factory patch file the
+  // bundle ships beside the library for the plug-in's preset discovery.
+  static validUrl(entry) {
+    return entry.url === 'objects/' + entry.sha256 ||
+      (entry.path.startsWith('patches_factory/') && entry.url === '../../factory/' + entry.path);
   }
   search(query = '', extension = '') {
     const words = query.toLocaleLowerCase().split(/\s+/).filter(Boolean);
@@ -52,8 +58,11 @@ export class FactoryLibrary {
   async download(entry) {
     const url = new URL(entry.url, this.location);
     let cache;
-    try { cache = await caches.open('surge-factory-v1'); }
-    catch (error) { this.report(`Factory cache unavailable; using the downloaded copy. ${error}`); }
+    // An opaque origin (a sandboxed plug-in window) has no cache storage.
+    if (globalThis.origin !== 'null') {
+      try { cache = await caches.open('surge-factory-v1'); }
+      catch (error) { this.report(`Factory cache unavailable; using the downloaded copy. ${error}`); }
+    }
     if (cache) {
       try {
         const cached = await cache.match(url);
