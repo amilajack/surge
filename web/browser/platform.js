@@ -74,6 +74,11 @@ if (typeof window !== 'undefined') {
     overlayParent() { return host.wam ? host.container() : document.body; }
   };
   const platform = globalThis.SurgeBrowser = {
+    callEditor(name, returnType, argTypes, args) {
+      return Module.surgeWclap
+        ? SurgeWclapPage.call(name, returnType, argTypes, args)
+        : Promise.resolve(Module.ccall(name, returnType, argTypes, args));
+    },
     storageState: 'loading',
     storageError: null,
     restoring: true,
@@ -191,7 +196,7 @@ if (typeof window !== 'undefined') {
           // Patches, wavetables, tuning files and presets are validated with
           // the native parsers' rules; one invalid file rejects the batch.
           if (Module['_surge_browser_validate_file']) {
-            const error = Module['ccall']('surge_browser_validate_file', 'string', ['string'], [name]);
+            const error = await platform.callEditor('surge_browser_validate_file', 'string', ['string'], [name]);
             if (error) throw Error((/\.fxp$/i.test(file.name) ? 'Invalid patch: ' : 'Invalid ' + file.name + ': ') + error);
           }
         }
@@ -222,7 +227,7 @@ if (typeof window !== 'undefined') {
           if (!files.length) throw Error('Drop a file, not a folder');
           const paths = await platform.importFiles(files);
           if (!canvas.isConnected || token !== generation) return;
-          const accepted = Module['ccall']('surge_browser_file_drop', 'number',
+          const accepted = await platform.callEditor('surge_browser_file_drop', 'number',
             ['number','string','number','number'], [peer, JSON.stringify(paths), x, y]);
           if (!accepted) throw Error('This target does not accept the dropped files');
         } catch (error) {
@@ -282,7 +287,7 @@ if (typeof window !== 'undefined') {
       let completed = false;
       const complete = paths => {
         completed = true;
-        return Module['ccall']('surge_file_dialog_complete', 'number', ['number','string'], [token, JSON.stringify(paths)]);
+        return platform.callEditor('surge_file_dialog_complete', 'number', ['number','string'], [token, JSON.stringify(paths)]);
       };
       try {
         if (directory) {
@@ -290,7 +295,7 @@ if (typeof window !== 'undefined') {
           const local = '/user/directories/' + crypto.randomUUID() + '/' + platform.safeName(handle.name);
           if (save) FS.mkdirTree(local);
           else await platform.copyDirectory(handle, local);
-          const accepted = complete([local]);
+          const accepted = await complete([local]);
           if (!accepted || (accepted === 2 && !await platform.awaitDeferred(token))) return;
           // JUCE's export callbacks finish their file writes synchronously.
           if (save) await platform.exportDirectory(local, handle);
@@ -301,7 +306,7 @@ if (typeof window !== 'undefined') {
           const local = '/user/exports/' + crypto.randomUUID() + '/' + platform.safeName(handle.name);
           const exportDirectory = local.slice(0, local.lastIndexOf('/'));
           FS.mkdirTree(exportDirectory);
-          const accepted = complete([local]);
+          const accepted = await complete([local]);
           if (!accepted) return;
           // 2: the application finishes this export later (for example after a
           // wavetable script generates off the main thread) and signals completion.
@@ -328,13 +333,13 @@ if (typeof window !== 'undefined') {
           if (extensions.length) options.types = [{description:title, accept:{'application/octet-stream':extensions}}];
           const handles = await window.showOpenFilePicker(options);
           const files = await Promise.all(handles.map(handle => handle.getFile()));
-          complete(await platform.importFiles(files));
+          await complete(await platform.importFiles(files));
         }
       } catch (error) {
         if (completed || error.name !== 'AbortError')
           platform.reportFile('File operation failed: ' + String(error) +
             (error.written ? (error.written.length ? ' Written before the failure: ' + error.written.join(', ') : ' No files were written.') : ''));
-        if (!completed) complete([]);
+        if (!completed) await complete([]);
       }
     },
     fallbackFonts: null,
@@ -346,10 +351,10 @@ if (typeof window !== 'undefined') {
         const response = await fetch(host.url('fonts-fallback/' + name));
         if (!response.ok) throw Error(`Font download failed (${response.status}): ${name}`);
         return [name, new Uint8Array(await response.arrayBuffer())];
-      })).then(fonts => {
+      })).then(async fonts => {
         FS.mkdirTree('/fonts/fallback');
         for (const [name, bytes] of fonts) FS.writeFile('/fonts/fallback/' + name, bytes);
-        Module['_surge_browser_fonts_added']();
+        await platform.callEditor('surge_browser_fonts_added', null, [], []);
       }).catch(error => {
         platform.fallbackFonts = null;
         platform.reportFile('Fallback fonts unavailable; some characters may not display. ' + String(error));

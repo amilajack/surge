@@ -45,17 +45,45 @@ canvas{position:absolute;touch-action:none}
   const message = document.getElementById('wclap-message');
   const progress = document.getElementById('wclap-progress');
   const fail = error => {
-    message.textContent = 'Surge XT could not start: ' + String(error && error.message || error);
+    message.textContent = 'Surge XT editor stopped: ' + String(error && error.message || error) +
+      '. Close and reopen the editor to retry; audio remains available.';
     progress.hidden = true;
     status.hidden = false;
+    for (const waiting of calls.values()) waiting.reject(error);
+    calls.clear();
+    pending.length = 0;
+    pendingBytes = 0;
+    stopped = true;
   };
   const pending = [];
-  let receiving = false;
-  const deliver = buffer => {
-    const bytes = new Uint8Array(buffer), pointer = Module._surge_wclap_ui_buffer(bytes.length);
-    if (!pointer) return;
-    Module.HEAPU8.set(bytes, pointer);
-    Module._surge_wclap_ui_receive(pointer, bytes.length);
+  const calls = new Map();
+  let nextCall = 0;
+  let receiving = false, outstanding = false, pendingBytes = 0, stopped = false;
+  const deliver = () => {
+    if (!receiving || outstanding || stopped || !pending.length) return;
+    const buffer = pending.shift();
+    pendingBytes -= buffer.byteLength;
+    outstanding = true;
+    globalThis.SurgeWclapPage.worker.postMessage({surgeMessage: buffer}, [buffer]);
+  };
+  const enqueue = buffer => {
+    if (stopped) return;
+    const type = new Uint8Array(buffer, 0, 1)[0];
+    // Meters and scope samples are replaceable; state, parameters and file
+    // replies must keep their order. Never build a frame backlog on the page.
+    if (type === 65 || type === 66) {
+      const index = pending.findLastIndex(item => new Uint8Array(item, 0, 1)[0] === type);
+      if (index >= 0) {
+        pendingBytes -= pending[index].byteLength;
+        pending[index] = buffer;
+      } else pending.push(buffer);
+    } else pending.push(buffer);
+    pendingBytes += buffer.byteLength;
+    if (pending.length > 1024 || pendingBytes > (320 << 20)) {
+      fail(new Error('The editor worker fell behind incoming plugin messages'));
+      return;
+    }
+    deliver();
   };
   // The user folder, mirrored in memory (platform.js syncs the editor's /user with it).
   let listed = null, sequence = 0;
@@ -125,22 +153,73 @@ canvas{position:absolute;touch-action:none}
   };
   globalThis.SurgeWclapPage = {
     hostScale: 0,
+    worker: null,
+    setWorker(worker) {
+      if (!worker) throw new Error('Surge XT editor worker did not start');
+      this.worker = worker;
+      worker.addEventListener('message', event => {
+        if (event.data?.surgeMessageDone) {
+          outstanding = false;
+          deliver();
+          return;
+        }
+        if (event.data?.surgeFailure) { fail(new Error(event.data.surgeFailure)); return; }
+        if (event.data?.surgeOut instanceof ArrayBuffer) {
+          this.send(event.data.surgeOut);
+          return;
+        }
+        const reply = event.data?.surgeReply;
+        if (!reply) return;
+        const waiting = calls.get(reply.id);
+        if (!waiting) return;
+        calls.delete(reply.id);
+        if (reply.error) waiting.reject(new Error(reply.error));
+        else waiting.resolve(reply.value);
+      });
+      worker.addEventListener('error', event => fail(event.error || event.message));
+      worker.addEventListener('messageerror', () => fail(new Error('The editor worker could not receive a message')));
+    },
+    call(name, returnType = null, argTypes = [], args = []) {
+      if (!this.worker || stopped) return Promise.reject(new Error('The editor worker is unavailable'));
+      if (calls.size >= 128) {
+        const error = new Error('The editor worker fell behind UI actions');
+        fail(error);
+        return Promise.reject(error);
+      }
+      const id = ++nextCall;
+      return new Promise((resolve, reject) => {
+        calls.set(id, {resolve, reject});
+        this.worker.postMessage({surgeCall: {id, name, returnType, argTypes, args}});
+      });
+    },
+    transferCanvas(canvas) {
+      if (!this.worker) throw new Error('Surge XT editor worker is unavailable');
+      const offscreen = canvas.transferControlToOffscreen();
+      this.worker.postMessage({surgeCanvas: {id: canvas.id, canvas: offscreen}}, [offscreen]);
+    },
     userFiles,
     send(buffer) { window.parent.postMessage(buffer, '*', [buffer]); },
     // The editor is up and has said Hello: plug-in messages can be delivered.
     ready() {
       receiving = true;
-      for (const buffer of pending.splice(0)) deliver(buffer);
+      deliver();
+      globalThis.SurgeAccessibility?.attach(Module);
       status.hidden = true;
     },
   };
   addEventListener('message', event => {
     if (event.source !== window.parent || !(event.data instanceof ArrayBuffer)) return;
+    if (event.data.byteLength < 4) return;
     if (intercept(event.data)) return;
-    if (receiving) deliver(event.data); else pending.push(event.data);
+    enqueue(event.data);
   });
   if (!globalThis.crossOriginIsolated) {
     fail(new Error('this window is not cross-origin isolated, which the editor needs for its threads'));
+    return;
+  }
+  if (typeof Worker !== 'function' || typeof OffscreenCanvas !== 'function' ||
+      typeof HTMLCanvasElement.prototype.transferControlToOffscreen !== 'function') {
+    fail(new Error('this browser cannot run the editor on a worker canvas'));
     return;
   }
   const load = async (name, as) => {
@@ -182,7 +261,7 @@ canvas{position:absolute;touch-action:none}
       },
       setStatus() {},
       onAbort: fail,
-      onRuntimeInitialized() { globalThis.SurgeAccessibility?.attach(Module); },
+      onRuntimeInitialized() {},
     };
     await runScript(glueBlob);
   })().catch(fail);

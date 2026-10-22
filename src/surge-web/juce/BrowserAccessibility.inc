@@ -318,8 +318,10 @@ extern "C" EMSCRIPTEN_KEEPALIVE int surge_accessibility_character(int id, int ch
 void browserPostAccessibilityAnnouncement(const String &text, AccessibilityHandler::AnnouncementPriority priority)
 {
     auto announce = [text, priority] {
-        EM_ASM({ globalThis.SurgeAccessibility?.announce(UTF8ToString($0), $1); },
+        // clang-format off
+        MAIN_THREAD_EM_ASM({ globalThis.SurgeAccessibility?.announce(UTF8ToString($0), $1); },
             text.toRawUTF8(), static_cast<int>(priority));
+        // clang-format on
     };
     if (MessageManager::getInstance()->isThisTheMessageThread()) announce();
     else MessageManager::callAsync(std::move(announce));

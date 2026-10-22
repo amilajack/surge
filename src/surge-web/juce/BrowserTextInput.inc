@@ -28,7 +28,7 @@
     void syncInput()
     {
         // clang-format off
-        const bool nativeText = EM_ASM_INT({ const active = SurgeHost.activeElement();
+        const bool nativeText = MAIN_THREAD_EM_ASM_INT({ const active = SurgeHost.activeElement();
             return active?.dataset.jucePeer === UTF8ToString($0) && active instanceof HTMLTextAreaElement; }, canvasId.toRawUTF8());
         // clang-format on
         auto *target = isFocused() && !nativeText ? findCurrentTextInputTarget() : nullptr;
@@ -44,7 +44,7 @@
                 ++inputGeneration;
                 inputComponent = nullptr;
                 inputText = {};
-                EM_ASM({ SurgeTextInput.detach($0); }, inputPeerId);
+                MAIN_THREAD_EM_ASM({ SurgeTextInput.detach($0); }, inputPeerId);
             }
             return;
         }
@@ -67,8 +67,9 @@
         state->setProperty("control", rectangle(focused->getScreenBounds()));
         state->setProperty("caret", rectangle(focused->localAreaToGlobal(target->getCaretRectangle())));
         const auto json = JSON::toString(var(state), true);
-        EM_ASM({ SurgeTextInput.sync($0, $1, JSON.parse(UTF8ToString($2))); },
-               inputPeerId, inputGeneration, json.toRawUTF8());
+        MAIN_THREAD_EM_ASM(
+            { SurgeTextInput.sync($0, $1, JSON.parse(UTF8ToString($2))); }, inputPeerId,
+            inputGeneration, json.toRawUTF8());
     }
     void paintInput()
     {

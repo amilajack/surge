@@ -10,6 +10,8 @@
 #include <emscripten.h>
 #include <emscripten/eventloop.h>
 #include <emscripten/heap.h>
+#include <emscripten/threading.h>
+#include <pthread.h>
 #include <cstdio>
 extern "C" void surge_dispatch_messages();
 void surge_attach_audio(SurgeSynthProcessor *);
@@ -23,6 +25,24 @@ void surge_wclap_ui_attach(SurgeSynthProcessor *, SurgeSynthEditor *);
 void surge_wclap_ui_pump();
 #endif
 static SurgeSynthProcessor *browserProcessor{};
+#if SURGE_WCLAP_UI
+extern "C" EMSCRIPTEN_KEEPALIVE int surge_browser_ui_thread_is_worker()
+{
+    return !emscripten_is_main_browser_thread();
+}
+extern "C" EMSCRIPTEN_KEEPALIVE int surge_browser_worker_canvas_count()
+{
+    // clang-format off
+    return EM_ASM_INT({ return globalThis.SurgeWorkerCanvas?.count() ?? 0; });
+    // clang-format on
+}
+extern "C" EMSCRIPTEN_KEEPALIVE int surge_browser_worker_paint_calls()
+{
+    // clang-format off
+    return EM_ASM_INT({ return globalThis.SurgeWorkerCanvas?.paints() ?? 0; });
+    // clang-format on
+}
+#endif
 extern "C" EMSCRIPTEN_KEEPALIVE double surge_browser_formula_live_compilations()
 {
     return browserProcessor ? static_cast<double>(browserProcessor->surge->storage.formulaGlobalData
@@ -214,7 +234,7 @@ extern "C" EMSCRIPTEN_KEEPALIVE void surge_browser_patch_prepared(int id, int to
     if (success)
     {
         s.browserReadyPatch.store(id, std::memory_order_release);
-        EM_ASM({ SurgeBrowser.reportFile(""); });
+        MAIN_THREAD_EM_ASM({ SurgeBrowser.reportFile(""); });
     }
     else
     {
@@ -223,7 +243,7 @@ extern "C" EMSCRIPTEN_KEEPALIVE void surge_browser_patch_prepared(int id, int to
         s.browserReadyPatch.store(-1, std::memory_order_release);
         s.refresh_editor = true;
         // clang-format off
-        EM_ASM({ SurgeBrowser.reportFile('Patch download failed; current patch retained. ' + UTF8ToString($0)); }, error);
+        MAIN_THREAD_EM_ASM({ SurgeBrowser.reportFile('Patch download failed; current patch retained. ' + UTF8ToString($0)); }, error);
         // clang-format on
     }
 }
@@ -253,8 +273,12 @@ static void prepareQueuedPatch()
         if (id >= 0 && id < s.storage.patch_list.size())
         {
             const auto path = s.storage.patch_list[id].path.u8string();
-            EM_ASM({ SurgeBrowser.reportFile("Loading selected patch...");
-                     SurgeFactory.prepare($0, $1, UTF8ToString($2)); }, id, requestToken, path.c_str());
+            MAIN_THREAD_EM_ASM(
+                {
+                    SurgeBrowser.reportFile("Loading selected patch...");
+                    SurgeFactory.prepare($0, $1, UTF8ToString($2));
+                },
+                id, requestToken, path.c_str());
         }
     }
     // Compile formula edits here, never in a callback. A loader owns the patch
@@ -268,21 +292,28 @@ static void prepareQueuedPatch()
 }
 static void pumpControls(void *)
 {
-    EM_ASM({ SurgeRuntime.phase('messages'); });
+#if SURGE_WCLAP_UI
+    // Phase tracing is a standalone diagnostic. Proxying seven such calls on
+    // every WCLAP control tick would needlessly wake the DAW's page thread.
+#define SURGE_CONTROL_PHASE(name) ((void)0)
+#else
+#define SURGE_CONTROL_PHASE(name) MAIN_THREAD_EM_ASM({ SurgeRuntime.phase(name); })
+#endif
+    SURGE_CONTROL_PHASE('messages');
     surge_dispatch_messages();
-    EM_ASM({ SurgeRuntime.phase('audio-startup'); });
+    SURGE_CONTROL_PHASE('audio-startup');
     surge_poll_audio_startup();
-    EM_ASM({ SurgeRuntime.phase('patch'); });
+    SURGE_CONTROL_PHASE('patch');
     prepareQueuedPatch();
-    EM_ASM({ SurgeRuntime.phase('effect-construction'); });
+    SURGE_CONTROL_PHASE('effect-construction');
     browserProcessor->surge->prepareBrowserEffects();
-    EM_ASM({ SurgeRuntime.phase('wavetable'); });
+    SURGE_CONTROL_PHASE('wavetable');
     surge_poll_wavetables();
 #if SURGE_WCLAP_UI
-    EM_ASM({ SurgeRuntime.phase('wclap'); });
     surge_wclap_ui_pump();
 #endif
-    EM_ASM({ SurgeRuntime.phase('idle'); });
+    SURGE_CONTROL_PHASE('idle');
+#undef SURGE_CONTROL_PHASE
 }
 int main()
 {
@@ -299,6 +330,9 @@ int main()
     surge_attach_wam(&processor);
     static std::unique_ptr<juce::AudioProcessorEditor> editor(processor.createEditor());
     browserEditor = dynamic_cast<SurgeSynthEditor *>(editor.get());
+#if SURGE_WCLAP_UI
+    MAIN_THREAD_EM_ASM({ SurgeWclapPage.setWorker(PThread.pthreads[$0]); }, pthread_self());
+#endif
     editor->addToDesktop(0);
     editor->setVisible(true);
 #if SURGE_WCLAP_UI

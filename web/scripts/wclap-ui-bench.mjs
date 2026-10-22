@@ -64,6 +64,25 @@ try {
     };
   });
   await page.goto(`${origin}/host/index.html`);
+  await page.evaluate(() => {
+    // The host's own animation heartbeat measures the thread the DAW shares
+    // with the embedded editor, independently of Surge's canvas API.
+    let last = performance.now();
+    const empty = () => ({frames: 0, totalGapMs: 0, maxGapMs: 0, over50Ms: 0});
+    globalThis.__surgeHostFrames = empty();
+    globalThis.__surgeResetHostFrames = () => { globalThis.__surgeHostFrames = empty(); last = performance.now(); };
+    const tick = now => {
+      const gap = now - last;
+      last = now;
+      const stats = globalThis.__surgeHostFrames;
+      stats.frames++;
+      stats.totalGapMs += gap;
+      stats.maxGapMs = Math.max(stats.maxGapMs, gap);
+      if (gap > 50) stats.over50Ms++;
+      requestAnimationFrame(tick);
+    };
+    requestAnimationFrame(tick);
+  });
   await page.locator('#start').click();
   let frame;
   for (let attempt = 0; attempt < 600; ++attempt) {
@@ -75,12 +94,19 @@ try {
   await page.evaluate(() => wclapHost.call('guiSetScale', {scale: 2}));
   await pause(1000);
   const screenshot = createHash('sha256').update(await page.locator('#window iframe').screenshot()).digest('hex');
+  const workerPaints = () => frame.evaluate(() => globalThis.SurgeWclapPage?.call?.(
+    'surge_browser_worker_paint_calls', 'number') ?? null);
   const measure = async (name, action, duration) => {
+    const beforeWorkerPaints = await workerPaints();
     await frame.evaluate(() => __surgeResetPaint());
+    await page.evaluate(() => __surgeResetHostFrames());
     await action();
     await pause(duration);
     const stats = await frame.evaluate(() => globalThis.__surgePaint);
-    return {name, seconds: duration / 1000, ...stats};
+    const host = await page.evaluate(() => globalThis.__surgeHostFrames);
+    const afterWorkerPaints = await workerPaints();
+    return {name, seconds: duration / 1000, ...stats, host,
+      workerPaints: beforeWorkerPaints === null ? null : afterWorkerPaints - beforeWorkerPaints};
   };
   const idle = await measure('idle', async () => {}, 2000);
   const note = await measure('held-note', async () => {

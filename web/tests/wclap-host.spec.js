@@ -69,6 +69,14 @@ const metaName = bytes => /<meta name="([^"]*)"/.exec(Buffer.from(bytes).toStrin
 
 test('the host opens the editor page from get_resource in a sandboxed, isolated frame', async () => {
   const frame = await editor();
+  const worker = await frame.evaluate(async () => ({
+    juce: await SurgeWclapPage.call('surge_browser_ui_thread_is_worker', 'number'),
+    canvases: await SurgeWclapPage.call('surge_browser_worker_canvas_count', 'number'),
+    paints: await SurgeWclapPage.call('surge_browser_worker_paint_calls', 'number'),
+  }));
+  expect(worker.juce).toBe(1);
+  expect(worker.canvases).toBeGreaterThan(0);
+  expect(worker.paints).toBeGreaterThan(0);
   const iframe = page.locator('#window iframe');
   await expect(iframe).toHaveAttribute('sandbox', 'allow-scripts');
   expect(await frame.evaluate(() => ({origin: self.origin, isolated: crossOriginIsolated, page: location.href,
@@ -85,6 +93,27 @@ test('the host opens the editor page from get_resource in a sandboxed, isolated 
   expect(editorSize[0]).toBeGreaterThanOrEqual(913);
   await expect.poll(async () => [Number(await iframe.getAttribute('width')), Number(await iframe.getAttribute('height'))])
     .toEqual(editorSize);
+});
+
+test('a browser without worker canvas support explains why the editor cannot open', async ({browser}) => {
+  const unsupported = await browser.newPage();
+  try {
+    await unsupported.goto(origin + '/host/index.html');
+    const html = fs.readFileSync(path.join(bundle, 'ui/index.html'), 'utf8').replace('<script>',
+      '<script>Object.defineProperty(window,"OffscreenCanvas",{value:undefined,configurable:true})</script><script>');
+    await unsupported.evaluate(srcdoc => {
+      const iframe = document.createElement('iframe');
+      iframe.id = 'unsupported-editor';
+      iframe.setAttribute('sandbox', 'allow-scripts');
+      iframe.setAttribute('allow', 'cross-origin-isolated');
+      iframe.srcdoc = srcdoc;
+      document.body.append(iframe);
+    }, html);
+    await expect(unsupported.frameLocator('#unsupported-editor').locator('#wclap-message'))
+      .toContainText('cannot run the editor on a worker canvas');
+  } finally {
+    await unsupported.close();
+  }
 });
 
 test('notes play through the DSP and the editor shows meters, voices and keys', async () => {

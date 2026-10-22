@@ -19,6 +19,10 @@ If you would also like to participate in discussions, testing and design of Surg
 
 This readme serves as the root of developer documentation for Surge XT.
 
+For the embedded WCLAP editor, [the browser README](web/README.md#embedded-wclap-editor-performance-requirements)
+defines the worker-rendering and host-responsiveness requirements. In particular,
+Surge's editor must not let its painting or UI computation stall the DAW that hosts it.
+
 # Developing Surge XT
 
 We welcome developers! Our workflow revolves around GitHub issues in this repository and conversations at our Discord
