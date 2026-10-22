@@ -34,7 +34,21 @@ try {
   await page.addInitScript(() => {
     const original = CanvasRenderingContext2D.prototype.putImageData;
     const originalCreate = CanvasRenderingContext2D.prototype.createImageData;
-    globalThis.__surgePaint = {calls: 0, pixels: 0, milliseconds: 0, imageAllocations: 0};
+    const originalFrame = requestAnimationFrame.bind(globalThis);
+    const empty = () => ({calls: 0, pixels: 0, milliseconds: 0, imageAllocations: 0,
+      frameCallbacks: 0, frameMilliseconds: 0, maxFrameMilliseconds: 0});
+    globalThis.__surgePaint = empty();
+    globalThis.__surgeResetPaint = () => { globalThis.__surgePaint = empty(); };
+    globalThis.requestAnimationFrame = callback => originalFrame(time => {
+      const start = performance.now();
+      try { return callback(time); }
+      finally {
+        const duration = performance.now() - start;
+        __surgePaint.frameCallbacks++;
+        __surgePaint.frameMilliseconds += duration;
+        __surgePaint.maxFrameMilliseconds = Math.max(__surgePaint.maxFrameMilliseconds, duration);
+      }
+    });
     CanvasRenderingContext2D.prototype.createImageData = function (...args) {
       __surgePaint.imageAllocations++;
       return originalCreate.apply(this, args);
@@ -62,7 +76,7 @@ try {
   await pause(1000);
   const screenshot = createHash('sha256').update(await page.locator('#window iframe').screenshot()).digest('hex');
   const measure = async (name, action, duration) => {
-    await frame.evaluate(() => { globalThis.__surgePaint = {calls: 0, pixels: 0, milliseconds: 0, imageAllocations: 0}; });
+    await frame.evaluate(() => __surgeResetPaint());
     await action();
     await pause(duration);
     const stats = await frame.evaluate(() => globalThis.__surgePaint);
