@@ -4,6 +4,7 @@
 #include <emscripten.h>
 #include <emscripten/html5.h>
 #include <set>
+#include <utility>
 namespace juce
 {
 namespace
@@ -343,13 +344,38 @@ class BrowserPeer final : public ComponentPeer
         dirty = false;
         // Composition underlines are drawn over the whole window: repaint all of it.
         const auto window = bounds.withZeroOrigin();
-        const auto area = repaintAll || !inputFormats.empty()
-                              ? window
-                              : dirtyRegion.getBounds().getIntersection(window);
+        auto regions = std::move(dirtyRegion);
+        dirtyRegion = {};
+        const bool full = repaintAll || !inputFormats.empty();
         repaintAll = false;
-        dirtyRegion.clear();
-        if (area.isEmpty())
+        if (full)
+        {
+            paintArea(window);
             return;
+        }
+        // Separate meter and control invalidations can be far apart. Painting
+        // their bounding box would convert and upload all the pixels between
+        // them. Bound the number of calls when invalidations are fragmented.
+        const auto bounds = regions.getBounds().getIntersection(window);
+        if (bounds.isEmpty()) return;
+        int64 covered = 0;
+        for (const auto &region : regions)
+        {
+            const auto clipped = region.getIntersection(window);
+            covered += int64(clipped.getWidth()) * clipped.getHeight();
+        }
+        if (regions.getNumRectangles() > 8 ||
+            covered * 2 >= int64(bounds.getWidth()) * bounds.getHeight())
+        {
+            paintArea(bounds);
+            return;
+        }
+        for (const auto &region : regions)
+            paintArea(region.getIntersection(window));
+    }
+    void paintArea(const Rectangle<int> &area)
+    {
+        if (area.isEmpty()) return;
         // The backing pixels that cover the area.
         const int x0 = std::max(0, int(std::floor(area.getX() * pixelScale)));
         const int y0 = std::max(0, int(std::floor(area.getY() * pixelScale)));
@@ -387,9 +413,11 @@ class BrowserPeer final : public ComponentPeer
         EM_ASM(
             {
                 const c = SurgeHost.canvas(UTF8ToString($0));
-                const image = c.getContext('2d').createImageData($3, $4);
+                const context = c.surgeContext ||= c.getContext('2d');
+                const image = c.surgeImage?.width === $3 && c.surgeImage.height === $4
+                    ? c.surgeImage : (c.surgeImage = context.createImageData($3, $4));
                 image.data.set(HEAPU8.subarray($5, $5 + $3 * $4 * 4));
-                c.getContext('2d').putImageData(image, $1, $2);
+                context.putImageData(image, $1, $2);
             },
             canvasId.toRawUTF8(), x0, y0, pixels.getWidth(), pixels.getHeight(), rgba.data());
     }

@@ -1111,6 +1111,12 @@ loads one of eight factory patches (`--patches daw`: the 23 patches of the DAW's
 Surge XT x100 song) through `clap.state` and holds a three-note chord, and every
 64-frame block processes each instance once.
 
+`node web/scripts/wclap-ui-bench.mjs <bundle directory>` measures the editor in
+the same sandboxed WCLAP test host at 2x scale: two seconds idle, then three
+seconds with a note held. It reports canvas upload calls and pixels, image buffer
+allocations, time inside `putImageData`, and an idle screenshot hash. Compare
+bundles on the same machine and browser; the upload time excludes JUCE painting.
+
 **The build optimizations** (LTO with Wasm exception handling, standard
 exceptions, relaxed SIMD for the fused multiply-adds, the oscillators' scalar
 recurrences on floats) render the 23 patches bit-identically to the build before
