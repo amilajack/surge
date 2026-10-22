@@ -4,6 +4,27 @@ The browser migration preserves the C++ JUCE interface. There is no TypeScript
 replacement interface. The engine, processor, widgets, skins, and advanced
 editors remain the existing Surge sources.
 
+## Embedded WCLAP editor performance requirements
+
+The WCLAP editor runs inside a DAW, so its UI must not monopolize the DAW's
+browser main thread. Run JUCE editor updates, rasterization, and canvas drawing
+in a dedicated worker with a transferred `OffscreenCanvas` on supported Chrome
+and desktop-app runtimes. Keep page-thread work limited to DOM input, accessible
+controls, and bounded message forwarding. Coalesce redundant repaint and input
+messages, and cap in-flight frames so a busy editor cannot build an unbounded
+queue or delay DAW controls. The plug-in's audio path must remain independent of
+editor rendering and must never wait for a UI frame.
+
+Detect worker, `OffscreenCanvas`, and cross-origin-isolation support at runtime.
+If a supported browser lacks a required capability, give the user a clear
+explanation and keep the host responsive; do not silently move expensive editor
+painting back onto the DAW's page thread. Verify these requirements with a
+running WCLAP host, including heavy editor activity, resize, close/reopen, and
+error recovery. Measure DAW page-thread responsiveness and editor frame cost
+before and after changing this boundary. `OffscreenCanvas` moves drawing work
+off the page thread but does not reserve GPU time, so test contention under a
+heavy DAW project as well.
+
 **Development port, not a completed browser release.** Build success alone is
 not a parity result. Native packaging remains available until reference captures
 and the portable feature inventory pass. See the [source-derived inventory and

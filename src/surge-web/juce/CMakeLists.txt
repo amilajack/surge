@@ -80,7 +80,10 @@ add_executable(surge-xt-wclap-ui BrowserMain.cpp BrowserAudio.cpp BrowserWam.cpp
 target_link_libraries(surge-xt-wclap-ui PRIVATE surge-xt-browser-editor)
 target_compile_definitions(surge-xt-wclap-ui PRIVATE SURGE_WCLAP_UI=1)
 target_include_directories(surge-xt-wclap-ui PRIVATE ${CMAKE_SOURCE_DIR}/src/surge-wclap)
-target_link_options(surge-xt-wclap-ui PRIVATE "SHELL:--pre-js ${CMAKE_SOURCE_DIR}/web/browser/factory-startup.js" -Wl,--error-limit=0 -sAUDIO_WORKLET=1 -sWASM_WORKERS=1
+target_link_options(surge-xt-wclap-ui PRIVATE "SHELL:--pre-js ${CMAKE_SOURCE_DIR}/web/browser/factory-startup.js"
+  "SHELL:--pre-js ${CMAKE_SOURCE_DIR}/web/browser/worker-canvas.js"
+  -Wl,--error-limit=0 -sAUDIO_WORKLET=1 -sWASM_WORKERS=1
+  -sPROXY_TO_PTHREAD=1
   -sINITIAL_MEMORY=268435456 -sALLOW_MEMORY_GROWTH=1 -sMAXIMUM_MEMORY=2147483648
   -sSTACK_SIZE=2097152 -sPTHREAD_POOL_SIZE=8 -sEXIT_RUNTIME=0 -sFORCE_FILESYSTEM=1
   --preload-file ${CMAKE_SOURCE_DIR}/resources/fonts@/fonts
@@ -92,7 +95,8 @@ endforeach()
 set_target_properties(surge-xt-wclap-ui PROPERTIES SUFFIX .js RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/wclap-ui)
 add_dependencies(surge-xt-wclap-ui surge-factory-library)
 set_property(TARGET surge-xt-wclap-ui APPEND PROPERTY LINK_DEPENDS
-  ${CMAKE_SOURCE_DIR}/web/browser/platform.js ${CMAKE_SOURCE_DIR}/web/browser/factory-startup.js)
+  ${CMAKE_SOURCE_DIR}/web/browser/platform.js ${CMAKE_SOURCE_DIR}/web/browser/factory-startup.js
+  ${CMAKE_SOURCE_DIR}/web/browser/worker-canvas.js)
 
 set_property(TARGET surge-xt-browser surge-juce-browser-check APPEND PROPERTY LINK_DEPENDS
   ${CMAKE_SOURCE_DIR}/web/browser/platform.js ${CMAKE_SOURCE_DIR}/web/juce-shell.html)

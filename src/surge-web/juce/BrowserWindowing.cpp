@@ -61,7 +61,7 @@ class BrowserPeer final : public ComponentPeer
     // times the pixels, and meters repaint 30 times a second).
     RectangleList<int> dirtyRegion;
     std::vector<uint8_t> rgba;
-    static double windowPixelRatio() { return EM_ASM_DOUBLE({ return SurgeHost.pixelRatio(); }); }
+    static double windowPixelRatio() { return MAIN_THREAD_EM_ASM_DOUBLE({ return SurgeHost.pixelRatio(); }); }
     static ModifierKeys mouseModifiers(const EmscriptenMouseEvent &event)
     {
         return ModifierKeys((event.shiftKey ? ModifierKeys::shiftModifier : 0) |
@@ -78,14 +78,14 @@ class BrowserPeer final : public ComponentPeer
         const auto modifiers = mouseModifiers(*event);
         ModifierKeys::currentModifiers = modifiers;
         // Desktop coordinates are relative to the application's container.
-        browserMouse = {float(event->clientX) - float(EM_ASM_DOUBLE({ return SurgeHost.origin().x; })),
-                        float(event->clientY) - float(EM_ASM_DOUBLE({ return SurgeHost.origin().y; }))};
+        browserMouse = {float(event->clientX) - float(MAIN_THREAD_EM_ASM_DOUBLE({ return SurgeHost.origin().x; })),
+                        float(event->clientY) - float(MAIN_THREAD_EM_ASM_DOUBLE({ return SurgeHost.origin().y; }))};
         // A plugin's container may have moved since the last display refresh.
-        if (type == EMSCRIPTEN_EVENT_MOUSEDOWN && EM_ASM_INT({ return SurgeHost.displaysStale(); }))
+        if (type == EMSCRIPTEN_EVENT_MOUSEDOWN && MAIN_THREAD_EM_ASM_INT({ return SurgeHost.displaysStale(); }))
             const_cast<Displays &>(Desktop::getInstance().getDisplays()).refresh();
         if (type == EMSCRIPTEN_EVENT_MOUSEDOWN &&
             (p.getStyleFlags() & windowIgnoresKeyPresses) == 0)
-            EM_ASM({ SurgeHost.canvas(UTF8ToString($0)).focus(); }, p.canvasId.toRawUTF8());
+            MAIN_THREAD_EM_ASM({ SurgeHost.canvas(UTF8ToString($0)).focus(); }, p.canvasId.toRawUTF8());
         p.handleMouseEvent(MouseInputSource::InputSourceType::mouse,
                            {float(event->targetX), float(event->targetY)}, modifiers,
                            MouseInputSource::invalidPressure, MouseInputSource::invalidOrientation,
@@ -106,7 +106,7 @@ class BrowserPeer final : public ComponentPeer
             p.handleKeyUpOrDown(false);
             // Moving between a canvas and its accessible DOM controls retains
             // the same JUCE peer. In particular, do not close type-ahead editors.
-            if (!EM_ASM_INT({ const c=SurgeHost.canvas(UTF8ToString($0));
+            if (!MAIN_THREAD_EM_ASM_INT({ const c=SurgeHost.canvas(UTF8ToString($0));
                 return c.surgeFocusDestination === c.id; }, p.canvasId.toRawUTF8()))
                 p.handleFocusLoss();
         }
@@ -116,7 +116,7 @@ class BrowserPeer final : public ComponentPeer
     {
         auto &p = *static_cast<BrowserPeer *>(ctx);
         p.syncInput();
-        if (EM_ASM_INT({ return SurgeTextInput.isComposing($0); }, p.inputPeerId) ||
+        if (MAIN_THREAD_EM_ASM_INT({ return SurgeTextInput.isComposing($0); }, p.inputPeerId) ||
             (p.activeInput() && (event->keyCode == 229 || String::fromUTF8(event->key) == "Dead")))
             return false;
         const int code = event->keyCode;
@@ -169,7 +169,7 @@ class BrowserPeer final : public ComponentPeer
     BrowserPeer(Component &c, int flags)
         : ComponentPeer(c, flags), canvasId("juce-" + String(inputPeerId))
     {
-        EM_ASM(
+        MAIN_THREAD_EM_ASM(
             {
                 const c = document.createElement('canvas');
                 c.id = UTF8ToString($0);
@@ -177,6 +177,7 @@ class BrowserPeer final : public ComponentPeer
                 if (!$2) c.tabIndex = 0;
                 c.setAttribute('aria-label', UTF8ToString($1));
                 SurgeHost.register(c, $3);
+                if (Module.surgeWclap) SurgeWclapPage.transferCanvas(c);
                 c.addEventListener('blur', event => { c.surgeFocusDestination=event.relatedTarget?.dataset.jucePeer || ""; }, true);
                 c.addEventListener('contextmenu', e => e.preventDefault());
                 SurgeBrowser.attachFileDrop(c, $4);
@@ -201,7 +202,7 @@ class BrowserPeer final : public ComponentPeer
     ~BrowserPeer() override
     {
         finishInputComposition();
-        EM_ASM({ SurgeTextInput.detach($0); }, inputPeerId);
+        MAIN_THREAD_EM_ASM({ SurgeTextInput.detach($0); }, inputPeerId);
         const auto selector = "#" + canvasId;
         emscripten_set_mousedown_callback(selector.toRawUTF8(), nullptr, true, nullptr);
         emscripten_set_mouseup_callback(selector.toRawUTF8(), nullptr, true, nullptr);
@@ -211,19 +212,20 @@ class BrowserPeer final : public ComponentPeer
         emscripten_set_wheel_callback(selector.toRawUTF8(), nullptr, true, nullptr);
         emscripten_set_focus_callback(selector.toRawUTF8(), nullptr, true, nullptr);
         emscripten_set_blur_callback(selector.toRawUTF8(), nullptr, true, nullptr);
-        EM_ASM({ SurgeHost.unregister(UTF8ToString($0)); }, canvasId.toRawUTF8());
+        EM_ASM({ globalThis.SurgeWorkerCanvas?.remove(UTF8ToString($0)); }, canvasId.toRawUTF8());
+        MAIN_THREAD_EM_ASM({ SurgeHost.unregister(UTF8ToString($0)); }, canvasId.toRawUTF8());
     }
     void *getNativeHandle() const override { return const_cast<BrowserPeer *>(this); }
     void setVisible(bool value) override
     {
         visible = value;
-        EM_ASM(
+        MAIN_THREAD_EM_ASM(
             { SurgeHost.canvas(UTF8ToString($0)).style.display = $1 ? 'block' : 'none'; },
             canvasId.toRawUTF8(), value);
     }
     void setTitle(const String &title) override
     {
-        EM_ASM(
+        MAIN_THREAD_EM_ASM(
             {
                 SurgeHost.canvas(UTF8ToString($0))
                     .setAttribute('aria-label', UTF8ToString($1));
@@ -241,11 +243,12 @@ class BrowserPeer final : public ComponentPeer
                             int(std::ceil(r.getHeight() * pixelScale)), true);
             rgba.resize(size_t(backing.getWidth()) * backing.getHeight() * 4);
         }
-        EM_ASM(
+        EM_ASM({ globalThis.SurgeWorkerCanvas?.prepare(UTF8ToString($0), $1, $2); },
+               canvasId.toRawUTF8(), backing.getWidth(), backing.getHeight());
+        MAIN_THREAD_EM_ASM(
             {
                 const c = SurgeHost.canvas(UTF8ToString($0));
-                c.width = $5;
-                c.height = $6;
+                if (!Module.surgeWclap) { c.width = $5; c.height = $6; }
                 c.style.width = $3 + 'px';
                 c.style.height = $4 + 'px';
                 c.style.left = $1 + 'px';
@@ -275,7 +278,7 @@ class BrowserPeer final : public ComponentPeer
     {
         if (!bounds.withPosition(0, 0).contains(p))
             return false;
-        return EM_ASM_INT({
+        return MAIN_THREAD_EM_ASM_INT({
             const canvas = SurgeHost.canvas(UTF8ToString($0));
             return SurgeHost.elementFromPoint($1, $2) === canvas;
         }, canvasId.toRawUTF8(), p.x + bounds.getX(), p.y + bounds.getY());
@@ -287,14 +290,14 @@ class BrowserPeer final : public ComponentPeer
     BorderSize<int> getFrameSize() const override { return {}; }
     bool setAlwaysOnTop(bool b) override
     {
-        EM_ASM(
+        MAIN_THREAD_EM_ASM(
             { SurgeHost.canvas(UTF8ToString($0)).style.zIndex = $2 ? 2000 : ($1 ? 100 : 0); },
             canvasId.toRawUTF8(), b, (getStyleFlags() & windowIsTemporary) != 0);
         return true;
     }
     void toFront(bool focus) override
     {
-        EM_ASM(
+        MAIN_THREAD_EM_ASM(
             {
                 const c = SurgeHost.canvas(UTF8ToString($0));
                 c.parentNode.appendChild(c);
@@ -305,7 +308,7 @@ class BrowserPeer final : public ComponentPeer
     }
     void toBehind(ComponentPeer *) override
     {
-        EM_ASM(
+        MAIN_THREAD_EM_ASM(
             {
                 const c = SurgeHost.canvas(UTF8ToString($0));
                 c.parentNode.prepend(c);
@@ -315,7 +318,7 @@ class BrowserPeer final : public ComponentPeer
     String accessibilityCanvasId() const { return canvasId; }
     bool isFocused() const override
     {
-        return EM_ASM_INT(
+        return MAIN_THREAD_EM_ASM_INT(
             { const active = SurgeHost.activeElement();
               return active === SurgeHost.canvas(UTF8ToString($0)) ||
                        active?.dataset.jucePeer === UTF8ToString($0); },
@@ -324,7 +327,7 @@ class BrowserPeer final : public ComponentPeer
     void grabFocus() override
     {
         if ((getStyleFlags() & windowIgnoresKeyPresses) == 0 && !isFocused())
-            EM_ASM({ SurgeHost.canvas(UTF8ToString($0)).focus(); }, canvasId.toRawUTF8());
+            MAIN_THREAD_EM_ASM({ SurgeHost.canvas(UTF8ToString($0)).focus(); }, canvasId.toRawUTF8());
     }
     void repaint(const Rectangle<int> &area) override
     {
@@ -412,18 +415,22 @@ class BrowserPeer final : public ComponentPeer
         }
         EM_ASM(
             {
-                const c = SurgeHost.canvas(UTF8ToString($0));
-                const context = c.surgeContext ||= c.getContext('2d');
-                const image = c.surgeImage?.width === $3 && c.surgeImage.height === $4
-                    ? c.surgeImage : (c.surgeImage = context.createImageData($3, $4));
-                image.data.set(HEAPU8.subarray($5, $5 + $3 * $4 * 4));
-                context.putImageData(image, $1, $2);
+                if (globalThis.SurgeWorkerCanvas) {
+                    SurgeWorkerCanvas.paint(UTF8ToString($0), $1, $2, $3, $4, $5);
+                } else {
+                    const c = SurgeHost.canvas(UTF8ToString($0));
+                    const context = c.surgeContext ||= c.getContext('2d');
+                    const image = c.surgeImage?.width === $3 && c.surgeImage.height === $4
+                        ? c.surgeImage : (c.surgeImage = context.createImageData($3, $4));
+                    image.data.set(HEAPU8.subarray($5, $5 + $3 * $4 * 4));
+                    context.putImageData(image, $1, $2);
+                }
             },
             canvasId.toRawUTF8(), x0, y0, pixels.getWidth(), pixels.getHeight(), rgba.data());
     }
     void setAlpha(float alpha) override
     {
-        EM_ASM(
+        MAIN_THREAD_EM_ASM(
             { SurgeHost.canvas(UTF8ToString($0)).style.opacity = $1; }, canvasId.toRawUTF8(),
             alpha);
     }
@@ -502,7 +509,7 @@ Desktop::createNativeDarkModeChangeDetectorImpl()
 }
 bool Desktop::isDarkModeActive() const
 {
-    return EM_ASM_INT({ return matchMedia('(prefers-color-scheme: dark)').matches; });
+    return MAIN_THREAD_EM_ASM_INT({ return matchMedia('(prefers-color-scheme: dark)').matches; });
 }
 bool detail::MouseInputSourceList::addSource()
 {
@@ -528,15 +535,15 @@ void Displays::findDisplays(const Desktop &desktop)
     d.scale = desktop.getGlobalScaleFactor();
     d.dpi = 96;
     // The visible viewport, in container-relative desktop coordinates.
-    d.totalArea = {EM_ASM_INT({ return SurgeHost.displayArea()[0]; }), EM_ASM_INT({ return SurgeHost.displayArea()[1]; }),
-                   EM_ASM_INT({ return SurgeHost.displayArea()[2]; }), EM_ASM_INT({ return SurgeHost.displayArea()[3]; })};
+    d.totalArea = {MAIN_THREAD_EM_ASM_INT({ return SurgeHost.displayArea()[0]; }), MAIN_THREAD_EM_ASM_INT({ return SurgeHost.displayArea()[1]; }),
+                   MAIN_THREAD_EM_ASM_INT({ return SurgeHost.displayArea()[2]; }), MAIN_THREAD_EM_ASM_INT({ return SurgeHost.displayArea()[3]; })};
     d.userArea = d.totalArea;
     displays.add(d);
 }
 bool WindowUtils::areThereAnyAlwaysOnTopWindows() { return false; }
 bool Process::isForegroundProcess()
 {
-    return EM_ASM_INT({ return document.hasFocus(); });
+    return MAIN_THREAD_EM_ASM_INT({ return document.hasFocus(); });
 }
 void Process::makeForegroundProcess() {}
 void Process::hide() {}
@@ -554,7 +561,7 @@ struct MouseCursor::PlatformSpecificHandle
                           : type == PointingHandCursor ? "pointer"
                           : type == DraggingHandCursor ? "grabbing"
                                                        : "default";
-        EM_ASM({ SurgeHost.container().style.cursor = UTF8ToString($0); }, css);
+        MAIN_THREAD_EM_ASM({ SurgeHost.container().style.cursor = UTF8ToString($0); }, css);
     }
 };
 namespace
@@ -572,7 +579,7 @@ void requestClipboard(bool write, const String &text, ClipboardCallback callback
     }
     do { ++clipboardRequestId; } while (clipboardRequests.count(clipboardRequestId));
     clipboardRequests.emplace(clipboardRequestId, std::move(callback));
-    EM_ASM({
+    MAIN_THREAD_EM_ASM({
         const id = $0;
         SurgeClipboard.run(id, $1, UTF8ToString($2), (ok, value) => {
             const pointer = stringToNewUTF8(value);
@@ -601,7 +608,7 @@ void SystemClipboard::writeTextAsync(const String &text, std::function<void(bool
 }
 void SystemClipboard::reportClipboardError(const String &message)
 {
-    EM_ASM({ SurgeClipboard.report(UTF8ToString($0)); }, message.toRawUTF8());
+    MAIN_THREAD_EM_ASM({ SurgeClipboard.report(UTF8ToString($0)); }, message.toRawUTF8());
 }
 void SystemClipboard::copyTextToClipboard(const String &text)
 {

@@ -48,7 +48,7 @@
               try{
                 const path=await library.install(entry.path,FS);
                 if(!dialog.isConnected)return;
-                if(!Module.ccall('surge_browser_load_tuning','number',['string'],[path]))throw Error('The tuning could not be applied');
+                if(!await SurgeBrowser.callEditor('surge_browser_load_tuning','number',['string'],[path]))throw Error('The tuning could not be applied');
                 message.textContent=`Loaded ${kind}: `+button.textContent;
               }catch(reason){error.textContent='Unable to load: '+String(reason);}
               finally{load.disabled=false;}

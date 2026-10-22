@@ -9,6 +9,9 @@
   }
   const utf16=(text,offset)=>Array.from(text).slice(0,offset).join('').length;
   const rectangle=values=>new DOMRect(...values);
+  const editorCall=(name,returnType,argTypes,args)=>Module.surgeWclap
+    ? SurgeWclapPage.call(name,returnType,argTypes,args)
+    : Promise.resolve(Module.ccall(name,returnType,argTypes,args));
   function detach(id) {
     const state=peers.get(id);
     if(state){peers.delete(id);state.element.editContext=null;}
@@ -22,33 +25,36 @@
     const valid=()=>peers.get(id)===state;
     context.addEventListener('compositionstart',()=>{
       if(!valid())return;state.composing=true;
-      Module._surge_text_composition(id,generation,1);
+      void editorCall('surge_text_composition',null,['number','number','number'],[id,generation,1]);
     });
     context.addEventListener('compositionend',()=>{
       if(!valid())return;state.composing=false;
-      Module._surge_text_composition(id,generation,0);
+      void editorCall('surge_text_composition',null,['number','number','number'],[id,generation,0]);
     });
     context.addEventListener('textupdate',event=>{
       if(!valid())return;
       const before=state.model,after=context.text;
       const pointer=Module.stringToNewUTF8(event.text);
       // Native code takes ownership of this heap allocation.
-      Module._surge_text_update(id,generation,scalar(before,event.updateRangeStart),scalar(before,event.updateRangeEnd),pointer,
-        scalar(after,event.selectionStart),scalar(after,event.selectionEnd));
+      void editorCall('surge_text_update',null,['number','number','number','number','number','number','number'],
+        [id,generation,scalar(before,event.updateRangeStart),scalar(before,event.updateRangeEnd),pointer,
+        scalar(after,event.selectionStart),scalar(after,event.selectionEnd)]);
     });
-    context.addEventListener('characterboundsupdate',event=>{
+    context.addEventListener('characterboundsupdate',async event=>{
       if(!valid())return;
       const bounds=[];
       for(let index=event.rangeStart;index<Math.min(event.rangeEnd,context.text.length);++index)
-        bounds.push(rectangle(JSON.parse(Module.ccall('surge_text_bounds','string',['number','number','number'],[id,generation,scalar(context.text,index)]))));
-      context.updateCharacterBounds(event.rangeStart,bounds);
+        bounds.push(rectangle(JSON.parse(await editorCall('surge_text_bounds','string',['number','number','number'],
+          [id,generation,scalar(context.text,index)]))));
+      if(valid())context.updateCharacterBounds(event.rangeStart,bounds);
     });
     context.addEventListener('textformatupdate',event=>{
       if(!valid())return;
-      Module._surge_text_format(id,generation,-1,0,0,0);
+      void editorCall('surge_text_format',null,['number','number','number','number','number','number'],[id,generation,-1,0,0,0]);
       for(const format of event.getTextFormats())
-        Module._surge_text_format(id,generation,scalar(context.text,format.rangeStart),scalar(context.text,format.rangeEnd),
-          ['none','solid','dotted','dashed','wavy'].indexOf(format.underlineStyle),['none','thin','thick'].indexOf(format.underlineThickness));
+        void editorCall('surge_text_format',null,['number','number','number','number','number','number'],
+          [id,generation,scalar(context.text,format.rangeStart),scalar(context.text,format.rangeEnd),
+          ['none','solid','dotted','dashed','wavy'].indexOf(format.underlineStyle),['none','thin','thick'].indexOf(format.underlineThickness)]);
     });
     return state;
   }

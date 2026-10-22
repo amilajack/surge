@@ -32,7 +32,7 @@ OscillatorStorage &oscillator(int slot)
 }
 void report(const std::string &error)
 {
-    EM_ASM({ SurgeBrowser.reportFile(UTF8ToString($0)); }, error.c_str());
+    MAIN_THREAD_EM_ASM({ SurgeBrowser.reportFile(UTF8ToString($0)); }, error.c_str());
 }
 bool current(int index)
 {
@@ -231,8 +231,9 @@ void surge_poll_wavetables()
         {
             slot.state.store(downloading, std::memory_order_release);
             report("Loading selected wavetable...");
-            EM_ASM({ SurgeFactory.prepareWavetable($0, $1, UTF8ToString($2)); },
-                   i, slot.request, slot.prepared->path.c_str());
+            MAIN_THREAD_EM_ASM(
+                { SurgeFactory.prepareWavetable($0, $1, UTF8ToString($2)); }, i, slot.request,
+                slot.prepared->path.c_str());
         }
     }
     if (!synth->audio_processing_active && synth->tryAcquireBrowserEngine(2))

@@ -1,5 +1,8 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 if (typeof window !== 'undefined') {
+  const callEditor = (name, args) => Module.surgeWclap
+    ? SurgeWclapPage.call(name, null, ['number','number','number','string'], args)
+    : Promise.resolve(Module.ccall(name, null, ['number','number','number','string'], args));
   globalThis.SurgeFactory = {
     library: null,
     ready: null,
@@ -44,9 +47,9 @@ if (typeof window !== 'undefined') {
           if (!SurgeFactory.library) throw Error('Factory index unavailable');
           await SurgeFactory.library.install(path.slice('/factory/'.length), FS);
         }
-        Module.ccall('surge_browser_wt_downloaded', null, ['number','number','number','string'], [slot,token,1,'']);
+        await callEditor('surge_browser_wt_downloaded', [slot,token,1,'']);
       } catch (error) {
-        Module.ccall('surge_browser_wt_downloaded', null, ['number','number','number','string'], [slot,token,0,String(error)]);
+        await callEditor('surge_browser_wt_downloaded', [slot,token,0,String(error)]);
       }
     },
     async prepare(id, token, path) {
@@ -58,10 +61,10 @@ if (typeof window !== 'undefined') {
           await SurgeFactory.library.install(path.slice('/factory/'.length), FS);
         }
         SurgeRuntime.record('patch-download-ready',{id,token});
-        Module.ccall('surge_browser_patch_prepared', null, ['number','number','number','string'], [id,token,1,'']);
+        await callEditor('surge_browser_patch_prepared', [id,token,1,'']);
       } catch (error) {
         SurgeRuntime.record('patch-download-failed',{id,token,error:String(error)});
-        Module.ccall('surge_browser_patch_prepared', null, ['number','number','number','string'], [id,token,0,String(error)]);
+        await callEditor('surge_browser_patch_prepared', [id,token,0,String(error)]);
       }
     }
   };

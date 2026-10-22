@@ -42,6 +42,9 @@
     },
     attach(module) {
       if(!module._surge_accessibility_snapshot) return;
+      const invoke=(name,returnType,argTypes,args)=>module.surgeWclap
+        ? SurgeWclapPage.call(name,returnType,argTypes,args)
+        : module.ccall(name,returnType,argTypes,args);
       const root=document.createElement('div');root.id='juce-accessibility';
       root.style.cssText='position:absolute;left:0;top:0;pointer-events:none';
       const ring=document.createElement('div');ring.setAttribute('aria-hidden','true');
@@ -52,8 +55,12 @@
         const [x,y,width,height]=data.bounds,{x:left,y:top}=origin();
         Object.assign(ring.style,{display:'block',left:x+left+'px',top:y+top+'px',width:width+'px',height:height+'px'});
       };
-      const update=()=>{
-        const tree=JSON.parse(module.ccall('surge_accessibility_snapshot','string',[],[]));
+      let updating=false,refreshPending=false;
+      const update=async()=>{
+        if(updating){refreshPending=true;return;}
+        updating=true;
+        try{
+        const tree=JSON.parse(await invoke('surge_accessibility_snapshot','string',[],[]));
         const seen=new Set();
         const visit=(data,parent)=>{
           if(data.ignored){for(const child of data.children)visit(child,parent);return;}
@@ -67,12 +74,12 @@
             node.style.cssText='position:fixed;opacity:0;pointer-events:none';
             nodes.set(data.id,node);
             const act=(action,value=0)=>{
-              const result=module._surge_accessibility_action(data.id,action,value);
+              const result=invoke('surge_accessibility_action','number',['number','number','number'],[data.id,action,value]);
               queueMicrotask(update);return result;
             };
             node.addEventListener('focus',()=>{act(2);drawRing(node.juceData);});
             node.addEventListener('blur',event=>{
-              if(node instanceof HTMLTextAreaElement)module._surge_accessibility_composition(data.id,0);
+              if(node instanceof HTMLTextAreaElement)invoke('surge_accessibility_composition',null,['number','number'],[data.id,0]);
               const destination=event.relatedTarget;
               if(destination?.dataset.jucePeer!==node.dataset.jucePeer&&destination?.id!==node.dataset.jucePeer)act(5);
               ring.style.display='none';
@@ -86,8 +93,9 @@
                 // DOM editor remains focused. A new user edit owns focus again.
                 act(2);
                 const before=node.juceData.text;
-                module._surge_accessibility_text(data.id,module.stringToNewUTF8(before),module.stringToNewUTF8(node.value),
-                  scalar(node.value,node.selectionStart),scalar(node.value,node.selectionEnd));
+                invoke('surge_accessibility_text','number',['number','number','number','number','number'],
+                  [data.id,module.stringToNewUTF8(before),module.stringToNewUTF8(node.value),
+                  scalar(node.value,node.selectionStart),scalar(node.value,node.selectionEnd)]);
                 update();
               };
               node.addEventListener('input',commit);
@@ -95,21 +103,22 @@
                 const d=node.juceData;
                 if(scalar(node.value,node.selectionStart)!==d.selectionStart||scalar(node.value,node.selectionEnd)!==d.selectionEnd)commit();
               });
-              node.addEventListener('compositionstart',()=>{if(nodes.get(data.id)===node&&active()===node)module._surge_accessibility_composition(data.id,1);});
-              node.addEventListener('compositionend',()=>{if(nodes.get(data.id)===node)module._surge_accessibility_composition(data.id,0);});
+              node.addEventListener('compositionstart',()=>{if(nodes.get(data.id)===node&&active()===node)invoke('surge_accessibility_composition',null,['number','number'],[data.id,1]);});
+              node.addEventListener('compositionend',()=>{if(nodes.get(data.id)===node)invoke('surge_accessibility_composition',null,['number','number'],[data.id,0]);});
               node.addEventListener('beforeinput',event=>{
                 // A typed delimiter uses the original Lua pairing rules.
                 // Paste, replacement input and IME commits remain literal.
                 if(node.juceData.codeEditorKeys && !event.isComposing && event.inputType==='insertText' &&
                     event.data?.length===1 && '()[]{}"\''.includes(event.data)){
                   commit();
-                  if(module._surge_accessibility_character(data.id,event.data.codePointAt(0))){
+                  const handled=invoke('surge_accessibility_character','number',['number','number'],[data.id,event.data.codePointAt(0)]);
+                  if(module.surgeWclap || handled){
                     event.preventDefault();update();return;
                   }
                 }
                 if(event.inputType==='historyUndo'||event.inputType==='historyRedo'){
                   if(active()===node)act(2);
-                  event.preventDefault();module._surge_accessibility_key(data.id,90,event.inputType==='historyRedo'?9:8);update();
+                  event.preventDefault();invoke('surge_accessibility_key','number',['number','number','number'],[data.id,90,event.inputType==='historyRedo'?9:8]);update();
                 }
               });
             }
@@ -130,7 +139,8 @@
               if(d.captureKeys){
                 if(event.isComposing||['Shift','Control','Alt','Meta','AltGraph'].includes(event.key))return;
                 const flags=(event.shiftKey?1:0)|(event.ctrlKey?2:0)|(event.altKey?4:0)|(event.metaKey?8:0);
-                if(module._surge_accessibility_key(data.id,event.keyCode,flags)){
+                const handled=invoke('surge_accessibility_key','number',['number','number','number'],[data.id,event.keyCode,flags]);
+                if(module.surgeWclap || handled){
                   event.preventDefault();event.stopPropagation();update();
                 }
                 return;
@@ -138,7 +148,8 @@
               if(d.nativeKeys && !event.isComposing &&
                  ['ArrowUp','ArrowDown','PageUp','PageDown','Home','End','Enter','Escape'].includes(event.key)){
                 const flags=(event.shiftKey?1:0)|(event.ctrlKey?2:0)|(event.altKey?4:0)|(event.metaKey?8:0);
-                if(module._surge_accessibility_key(data.id,event.keyCode,flags)){
+                const handled=invoke('surge_accessibility_key','number',['number','number','number'],[data.id,event.keyCode,flags]);
+                if(module.surgeWclap || handled){
                   event.preventDefault();event.stopPropagation();update();
                   // Type-ahead navigation moves JUCE focus from its editor to
                   // the result list. Follow only this explicit native action;
@@ -154,7 +165,8 @@
               // retains normal browser focus navigation.
               if(event.target===node && node.getAttribute('role')==='group' && d.focusable){
                 const flags=(event.shiftKey?1:0)|(event.ctrlKey?2:0)|(event.altKey?4:0)|(event.metaKey?8:0);
-                if(module._surge_accessibility_key(data.id,event.keyCode,flags)){
+                const handled=invoke('surge_accessibility_key','number',['number','number','number'],[data.id,event.keyCode,flags]);
+                if((module.surgeWclap && event.key!=='Tab') || handled===true){
                   event.preventDefault();event.stopPropagation();update();
                 }
                 return;
@@ -165,7 +177,8 @@
                 if(d.codeEditorKeys && (['Tab','Enter','Backspace'].includes(event.key) ||
                     ((event.metaKey||event.ctrlKey)&&['Enter','d','f','g','h'].includes(event.key.length===1?event.key.toLowerCase():event.key)))){
                   const flags=(event.shiftKey?1:0)|(event.ctrlKey?2:0)|(event.altKey?4:0)|(event.metaKey?8:0);
-                  if(module._surge_accessibility_key(data.id,event.keyCode,flags)){
+                  const handled=invoke('surge_accessibility_key','number',['number','number','number'],[data.id,event.keyCode,flags]);
+                  if(module.surgeWclap || handled){
                     event.preventDefault();event.stopPropagation();update();
                     const focused=[...nodes.values()].find(n=>n.juceData.focused&&n.dataset.jucePeer===node.dataset.jucePeer);
                     focused?.focus({preventScroll:true});
@@ -175,7 +188,7 @@
                 if(((event.metaKey||event.ctrlKey)&&['z','y'].includes(event.key.toLowerCase()))||
                     (event.key==='Enter'&&!d.multiline)||event.key==='Escape'){
                   const flags=(event.shiftKey?1:0)|(event.ctrlKey?2:0)|(event.altKey?4:0)|(event.metaKey?8:0);
-                  event.preventDefault();module._surge_accessibility_key(data.id,event.keyCode,flags);update();
+                  event.preventDefault();invoke('surge_accessibility_key','number',['number','number','number'],[data.id,event.keyCode,flags]);update();
                 }
                 return;
               }
@@ -249,6 +262,11 @@
           if(active()===node)ring.style.display='none';
           node.remove();nodes.delete(id);
         }
+        }catch(error){console.error('Surge XT accessibility update failed:',error);}
+        finally{
+          updating=false;
+          if(refreshPending){refreshPending=false;queueMicrotask(update);}
+        }
       };
       this.update=update;
       const menuKey=event=>{
@@ -260,7 +278,9 @@
         // navigation from the document through a current JUCE popup, even when the
         // browser focus has consequently fallen back to body.
         for(const node of [...nodes.values()].reverse()){
-          if(node.getAttribute('role')==='menu' && module._surge_accessibility_action(node.juceData.id,event.key==='Escape'?6:7,code||0)){
+          if(node.getAttribute('role')!=='menu') continue;
+          const handled=invoke('surge_accessibility_action','number',['number','number','number'],[node.juceData.id,event.key==='Escape'?6:7,code||0]);
+          if(module.surgeWclap || handled){
             event.preventDefault();event.stopPropagation();queueMicrotask(update);return;
           }
         }

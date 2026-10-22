@@ -32,7 +32,7 @@ bool Process::openDocument(const String &url, const String &)
 {
     if (!url.startsWith("https://") && !url.startsWith("http://"))
         return false;
-    return EM_ASM_INT(
+    return MAIN_THREAD_EM_ASM_INT(
         { return window.open(UTF8ToString($0), '_blank', 'noopener') !== null; }, url.toRawUTF8());
 }
 } // namespace juce
@@ -61,5 +61,7 @@ bool DatagramSocket::setEnablePortReuse(bool) { return false; }
 // fetches the fallback fonts once and calls surge_browser_fonts_added.
 extern "C" void surge_browser_request_fallback_fonts()
 {
-    EM_ASM({ globalThis.SurgeBrowser?.requestFallbackFonts?.(); });
+    // clang-format off
+    MAIN_THREAD_EM_ASM({ globalThis.SurgeBrowser?.requestFallbackFonts?.(); });
+    // clang-format on
 }

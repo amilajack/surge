@@ -225,7 +225,8 @@ class Bridge final : public juce::AudioProcessorParameter::Listener,
     void send(const std::vector<uint8_t> &bytes)
     {
         // clang-format off
-        EM_ASM({ SurgeWclapPage.send(HEAPU8.slice($0, $0 + $1).buffer); }, bytes.data(), bytes.size());
+        EM_ASM({ const buffer = HEAPU8.slice($0, $0 + $1).buffer;
+                 postMessage({surgeOut: buffer}, [buffer]); }, bytes.data(), bytes.size());
         // clang-format on
     }
 
@@ -411,6 +412,13 @@ class Bridge final : public juce::AudioProcessorParameter::Listener,
         if (zoom != int(gui->getZoomFactor()))
             gui->resizeWindow(float(zoom));
         sendEditorStateIfChanged();
+        // An exact host-requested size is already known to the plug-in. Do not
+        // echo it back later if visual telemetry delayed this Resize message.
+        if (editor.getWidth() == width && editor.getHeight() == height)
+        {
+            lastWidth = width;
+            lastHeight = height;
+        }
         sendSizeIfChanged();
     }
 
@@ -461,7 +469,7 @@ class Bridge final : public juce::AudioProcessorParameter::Listener,
         watchUntil = 0;
         s.refresh_editor = true;
         // clang-format off
-        EM_ASM({ SurgeBrowser.reportFile(''); });
+        MAIN_THREAD_EM_ASM({ SurgeBrowser.reportFile(''); });
         // clang-format on
     }
 
@@ -576,7 +584,7 @@ void surge_wclap_ui_attach(SurgeSynthProcessor *processor, SurgeSynthEditor *edi
     processor->surge->patchid_queue = -1;
     Bridge::instance = new Bridge(*processor, *editor);
     // clang-format off
-    EM_ASM({ SurgeWclapPage.ready(); });
+    MAIN_THREAD_EM_ASM({ SurgeWclapPage.ready(); });
     // clang-format on
     Bridge::instance->start();
 }

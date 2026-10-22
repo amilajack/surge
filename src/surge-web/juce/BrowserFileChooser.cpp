@@ -17,7 +17,7 @@ class FileChooser::Native final : public FileChooser::Pimpl,
                                (flags & FileBrowserComponent::canSelectFiles) == 0;
         const bool multiple = (flags & FileBrowserComponent::canSelectMultipleItems) != 0;
         // clang-format off
-        EM_ASM({ SurgeBrowser.pickFiles($0, UTF8ToString($1), UTF8ToString($2), UTF8ToString($3), !!$4, !!$5, !!$6); },
+        MAIN_THREAD_EM_ASM({ SurgeBrowser.pickFiles($0, UTF8ToString($1), UTF8ToString($2), UTF8ToString($3), !!$4, !!$5, !!$6); },
                token, owner.title.toRawUTF8(), owner.filters.toRawUTF8(),
                owner.startingFile.getFullPathName().toRawUTF8(), save, directory, multiple);
         // clang-format on
@@ -68,6 +68,8 @@ extern "C" EMSCRIPTEN_KEEPALIVE int surge_file_dialog_complete(int token, const 
 extern "C" int surge_file_dialog_defer() { return FileChooser::Native::defer(); }
 extern "C" void surge_file_dialog_deferred_done(int token, int ok, const char *message)
 {
-    EM_ASM({ SurgeBrowser.deferredDone($0, $1, UTF8ToString($2)); }, token, ok, message ? message : "");
+    MAIN_THREAD_EM_ASM(
+        { SurgeBrowser.deferredDone($0, $1, UTF8ToString($2)); }, token, ok,
+        message ? message : "");
 }
 }
