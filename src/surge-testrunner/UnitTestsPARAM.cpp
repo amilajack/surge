@@ -34,6 +34,23 @@
 
 using namespace Surge::Test;
 
+TEST_CASE("Parameter ID cleanup uses bounded stack", "[param]")
+{
+    std::weak_ptr<ParameterIDCounter::ParameterIDPromise> first, last;
+    {
+        ParameterIDCounter counter;
+        first = counter.head;
+        for (int i = 0; i < 100000; ++i)
+            counter.next();
+        last = counter.tail;
+        counter.resolve();
+        REQUIRE(counter.head->value == 0);
+        REQUIRE(counter.tail->value == 100000);
+    }
+    REQUIRE(first.expired());
+    REQUIRE(last.expired());
+}
+
 TEST_CASE("Param String Inversion", "[param]")
 {
     SECTION("Inverting")
