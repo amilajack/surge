@@ -25,6 +25,7 @@
 #include "globals.h"
 #include <string>
 #include <memory>
+#include <utility>
 #include <cstdint>
 #include <functional>
 #include <atomic>
@@ -337,8 +338,14 @@ struct ParameterIDCounter
     }
     ~ParameterIDCounter()
     {
-        head = nullptr;
-        tail = nullptr;
+        // Release one node at a time: recursively destroying this list can
+        // exceed a WebAssembly runtime's call-stack limit during patch setup.
+        tail.reset();
+        while (head)
+        {
+            auto next = std::move(head->next);
+            head = std::move(next);
+        }
     }
 
     typedef std::shared_ptr<ParameterIDPromise> promise_t;
