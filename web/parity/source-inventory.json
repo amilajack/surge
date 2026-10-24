@@ -7,7 +7,7 @@
     "src/common/SkinModel.cpp": "506b383cb3ec48d4d9214cbe49bcbaf45debfbd3bc0c348e12ff113d40cea611",
     "src/common/SkinModel.h": "a6bb57c2118c83920f8821bdbe38ab386696503cad0c04670b2c7b92fff4b19f",
     "src/surge-xt/SurgeSynthEditor.cpp": "fe105281431ac9fe6d38be5dcbd3a44a30adc285b57f94d3d5a64e568acac27a",
-    "src/surge-xt/gui/SurgeGUIEditor.cpp": "885afa4282332785298bc841176b180d95386e7db604a7124eebe19db5d5cda3",
+    "src/surge-xt/gui/SurgeGUIEditor.cpp": "d6be7b3a062391759a60d664a8812bd967b6a0e648bd0457eb89c5049685084c",
     "src/surge-xt/gui/SurgeGUIEditor.h": "fdbac3023fa2c9a9e3d5537d69ecf51df64c89f02566f39ed23339e67c75485e",
     "src/surge-xt/gui/SurgeGUIEditorKeyboardActions.h": "5446a468c773a629884ec99ea9332eac6ce89d2c1b26033ccbb7ada1acbbc220",
     "src/surge-xt/gui/SurgeGUIEditorMenuStructures.cpp": "7b84754dc1f8cdb0238302b6432509e45696b4db30c26585c53de56f94b97a54",
@@ -1621,7 +1621,7 @@
       "kind": "menu-call",
       "name": "00e3728fe45e291e",
       "source": "src/surge-xt/gui/SurgeGUIEditor.cpp",
-      "line": 2703,
+      "line": 2711,
       "arguments": [
         "sc + Surge::GUI::toOSCase(\" Hard Clip at 0 dBFS\")",
         "true",
@@ -1635,7 +1635,7 @@
       "kind": "menu-call",
       "name": "0a0ab00d530aaffc",
       "source": "src/surge-xt/gui/SurgeGUIEditor.cpp",
-      "line": 2713,
+      "line": 2721,
       "arguments": [
         "sc + Surge::GUI::toOSCase(\" Hard Clip at +18 dBFS\")",
         "true",
@@ -1649,7 +1649,7 @@
       "kind": "menu-call",
       "name": "357c81ba4121447a",
       "source": "src/surge-xt/gui/SurgeGUIEditor.cpp",
-      "line": 2693,
+      "line": 2701,
       "arguments": [
         "sc + Surge::GUI::toOSCase(\" Hard Clip Disabled\")",
         "true",
@@ -1663,7 +1663,7 @@
       "kind": "menu-call",
       "name": "74b6804ae0202d94",
       "source": "src/surge-xt/gui/SurgeGUIEditor.cpp",
-      "line": 3792,
+      "line": 3800,
       "arguments": [
         "menu",
         "Surge::GUI::toOSCase(\"Oscilloscope...\")",

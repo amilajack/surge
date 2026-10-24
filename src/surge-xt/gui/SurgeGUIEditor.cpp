@@ -571,7 +571,12 @@ SurgeGUIEditor::~SurgeGUIEditor()
     closePatchBackup();
 
 #if SURGE_WEB
-    EM_ASM({ if (SurgeFactory.skinRequests.delete($0)) SurgeBrowser.reportFile(""); }, browserSkinRequest);
+    MAIN_THREAD_EM_ASM(
+        {
+            if (SurgeFactory.skinRequests.delete($0))
+                SurgeBrowser.reportFile("");
+        },
+        browserSkinRequest);
 #endif
     juce::PopupMenu::dismissAllActiveMenus();
     juce::Desktop::getInstance().removeFocusChangeListener(this);
@@ -595,14 +600,17 @@ void SurgeGUIEditor::idle()
         return;
     }
 #if SURGE_WEB
+    // The worker owns the editor; factory downloads and their status live on
+    // the browser thread, including cancellation when a skin is replaced.
     if (browserPendingSkin)
     {
-        auto status = EM_ASM_INT({ return SurgeFactory.skinRequests.get($0) || 0; }, browserSkinRequest);
+        auto status = MAIN_THREAD_EM_ASM_INT(
+            { return SurgeFactory.skinRequests.get($0) || 0; }, browserSkinRequest);
         if (status)
         {
             auto entry = *browserPendingSkin;
             browserPendingSkin.reset();
-            EM_ASM({ SurgeFactory.skinRequests.delete($0); }, browserSkinRequest);
+            MAIN_THREAD_EM_ASM({ SurgeFactory.skinRequests.delete($0); }, browserSkinRequest);
             if (status > 0)
             {
                 setupSkinFromEntry(entry);
@@ -4286,13 +4294,19 @@ std::string SurgeGUIEditor::fullyResolvedHelpURL(const string &helpurl)
 void SurgeGUIEditor::selectSkinFromEntry(const Surge::GUI::SkinDB::Entry &entry)
 {
 #if SURGE_WEB
-    EM_ASM({ if (SurgeFactory.skinRequests.delete($0)) SurgeBrowser.reportFile(""); }, browserSkinRequest);
+    MAIN_THREAD_EM_ASM(
+        {
+            if (SurgeFactory.skinRequests.delete($0))
+                SurgeBrowser.reportFile("");
+        },
+        browserSkinRequest);
     browserPendingSkin.reset();
     if (entry.rootType == Surge::GUI::FACTORY)
     {
         browserPendingSkin = entry;
         auto path = entry.root + entry.name;
-        browserSkinRequest = EM_ASM_INT({ return SurgeFactory.requestSkin(UTF8ToString($0)); }, path.c_str());
+        browserSkinRequest = MAIN_THREAD_EM_ASM_INT(
+            { return SurgeFactory.requestSkin(UTF8ToString($0)); }, path.c_str());
         return;
     }
 #endif
@@ -4305,7 +4319,12 @@ void SurgeGUIEditor::selectSkinFromEntry(const Surge::GUI::SkinDB::Entry &entry)
 void SurgeGUIEditor::setupSkinFromEntry(const Surge::GUI::SkinDB::Entry &entry)
 {
 #if SURGE_WEB
-    EM_ASM({ if (SurgeFactory.skinRequests.delete($0)) SurgeBrowser.reportFile(""); }, browserSkinRequest);
+    MAIN_THREAD_EM_ASM(
+        {
+            if (SurgeFactory.skinRequests.delete($0))
+                SurgeBrowser.reportFile("");
+        },
+        browserSkinRequest);
     browserPendingSkin.reset();
 #endif
     auto *db = Surge::GUI::SkinDB::get();

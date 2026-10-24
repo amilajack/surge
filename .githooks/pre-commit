@@ -1,10 +1,10 @@
 #!/usr/bin/env bash
-# Fast CI checks before each commit, in verification mode (nothing is rewritten).
+# CI checks before each commit, in verification mode (nothing is rewritten).
 # Enable once per clone:  git config core.hooksPath .githooks
 #
 # Mirrors .github/workflows/code-checks.yml (clang-format 21.1.8 via uv) and the
-# non-browser steps of .github/workflows/build-web.yml. The Emscripten build and
-# the Playwright suite take far too long for a commit hook; CI runs them.
+# browser build and packaging checks of .github/workflows/build-web.yml, plus
+# the WCLAP host regression suite against the freshly packaged editor.
 set -uo pipefail
 root=$(git rev-parse --show-toplevel)
 cd "$root" || exit 1
@@ -22,6 +22,14 @@ if command -v uvx >/dev/null 2>&1; then
 else
   failed+=("clang-format: install uv (https://docs.astral.sh/uv/) to run the pinned clang-format 21.1.8")
 fi
+
+# Compile the editor and package the WCLAP before testing: an old bundle could
+# otherwise make a broken C++ change appear green.
+bash web/scripts/build.sh || failed+=("web/scripts/build.sh")
+bash web/scripts/build-wclap.sh || failed+=("web/scripts/build-wclap.sh")
+python3 web/scripts/package-wclap.py || failed+=("web/scripts/package-wclap.py")
+SURGE_TEST_SILENT_OUTPUT=1 npm test --prefix web -- tests/wclap-host.spec.js ||
+    failed+=("web/tests/wclap-host.spec.js")
 
 # Packaging, notice and source tests; license coverage; UI feature inventory.
 for test in web/tests/*.test.py; do

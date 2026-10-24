@@ -158,8 +158,12 @@ test('dragging a knob in the editor changes the DSP and reaches the host as auto
   const dsp = (await call('param', {id: VOLUME})).value;
   expect(await editorValue(frame, 'volume')).toBeCloseTo(dsp, 5);
   // The host recorded the edit with a gesture, as it would from a desktop plug-in.
-  const events = (await call('stats')).outEvents.filter(event => event.id === VOLUME);
-  expect(events.map(event => event.type)).toEqual(expect.arrayContaining([7, 5, 8]));
+  // The worker can deliver gesture-end after the last parameter update.
+  const events = [];
+  await expect.poll(async () => {
+    events.push(...(await call('stats')).outEvents.filter(event => event.id === VOLUME));
+    return events.map(event => event.type);
+  }).toEqual(expect.arrayContaining([7, 5, 8]));
 });
 
 test('host automation moves the editor controls', async () => {
@@ -282,4 +286,37 @@ test('user patches saved in the editor go to the plug-in user folder, come back 
   expect(await frame.evaluate(path => Module.FS.analyzePath('/user' + path).exists, where)).toBe(true);
   const saved = Buffer.from(Object.values(await call('userFile', {path: where})));
   expect(Buffer.from(await frame.evaluate(path => [...Module.FS.readFile('/user' + path)], where)).equals(saved)).toBe(true);
+});
+
+test('factory skins switch on the worker editor without stopping it', async () => {
+  const frame = await editor();
+  const openSkins = async () => {
+    const skins = frame.getByRole('menuitem', {name: 'Skins', exact: true});
+    // Applying a skin rebuilds the controls on the worker. Retry opening the
+    // menu until accessibility has published the replacement button.
+    await expect(async () => {
+      if (!await skins.count())
+        await frame.getByRole('button', {name: 'Main Menu', exact: true}).dispatchEvent('click');
+      await expect(skins).toBeAttached({timeout: 1000});
+    }).toPass({timeout: 10000});
+    await skins.dispatchEvent('click');
+  };
+  for (const name of ['Surge Dark', 'Surge Classic', 'Surge Dark', 'Surge Classic']) {
+    const serial = await frame.evaluate(() => SurgeFactory.skinSerial);
+    await openSkins();
+    await frame.getByRole('menuitem', {name, exact: true}).dispatchEvent('click');
+    // Classic is embedded; only the factory skin starts a download.
+    await expect.poll(() => frame.evaluate(() => SurgeFactory.skinSerial)).toBe(serial + (name === 'Surge Dark' ? 1 : 0));
+    await expect.poll(() => frame.evaluate(() => SurgeFactory.skinRequests.size)).toBe(0);
+    await expect(frame.locator('#file-status')).toHaveText('');
+    await expect(frame.locator('#wclap-status')).toBeHidden();
+    await expect(frame.getByRole('menu')).toHaveCount(0);
+    await expect(async () => {
+      await openSkins();
+      await expect(frame.getByRole('menuitemcheckbox', {name: name + ' (Checked)', exact: true})).toBeChecked({timeout: 1000});
+    }).toPass({timeout: 10000});
+    await frame.locator('body').press('Escape');
+    await expect(frame.getByRole('menu')).toHaveCount(0);
+    expect(await frame.evaluate(() => SurgeWclapPage.call('surge_browser_ui_thread_is_worker', 'number'))).toBe(1);
+  }
 });
