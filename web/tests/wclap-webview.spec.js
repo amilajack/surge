@@ -5,8 +5,8 @@ import {test, expect} from '@playwright/test';
 import fs from 'node:fs';
 import path from 'node:path';
 import {modulePath, root, loadModule, createPlugin, juceHash, PLUGIN_ID} from './helpers/wclap.js';
-import {EVENT, PROCESS} from '../wclap/host/clap-host.mjs';
-import {memoryFiles} from '../wclap/host/wasi.mjs';
+import {EVENT, PROCESS, WclapModule} from '../wclap/host/clap-host.mjs';
+import {memoryFiles, nodeFiles, Wasi} from '../wclap/host/wasi.mjs';
 
 const ready = fs.existsSync(modulePath);
 const T = {Hello: 1, Param: 2, Gesture: 3, State: 4, Modulation: 5, Note: 6, EditorState: 7, Resize: 8, Scope: 9,
@@ -421,6 +421,32 @@ test('structural edits as parts apply in place: a held note keeps playing, unlik
     expect(engine.plugin.webviewReceive(delta(0, [{kind: PART.Mseg, a: 5, b: 0, data: parts[0].data}]))).toBe(false);
     expect(engine.plugin.webviewReceive(delta(0, [{kind: PART.Formula, a: 0, b: 0, data: '<nope'}]))).toBe(false);
   } finally { for (const {plugin} of engines) plugin.destroy(); }
+});
+
+test('the editor user-folder handshake requests only defined WASI rights', async () => {
+  const wasi = new Wasi({files: await nodeFiles(path.dirname(modulePath)), user: memoryFiles({}), seed: 5});
+  const imports = wasi.imports.wasi_snapshot_preview1, original = imports.path_open;
+  const requests = [];
+  // Strict preview1 hosts reject reserved bits before entering path_open. A
+  // permissive browser host had hidden Surge's all-bits-set inheriting mask.
+  imports.path_open = (...args) => {
+    for (const rights of args.slice(5, 7)) {
+      const value = BigInt.asUintN(64, rights);
+      expect(value & ~0x3fffffffn, 'path_open must not request undefined rights').toBe(0n);
+    }
+    requests.push(args.slice(5, 7));
+    return original(...args);
+  };
+  const instance = await WebAssembly.instantiate(await WebAssembly.compile(fs.readFileSync(modulePath)), wasi.imports);
+  const target = new WclapModule(instance, wasi);
+  await target.start('/');
+  const {plugin, host} = withPage(target);
+  expect(plugin.webviewReceive(frame(T.UserFiles, v => v.setUint32(4, VERSION, true), 4))).toBe(true);
+  const reply = take(host, T.UserFileList);
+  expect(reply[4], 'the editor can use its persistent folder immediately').toBe(1);
+  expect(requests.length).toBeGreaterThan(0);
+  plugin.guiDestroy();
+  plugin.destroy();
 });
 
 test('the user folder is listed for the editor and written through the plug-in, inside the folder only', async () => {
