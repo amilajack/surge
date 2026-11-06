@@ -86,11 +86,14 @@ if (typeof window !== 'undefined') {
     savedGeneration: 0,
     pendingFlush: null,
     flushTimer: null,
+    discarding: false,
     report(message) {
       const element = host.status('storage-status', message);
       if (element) element.textContent = message;
       const retry = host.wam ? null : document.getElementById('retry-storage');
       if (retry) retry.hidden = platform.storageState !== 'error';
+      const discard = host.wam ? null : document.getElementById('discard-storage');
+      if (discard) discard.hidden = platform.storageState !== 'error';
     },
     reportFile(message) {
       const element = host.status('file-status', message);
@@ -101,6 +104,7 @@ if (typeof window !== 'undefined') {
       ++platform.generation;
       clearTimeout(platform.flushTimer);
       platform.flushTimer = null;
+      if (platform.discarding) return;
       if (platform.storageState !== 'error' && platform.storageState !== 'saving') {
         platform.storageState = 'saving';
         platform.report('Saving user files…');
@@ -116,6 +120,7 @@ if (typeof window !== 'undefined') {
     async flush() {
       clearTimeout(platform.flushTimer);
       platform.flushTimer = null;
+      if (platform.discarding) throw new Error('Unsaved user files are being discarded for reload.');
       if (platform.storageState === 'memory') return;
       if (platform.storageState === 'unavailable') throw platform.storageError;
       if (platform.pendingFlush) return platform.pendingFlush;
@@ -449,6 +454,7 @@ if (typeof window !== 'undefined') {
   // status line and retry as the browser's storage.
   function wclapUserFolder(user) {
     const root = '/user';
+    if (user.protocol !== 2) throw new Error('The host does not support conflict-safe user files; update the app and reopen the editor.');
     // Omitted files remain in the host folder. Never infer their removal from
     // the editor's incomplete in-memory copy, including parent-folder deletes.
     const skipped = (user.skipped || []).map(entry => entry.path);
@@ -506,7 +512,7 @@ if (typeof window !== 'undefined') {
       }
       FS.utime(path, entry.mtime, entry.mtime);
       // As the file system reports it back (it may round), so unchanged files compare equal.
-      remote.set(entry.path, capture(path, entry.kind === 2));
+      remote.set(entry.path, {...capture(path, entry.kind === 2), token: entry.token});
     }
     const local = () => {
       const found = new Map(), walk = folder => {
@@ -525,6 +531,7 @@ if (typeof window !== 'undefined') {
     // current snapshot and reply intact; waiting callers share one later
     // snapshot of the newest dirty files instead of queueing full copies.
     const persist = callback => {
+      if (platform.discarding) return callback(new Error('Unsaved user files are being discarded for reload.'));
       if (revisionError) return callback(revisionError);
       const now = local(), ops = [];
       const replacedFolders = [...now].filter(([path, is]) => is.folder && remote.get(path)?.folder && remote.get(path).node !== is.node).map(([path]) => path);
@@ -546,10 +553,26 @@ if (typeof window !== 'undefined') {
           is.revision = captured;
           ops.push({op: 1, path, data});
         }
+      for (const operation of ops) operation.expected = remote.get(operation.path)?.token ?? null;
       if (!ops.length) return callback(null);
       if (ops.some(operation => skipped.some(path => operation.path === path || operation.path.startsWith(path + '/') || path.startsWith(operation.path + '/'))))
         return callback(new Error('This change would replace or remove a user file that was not loaded. The original remains saved; inspect User files and reopen the editor to retry.'));
-      globalThis.SurgeWclapPage.userFiles.send(ops).then(() => {
+      globalThis.SurgeWclapPage.userFiles.send(ops).then(reply => {
+        const final = new Map();
+        for (const operation of ops) final.set(operation.path, operation.op);
+        if (reply?.protocol !== 2 || !Array.isArray(reply.versions) || reply.versions.length !== final.size)
+          return callback(new Error('The host did not confirm the user-file versions; keep this window open and retry saving.'));
+        const versions = new Map();
+        for (const entry of reply.versions) {
+          if (!entry || typeof entry.path !== 'string') return callback(new Error('The host returned invalid user-file versions; keep this window open and retry saving.'));
+          const op = final.get(entry.path);
+          if (!op || versions.has(entry.path) || (op === 1 ? typeof entry.token !== 'string' || !/^file:[0-9a-f]{64}$/.test(entry.token) : op === 3 ? entry.token !== 'directory' : entry.token !== null))
+            return callback(new Error('The host returned ambiguous user-file versions; keep this window open and retry saving.'));
+          versions.set(entry.path, entry.token);
+        }
+        // Untouched local files keep their original base token. A newer remote
+        // token without matching local bytes would hide another editor's edit.
+        for (const [path, is] of now) is.token = versions.has(path) ? versions.get(path) : remote.get(path)?.token;
         remote.clear();
         for (const [path, is] of now) remote.set(path, is);
         callback(null);

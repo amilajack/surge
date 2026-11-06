@@ -295,7 +295,11 @@ test('closing immediately after Save Patch drains dirty user files before reopen
   await frame.getByRole('textbox', {name: 'patch category', exact: true}).fill('WCLAP Close');
   await frame.getByRole('button', {name: 'OK', exact: true}).dispatchEvent('click');
   const where = '/Patches/WCLAP Close/Immediate.fxp';
-  await frame.waitForFunction(path => Module.FS.analyzePath('/user' + path).exists, where, {polling: 5});
+  await frame.waitForFunction(path => {
+    if (!Module.FS.analyzePath('/user' + path).exists) return false;
+    const bytes=Module.FS.readFile('/user'+path);
+    return bytes.length>60 && new DataView(bytes.buffer,bytes.byteOffset,bytes.byteLength).getUint32(56,false)+60===bytes.length;
+  }, where, {polling: 5});
   const expected = await frame.evaluate(path => [...Module.FS.readFile('/user' + path)], where);
   await page.evaluate(() => wclapHost.reopen());
   frame = await editor();
@@ -322,6 +326,37 @@ test('same-timestamp writes and replacement inodes persist through the actual mo
   expect(Buffer.from(Object.values(await call('userFile',{path:'/same-tick.bin'})))).toEqual(Buffer.from([3]));
   await page.evaluate(() => wclapHost.reopen());frame=await editor();
   expect(await frame.evaluate(()=>[...Module.FS.readFile('/user/same-tick.bin')])).toEqual([3]);
+});
+
+test('failed user-file saves can be downloaded before explicit discard and reload', async () => {
+  let frame=await editor();
+  const opened=await frame.evaluate(()=>performance.timeOrigin);
+  await frame.evaluate(async()=>{
+    await SurgeBrowser.flush();
+    const userFiles=wclapHost.userFiles;
+    wclapHost.userFiles=request=>request.op==='apply'?Promise.reject(new Error('User-file conflict: recovery.bin changed in another editor')):userFiles(request);
+    Module.FS.writeFile('/user/recovery.bin',new Uint8Array([7,8,9]));
+    await SurgeBrowser.flush().catch(()=>{});
+  });
+  await expect.poll(()=>frame.evaluate(()=>SurgeBrowser.storageState)).toBe('error');
+  expect(await frame.evaluate(()=>performance.timeOrigin)).toBe(opened);
+  await frame.locator('#user-files').click();
+  await expect(frame.getByRole('button',{name:'Download this folder',exact:true})).toBeDisabled();
+  const downloading=page.waitForEvent('download');
+  await frame.getByRole('button',{name:'Download recovery.bin',exact:true}).click();
+  const download=await downloading,stream=await download.createReadStream(),chunks=[];
+  for await(const chunk of stream)chunks.push(chunk);
+  expect(Buffer.concat(chunks)).toEqual(Buffer.from([7,8,9]));
+  expect(download.suggestedFilename()).toBe('recovery.bin');
+  await expect(frame.getByRole('dialog',{name:'User files',exact:true}).getByRole('status')).toHaveText(/Download started.*Unsaved changes remain/);
+  expect(await frame.evaluate(()=>SurgeBrowser.storageState)).toBe('error');
+  expect(await frame.evaluate(()=>[...Module.FS.readFile('/user/recovery.bin')])).toEqual([7,8,9]);
+  await frame.getByRole('button',{name:'Close user files',exact:true}).click();
+  await frame.getByRole('button',{name:'Discard unsaved files and reload',exact:true}).click();
+  await expect.poll(()=>frame.evaluate(()=>performance.timeOrigin).catch(()=>opened)).not.toBe(opened);
+  frame=await editor();
+  expect(await frame.evaluate(()=>Module.FS.analyzePath('/user/recovery.bin').exists)).toBe(false);
+  expect((await call('userFiles')).some(file=>file.path==='/recovery.bin')).toBe(false);
 });
 
 test('factory skins switch on the worker editor without stopping it', async () => {

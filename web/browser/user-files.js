@@ -2,7 +2,7 @@
 (() => {
   globalThis.SurgeUserFiles = {
     attach(module, {reportOnly = false} = {}) {
-      const skipped = module['surgeWclapUser']?.skipped || [];
+      const skipped = module['surgeWclapUser']?.skipped || [], wclap = !!module['surgeWclap'];
       const open=document.createElement('button');open.id='user-files';open.textContent='User files';
       if (skipped.length) { open.textContent += ' · ' + skipped.length + ' not loaded'; open.title='Some user files could not be loaded into this editor. They remain saved; open this report for paths and sizes.'; }
       open.style.cssText='position:fixed;right:120px;bottom:8px;z-index:1000';document.body.append(open);
@@ -12,6 +12,7 @@
         dialog.style.cssText='width:min(700px,85vw);max-height:75vh;background:#202328;color:white;border:1px solid #888';
         const heading=document.createElement('h2');heading.textContent='User files';
         const hint=document.createElement('p');hint.textContent='Download saved patches and other user files. Files remain in browser storage.';
+        if (wclap && !reportOnly) hint.textContent='Download local copies before discarding unsaved files or reloading. Starting a download does not save changes to the plug-in user folder.';
         if (reportOnly) hint.textContent='These files were not loaded into the editor. They remain saved in the plug-in user folder; ordinary controls and other files remain available.';
         const omitted=document.createElement('details');
         if (skipped.length) {
@@ -24,6 +25,7 @@
         const up=document.createElement('button');up.textContent='Parent folder';
         const refresh=document.createElement('button');refresh.textContent='Refresh files';
         const exportFolder=document.createElement('button');exportFolder.textContent='Download this folder';
+        if(wclap){exportFolder.disabled=true;exportFolder.title='Folder downloads are unavailable in a plug-in window; download files individually.';}
         const location=document.createElement('p');location.setAttribute('aria-live','polite');
         const list=document.createElement('ul');const status=document.createElement('p');status.setAttribute('role','status');
         const error=document.createElement('p');error.setAttribute('role','alert');
@@ -33,11 +35,12 @@
           try {
             const entries=FS.readdir(directory).filter(name=>name!=='.'&&name!=='..').map(name=>{
               const path=directory+'/'+name,info=FS.lstat(path);
-              return {name,path,folder:FS.isDir(info.mode),file:FS.isFile(info.mode)};
+              return {name,path,size:info.size,folder:FS.isDir(info.mode),file:FS.isFile(info.mode)};
             }).filter(e=>e.folder||e.file).sort((a,b)=>Number(b.folder)-Number(a.folder)||a.name.localeCompare(b.name));
             for(const entry of entries){
               const row=document.createElement('li'),button=document.createElement('button');
               button.textContent=(entry.folder?'Open folder ':'Download ')+entry.name;row.append(button);list.append(row);
+              if(wclap&&entry.file&&entry.size>256*1024*1024){button.disabled=true;button.title='This recovery file exceeds the 256 MiB download limit; it remains in this window.';}
               button.onclick=async()=>{
                 if(entry.folder){directory=entry.path;render();return;}
                 button.disabled=true;error.textContent='';status.textContent='';let writable;
@@ -45,14 +48,21 @@
                   // Copy before awaiting a picker: subsequent saves cannot change
                   // the version the user selected for this export.
                   const bytes=FS.readFile(entry.path);
-                  const handle=await window.showSaveFilePicker({suggestedName:entry.name});
-                  writable=await handle.createWritable();await writable.write(bytes);await writable.close();writable=null;
-                  if(dialog.isConnected)status.textContent='Downloaded '+entry.name;
+                  if(wclap){
+                    if(bytes.byteLength>256*1024*1024)throw new Error('This recovery file exceeds the 256 MiB download limit');
+                    const result=await globalThis.wclapHost.exportFile({name:entry.name,data:new Uint8Array(bytes)});
+                    if(result?.started!==true)throw new Error('The host did not start the recovery download');
+                    if(dialog.isConnected)status.textContent='Download started for '+entry.name+'. Unsaved changes remain in this window.';
+                  }else{
+                    const handle=await window.showSaveFilePicker({suggestedName:entry.name});
+                    writable=await handle.createWritable();await writable.write(bytes);await writable.close();writable=null;
+                    if(dialog.isConnected)status.textContent='Downloaded '+entry.name;
+                  }
                 }catch(reason){
                   if(writable)try{await writable.abort();}catch{}
                   if(dialog.isConnected){
-                    if(reason?.name==='AbortError')status.textContent='Download canceled. The file remains in browser storage.';
-                    else error.textContent='Unable to download '+entry.name+': '+String(reason)+'. The file remains in browser storage.';
+                    if(reason?.name==='AbortError')status.textContent=wclap?'Download canceled. The file remains in this window.':'Download canceled. The file remains in browser storage.';
+                    else error.textContent='Unable to download '+entry.name+': '+String(reason)+(wclap?'. The file remains in this window.':'. The file remains in browser storage.');
                   }
                 }finally{button.disabled=false;}
               };
@@ -61,6 +71,7 @@
           }catch(reason){error.textContent='Unable to read user files: '+String(reason);}
         };
         exportFolder.onclick=async()=>{
+          if(wclap)return;
           const source=directory,name=source===root?'Surge User Files':source.slice(source.lastIndexOf('/')+1);
           exportFolder.disabled=true;error.textContent='';status.textContent='';let copying=false;
           try {
