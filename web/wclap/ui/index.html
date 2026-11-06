@@ -222,7 +222,9 @@ canvas{position:absolute;touch-action:none}
       },
       setStatus() {},
       onAbort: fail,
-      onRuntimeInitialized() {},
+      onRuntimeInitialized() {
+        if (user.skipped?.length) SurgeUserFiles.attach(Module, {reportOnly: true});
+      },
     };
     await runScript(glueBlob);
   })().catch(fail);

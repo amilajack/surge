@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 (() => {
   globalThis.SurgeUserFiles = {
-    attach(module) {
+    attach(module, {reportOnly = false} = {}) {
       const skipped = module['surgeWclapUser']?.skipped || [];
       const open=document.createElement('button');open.id='user-files';open.textContent='User files';
       if (skipped.length) { open.textContent += ' · ' + skipped.length + ' not loaded'; open.title='Some user files could not be loaded into this editor. They remain saved; open this report for paths and sizes.'; }
@@ -12,6 +12,7 @@
         dialog.style.cssText='width:min(700px,85vw);max-height:75vh;background:#202328;color:white;border:1px solid #888';
         const heading=document.createElement('h2');heading.textContent='User files';
         const hint=document.createElement('p');hint.textContent='Download saved patches and other user files. Files remain in browser storage.';
+        if (reportOnly) hint.textContent='These files were not loaded into the editor. They remain saved in the plug-in user folder; ordinary controls and other files remain available.';
         const omitted=document.createElement('details');
         if (skipped.length) {
           const summary=document.createElement('summary');summary.textContent=skipped.length+' user files not loaded; originals remain saved';
@@ -91,7 +92,7 @@
         up.onclick=()=>{directory=directory.slice(0,directory.lastIndexOf('/'))||root;render();};
         refresh.onclick=render;close.onclick=()=>dialog.close();
         dialog.addEventListener('close',()=>{dialog.remove();open.focus();});
-        dialog.append(heading,hint,...(skipped.length?[omitted]:[]),close,up,refresh,exportFolder,location,list,status,error);document.body.append(dialog);dialog.showModal();render();
+        dialog.append(heading,hint,...(skipped.length?[omitted]:[]),close,...(reportOnly?[]:[up,refresh,exportFolder,location,list,status,error]));document.body.append(dialog);dialog.showModal();if(!reportOnly)render();
       };
     }
   };

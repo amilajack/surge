@@ -26,7 +26,7 @@ NAME = 'surge-xt.wclap'
 FACTORY = ['patches_factory', 'wavetables', 'fx_presets', 'modulator_presets', 'tuning_library',
            'skins', 'impulses_factory']
 # Classic scripts the editor's native code calls into (EM_ASM), in load order.
-SUPPORT = ['runtime.js', 'reports.js', 'clipboard.js', 'text-input.js', 'accessibility.js',
+SUPPORT = ['runtime.js', 'reports.js', 'user-files.js', 'clipboard.js', 'text-input.js', 'accessibility.js',
            'tuning-library.js', 'archive-recovery.js', 'audio-lifecycle.js']
 EMSDK_REVISION = 'a2b92777574c2feda07994cd4f1079a3dfc151f8'
 UI_FILES = ['surge-xt-wclap-ui.js', 'surge-xt-wclap-ui.wasm', 'surge-xt-wclap-ui.data']
