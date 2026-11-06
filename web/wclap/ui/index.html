@@ -37,9 +37,7 @@ canvas{position:absolute;touch-action:none}
 (() => {
   'use strict';
   const base = new URL('./', document.baseURI);
-  const VERSION = 2;
-  const T = {UserFiles: 11, UserFileOps: 12, Scale: 68, UserFileList: 70, UserFilesDone: 71};
-  const encoder = new TextEncoder(), decoder = new TextDecoder();
+  const T = {Scale: 68};
   const post = bytes => window.parent.postMessage(bytes.buffer, '*', [bytes.buffer]);
   const status = document.getElementById('wclap-status');
   const message = document.getElementById('wclap-message');
@@ -85,63 +83,30 @@ canvas{position:absolute;touch-action:none}
     }
     deliver();
   };
-  // The user folder, mirrored in memory (platform.js syncs the editor's /user with it).
-  let listed = null, sequence = 0;
-  const done = new Map();
-  const userFiles = {
-    list: () => new Promise(resolve => {
-      listed = resolve;
-      const bytes = new Uint8Array(8);
-      bytes[0] = T.UserFiles;
-      new DataView(bytes.buffer).setUint32(4, VERSION, true);
-      post(bytes);
-    }),
-    // ops: [{op, path, data}] (Protocol.h UserFileOp). Resolves when the plug-in
-    // has applied them all; rejects with the first failure.
-    send(ops) {
-      const encoded = ops.map(({op, path, data}) => ({op, path: encoder.encode(path), data: data ?? new Uint8Array()}));
-      const size = 12 + encoded.reduce((n, item) => n + 12 + item.path.length + item.data.length, 0);
-      const bytes = new Uint8Array(size), view = new DataView(bytes.buffer), id = ++sequence;
-      bytes[0] = T.UserFileOps;
-      view.setUint32(4, id, true);
-      view.setUint32(8, encoded.length, true);
-      let at = 12;
-      for (const item of encoded) {
-        bytes[at] = item.op;
-        view.setUint32(at + 4, item.path.length, true);
-        bytes.set(item.path, at + 8);
-        view.setUint32(at + 8 + item.path.length, item.data.length, true);
-        bytes.set(item.data, at + 12 + item.path.length);
-        at += 12 + item.path.length + item.data.length;
-      }
-      return new Promise((resolve, reject) => { done.set(id, {resolve, reject}); post(bytes); });
-    },
+  // The host persists the same /user folder without entering the DSP store.
+  // Serialize reads and writes; snapshot bytes before a caller can change them.
+  let userFileTail = Promise.resolve();
+  const userFileRequest = request => {
+    const pending = userFileTail.then(() => {
+      if (stopped) throw new Error('The editor has stopped; reopen it to retry user-file operations');
+      if (typeof globalThis.wclapHost?.userFiles !== 'function')
+        throw new Error('The host does not support durable Surge user files. Update the app and reopen the editor.');
+      return globalThis.wclapHost.userFiles(request);
+    });
+    userFileTail = pending.catch(() => {});
+    return pending;
   };
-  const parseList = buffer => {
-    const view = new DataView(buffer), bytes = new Uint8Array(buffer), entries = [];
-    let at = 12;
-    for (let i = 0, count = view.getUint32(8, true); i < count; ++i) {
-      const kind = view.getUint8(at), mtime = view.getFloat64(at + 4, true), pathSize = view.getUint32(at + 12, true);
-      const path = decoder.decode(bytes.subarray(at + 16, at + 16 + pathSize));
-      const dataSize = view.getUint32(at + 16 + pathSize, true);
-      entries.push({kind, mtime, path, data: bytes.slice(at + 20 + pathSize, at + 20 + pathSize + dataSize)});
-      at += 20 + pathSize + dataSize;
-    }
-    return {available: view.getUint8(4) === 1, entries};
+  const userFiles = {
+    list: () => userFileRequest({op: 'list'}),
+    send(ops) {
+      const operations = ops.map(({op, path, data}) => ({op, path,
+        ...(data === undefined ? {} : {data: new Uint8Array(data)})}));
+      return userFileRequest({op: 'apply', operations});
+    },
   };
   // Messages the page answers itself, before or without the editor.
   const intercept = buffer => {
     const type = new Uint8Array(buffer, 0, 1)[0];
-    if (type === T.UserFileList && listed) { listed(parseList(buffer)); listed = null; return true; }
-    if (type === T.UserFilesDone) {
-      const view = new DataView(buffer), waiting = done.get(view.getUint32(4, true));
-      if (waiting) {
-        done.delete(view.getUint32(4, true));
-        if (view.getUint8(8)) waiting.resolve();
-        else waiting.reject(new Error(decoder.decode(new Uint8Array(buffer, 12))));
-      }
-      return true;
-    }
     if (type === T.Scale) {
       // The host's GUI scale overrides the device pixel ratio (BrowserWindowing.cpp
       // sizes the canvas backing store by SurgeHost.pixelRatio()).
@@ -237,10 +202,7 @@ canvas{position:absolute;touch-action:none}
     document.body.append(script);
   });
   (async () => {
-    // A plug-in that does not answer (an older module) leaves user files in memory.
-    const user = await Promise.race([userFiles.list(),
-      new Promise(resolve => setTimeout(() => resolve({available: false, entries: [], unanswered: true}), 10000))]);
-    if (user.unanswered) console.warn('Surge XT: the plug-in did not list its user folder; user files stay in memory.');
+    const user = await userFiles.list();
     const [support, library, glue, wasm] = await Promise.all([
       load('support.js'), load('library.js'), load('surge-xt-wclap-ui.js'), load('surge-xt-wclap-ui.wasm', 'bytes')]);
     message.textContent = 'Starting Surge XT…';
