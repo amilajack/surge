@@ -96,7 +96,8 @@ const methods = {
   // The plug-in's user folder: every path and size.
   userFileRequest(request) { return userFileRequest(user, request); },
   userFiles() { return [...user.entries].map(([path, entry]) => ({path, type: entry.type, size: entry.data?.length ?? 0})); },
-  userFile({path}) { return user.read(path); },
+  // Replies transfer their buffers; never transfer the backend's live file.
+  userFile({path}) { return user.read(path)?.slice() ?? null; },
   presets({location}) {
     const discovery = module.discoverPresets();
     try { return {locations: discovery.locations, ...discovery.metadata(location)}; }
