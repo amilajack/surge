@@ -101,7 +101,7 @@ if (typeof window !== 'undefined') {
       ++platform.generation;
       clearTimeout(platform.flushTimer);
       platform.flushTimer = null;
-      if (platform.storageState !== 'error') {
+      if (platform.storageState !== 'error' && platform.storageState !== 'saving') {
         platform.storageState = 'saving';
         platform.report('Saving user files…');
       }
@@ -453,10 +453,49 @@ if (typeof window !== 'undefined') {
     // the editor's incomplete in-memory copy, including parent-folder deletes.
     const skipped = (user.skipped || []).map(entry => entry.path);
     const mtimeOf = stat => stat.mtime instanceof Date ? stat.mtime.getTime() : Number(stat.mtime);
-    // What the plug-in holds, by path below the folder: {folder, mtime}.
+    // Millisecond mtimes alone cannot distinguish same-tick writes or a new
+    // inode at an old path. Track mutations on this mount's actual FS nodes.
+    const revisions = new WeakMap();
+    let revisionError = null;
+    const revision = node => revisions.get(node) ?? 0;
+    const mutate = (node, operation) => {
+      const check = () => {
+        const value = revision(node);
+        if (!Number.isSafeInteger(value) || value < 0 || value >= Number.MAX_SAFE_INTEGER) {
+          revisionError = new Error('The user-file change counter is exhausted; keep this window open to retain unsaved work.');
+          throw revisionError;
+        }
+        return value;
+      };
+      check();
+      const result = operation();
+      revisions.set(node, check() + 1);
+      platform.changed();
+      return result;
+    };
     const remote = new Map();
     IDBFS.queuePersist = () => platform.changed();
-    FS.mount(IDBFS, {autoPersist: true}, root);
+    const mount = FS.mount(IDBFS, {autoPersist: true}, root);
+    const makeNode = mount.node_ops.mknod, setAttributes = mount.node_ops.setattr;
+    mount.node_ops.mknod = function(...args) {
+      const node = makeNode.apply(this, args);
+      for (const kind of ['write', 'allocate', 'msync']) {
+        const original = node.stream_ops[kind];
+        if (typeof original === 'function') node.stream_ops[kind] = function(...args) {
+          // MEMFS does not write MAP_PRIVATE (2) mappings back to the file.
+          if (kind === 'msync' && (args[4] & 2)) return original.apply(this, args);
+          return mutate(args[0].node, () => original.apply(this, args));
+        };
+      }
+      return node;
+    };
+    mount.node_ops.setattr = function(node, attributes) {
+      return mutate(node, () => setAttributes.call(this, node, attributes));
+    };
+    const capture = (path, folder, stat = FS.lstat(path)) => {
+      const node = FS.lookupPath(path).node;
+      return {folder, mtime: mtimeOf(stat), node, revision: revision(node)};
+    };
     const entries = [...user.entries].sort((a, b) => a.path.split('/').length - b.path.split('/').length);
     for (const entry of entries) {
       const path = root + '/' + entry.path;
@@ -467,15 +506,15 @@ if (typeof window !== 'undefined') {
       }
       FS.utime(path, entry.mtime, entry.mtime);
       // As the file system reports it back (it may round), so unchanged files compare equal.
-      remote.set(entry.path, {folder: entry.kind === 2, mtime: mtimeOf(FS.lstat(path))});
+      remote.set(entry.path, capture(path, entry.kind === 2));
     }
     const local = () => {
       const found = new Map(), walk = folder => {
         for (const name of FS.readdir(root + (folder ? '/' + folder : ''))) {
           if (name === '.' || name === '..') continue;
           const path = folder ? folder + '/' + name : name, stat = FS.lstat(root + '/' + path);
-          if (FS.isDir(stat.mode)) { found.set(path, {folder: true, mtime: mtimeOf(stat)}); walk(path); }
-          else if (FS.isFile(stat.mode)) found.set(path, {folder: false, mtime: mtimeOf(stat)});
+          if (FS.isDir(stat.mode)) { found.set(path, capture(root + '/' + path, true, stat)); walk(path); }
+          else if (FS.isFile(stat.mode)) found.set(path, capture(root + '/' + path, false, stat));
         }
       };
       walk('');
@@ -486,17 +525,27 @@ if (typeof window !== 'undefined') {
     // current snapshot and reply intact; waiting callers share one later
     // snapshot of the newest dirty files instead of queueing full copies.
     const persist = callback => {
+      if (revisionError) return callback(revisionError);
       const now = local(), ops = [];
+      const replacedFolders = [...now].filter(([path, is]) => is.folder && remote.get(path)?.folder && remote.get(path).node !== is.node).map(([path]) => path);
+      const replaced = path => replacedFolders.some(folder => path === folder || path.startsWith(folder + '/'));
       // Removed files, removed folders (deepest first), new folders (shallowest
       // first), then new and changed files.
-      for (const [path, was] of remote) if (!was.folder && (!now.has(path) || now.get(path).folder)) ops.push({op: 2, path});
-      [...remote].filter(([path, was]) => was.folder && !now.get(path)?.folder).sort(([a], [b]) => depth(b) - depth(a))
+      for (const [path, was] of remote) if (!was.folder && (replaced(path) || !now.has(path) || now.get(path).folder)) ops.push({op: 2, path});
+      [...remote].filter(([path, was]) => was.folder && (replaced(path) || !now.get(path)?.folder)).sort(([a], [b]) => depth(b) - depth(a))
         .forEach(([path]) => ops.push({op: 4, path}));
-      [...now].filter(([path, is]) => is.folder && !remote.get(path)?.folder).sort(([a], [b]) => depth(a) - depth(b))
+      [...now].filter(([path, is]) => is.folder && (replaced(path) || !remote.get(path)?.folder)).sort(([a], [b]) => depth(a) - depth(b))
         .forEach(([path]) => ops.push({op: 3, path}));
       for (const [path, is] of now)
-        if (!is.folder && (remote.get(path)?.folder !== false || remote.get(path).mtime !== is.mtime))
-          ops.push({op: 1, path, data: FS.readFile(root + '/' + path)});
+        if (!is.folder && (replaced(path) || remote.get(path)?.folder !== false || remote.get(path).node !== is.node || remote.get(path).revision !== is.revision || remote.get(path).mtime !== is.mtime)) {
+          // Publish the revision corresponding to these bytes, never the node's
+          // later revision after an asynchronous durable reply.
+          const captured = revision(is.node), data = FS.readFile(root + '/' + path);
+          if (captured !== revision(is.node) || FS.lookupPath(root + '/' + path).node !== is.node)
+            return callback(new Error('The user file changed during its snapshot; retry saving.'));
+          is.revision = captured;
+          ops.push({op: 1, path, data});
+        }
       if (!ops.length) return callback(null);
       if (ops.some(operation => skipped.some(path => operation.path === path || operation.path.startsWith(path + '/') || path.startsWith(operation.path + '/'))))
         return callback(new Error('This change would replace or remove a user file that was not loaded. The original remains saved; inspect User files and reopen the editor to retry.'));

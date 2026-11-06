@@ -303,6 +303,27 @@ test('closing immediately after Save Patch drains dirty user files before reopen
   expect(Buffer.from(Object.values(await call('userFile', {path: where})))).toEqual(Buffer.from(expected));
 });
 
+test('same-timestamp writes and replacement inodes persist through the actual mounted filesystem', async () => {
+  let frame = await editor();
+  await frame.evaluate(async () => {
+    const path='/user/same-tick.bin';
+    Module.FS.writeFile(path,new Uint8Array([1]));
+    const time=Module.FS.stat(path).mtime;
+    await SurgeBrowser.flush();
+    Module.FS.writeFile(path,new Uint8Array([2]));Module.FS.utime(path,time,time);
+    await SurgeBrowser.flush();
+  });
+  expect(Buffer.from(Object.values(await call('userFile',{path:'/same-tick.bin'})))).toEqual(Buffer.from([2]));
+  await frame.evaluate(async () => {
+    const path='/user/same-tick.bin',time=Module.FS.stat(path).mtime;
+    Module.FS.unlink(path);Module.FS.writeFile(path,new Uint8Array([3]));Module.FS.utime(path,time,time);
+    await SurgeBrowser.flush();
+  });
+  expect(Buffer.from(Object.values(await call('userFile',{path:'/same-tick.bin'})))).toEqual(Buffer.from([3]));
+  await page.evaluate(() => wclapHost.reopen());frame=await editor();
+  expect(await frame.evaluate(()=>[...Module.FS.readFile('/user/same-tick.bin')])).toEqual([3]);
+});
+
 test('factory skins switch on the worker editor without stopping it', async () => {
   const frame = await editor();
   const openSkins = async () => {
