@@ -482,8 +482,10 @@ if (typeof window !== 'undefined') {
       return found;
     };
     const depth = path => path.split('/').length;
-    IDBFS.syncfs = (mount, populate, callback) => {
-      if (populate) return callback(null);
+    // fd_sync calls the mount directly, without platform.flush. Keep its
+    // current snapshot and reply intact; waiting callers share one later
+    // snapshot of the newest dirty files instead of queueing full copies.
+    const persist = callback => {
       const now = local(), ops = [];
       // Removed files, removed folders (deepest first), new folders (shallowest
       // first), then new and changed files.
@@ -503,6 +505,36 @@ if (typeof window !== 'undefined') {
         for (const [path, is] of now) remote.set(path, is);
         callback(null);
       }, callback);
+    };
+    let syncing = false, activeSyncs = 0;
+    const waitingSyncs = [];
+    const drainSyncs = callbacks => {
+      activeSyncs = callbacks.length;
+      const complete = error => {
+        let callbackError;
+        for (const callback of callbacks) {
+          --activeSyncs;
+          try { callback(error); } catch (failure) { callbackError ??= failure; }
+        }
+        if (error) {
+          const waiting = waitingSyncs.splice(0);
+          syncing = false;
+          for (const callback of waiting) {
+            try { callback(error); } catch (failure) { callbackError ??= failure; }
+          }
+        } else if (waitingSyncs.length) {
+          Promise.resolve().then(() => drainSyncs(waitingSyncs.splice(0)));
+        } else syncing = false;
+        if (callbackError) Promise.resolve().then(() => { throw callbackError; });
+      };
+      try { persist(complete); } catch (error) { complete(error); }
+    };
+    IDBFS.syncfs = (mount, populate, callback) => {
+      if (populate) return callback(null);
+      if (activeSyncs + waitingSyncs.length >= 4096)
+        return callback(new Error('Too many pending user-file synchronization requests; retry saving.'));
+      if (syncing) waitingSyncs.push(callback);
+      else { syncing = true; drainSyncs([callback]); }
     };
     platform.restoring = false;
     platform.storageState = 'saved';
