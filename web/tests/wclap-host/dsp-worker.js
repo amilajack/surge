@@ -123,6 +123,6 @@ self.onmessage = async ({data, ports}) => {
       : result instanceof Uint8Array ? [result.buffer] : [];
     if (id !== undefined) post({type: 'reply', id, result}, transfer);
   } catch (error) {
-    if (id !== undefined) post({type: 'reply', id, error: String(error && error.stack || error)});
+    if (id !== undefined) post({type: 'reply', id, error: error instanceof Error ? error.message : String(error)});
   }
 };

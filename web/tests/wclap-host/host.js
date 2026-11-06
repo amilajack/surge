@@ -23,7 +23,7 @@ const BOOTSTRAP = `(() => {
         document.body.inert = true;
         Promise.resolve().then(() => beforeClose?.()).then(
           () => port.postMessage({id: data.id, kind: 'close-result', ok: true}),
-          error => { document.body.inert = inert; port.postMessage({id: data.id, kind: 'close-result', ok: false, error: String(error)}); });
+          error => { document.body.inert = inert; port.postMessage({id: data.id, kind: 'close-result', ok: false, error: error instanceof Error ? error.message : String(error)}); });
         return;
       }
       const request = pending.get(data.id);
@@ -131,7 +131,7 @@ async function openWindow() {
       }
       if (data.kind === 'user-files') {
         try { replyPort.postMessage({id: data.id, kind: data.kind, ok: true, value: await call('userFileRequest', data.request)}); }
-        catch (error) { replyPort.postMessage({id: data.id, kind: data.kind, ok: false, error: String(error)}); }
+        catch (error) { replyPort.postMessage({id: data.id, kind: data.kind, ok: false, error: error instanceof Error ? error.message : String(error)}); }
         return;
       }
       if (data.kind === 'export-file') {
@@ -144,7 +144,7 @@ async function openWindow() {
           anchor.href = url; anchor.download = name; anchor.click();
           setTimeout(() => URL.revokeObjectURL(url), 30000);
           replyPort.postMessage({id: data.id, kind: data.kind, ok: true, value: {started: true}});
-        } catch (error) { replyPort.postMessage({id: data.id, kind: data.kind, ok: false, error: String(error)}); }
+        } catch (error) { replyPort.postMessage({id: data.id, kind: data.kind, ok: false, error: error instanceof Error ? error.message : String(error)}); }
         return;
       }
       const found = await call('resource', {path: data.path}).catch(() => null);
