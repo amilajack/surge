@@ -288,6 +288,21 @@ test('user patches saved in the editor go to the plug-in user folder, come back 
   expect(Buffer.from(await frame.evaluate(path => [...Module.FS.readFile('/user' + path)], where)).equals(saved)).toBe(true);
 });
 
+test('closing immediately after Save Patch drains dirty user files before reopening', async () => {
+  let frame = await editor();
+  await frame.getByRole('button', {name: 'Save Patch', exact: true}).dispatchEvent('click');
+  await frame.getByRole('textbox', {name: 'patch name', exact: true}).fill('Immediate');
+  await frame.getByRole('textbox', {name: 'patch category', exact: true}).fill('WCLAP Close');
+  await frame.getByRole('button', {name: 'OK', exact: true}).dispatchEvent('click');
+  const where = '/Patches/WCLAP Close/Immediate.fxp';
+  await frame.waitForFunction(path => Module.FS.analyzePath('/user' + path).exists, where, {polling: 5});
+  const expected = await frame.evaluate(path => [...Module.FS.readFile('/user' + path)], where);
+  await page.evaluate(() => wclapHost.reopen());
+  frame = await editor();
+  expect(await frame.evaluate(path => [...Module.FS.readFile('/user' + path)], where)).toEqual(expected);
+  expect(Buffer.from(Object.values(await call('userFile', {path: where})))).toEqual(Buffer.from(expected));
+});
+
 test('factory skins switch on the worker editor without stopping it', async () => {
   const frame = await editor();
   const openSkins = async () => {

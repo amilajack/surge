@@ -12,12 +12,20 @@ const CSP = ["default-src 'none'", "script-src 'unsafe-inline' 'unsafe-eval' dat
 // Runs first in the frame: answers fetch() of the page's own (virtual) URLs.
 const BOOTSTRAP = `(() => {
   const pending = new Map(), queued = [];
-  let port = null, next = 0;
+  let port = null, next = 0, beforeClose = null;
   addEventListener('message', event => {
     if (event.source !== parent || event.data !== 'wclap-host:resources' || !event.ports[0]) return;
     event.stopImmediatePropagation();
     port = event.ports[0];
     port.onmessage = ({data}) => {
+      if (data.kind === 'prepare-close') {
+        const inert = document.body.inert;
+        document.body.inert = true;
+        Promise.resolve().then(() => beforeClose?.()).then(
+          () => port.postMessage({id: data.id, kind: 'close-result', ok: true}),
+          error => { document.body.inert = inert; port.postMessage({id: data.id, kind: 'close-result', ok: false, error: String(error)}); });
+        return;
+      }
       const request = pending.get(data.id);
       if (!request) return;
       pending.delete(data.id);
@@ -28,7 +36,10 @@ const BOOTSTRAP = `(() => {
     };
     for (const message of queued.splice(0)) port.postMessage(message);
   });
-  globalThis.wclapHost = {userFiles: request => new Promise((resolve, reject) => {
+  globalThis.wclapHost = {onBeforeClose(callback) {
+    beforeClose = callback;
+    return () => { if (beforeClose === callback) beforeClose = null; };
+  }, userFiles: request => new Promise((resolve, reject) => {
     const message = {id: next++, kind: 'user-files', request};
     pending.set(message.id, {resolve, reject});
     if (port) port.postMessage(message); else queued.push(message);
@@ -50,6 +61,8 @@ const say = text => { log.textContent += text + '\n'; };
 const worker = new Worker(new URL('dsp-worker.js', import.meta.url), {type: 'module'});
 let nextId = 0, frame = null, frameLoaded = false, resources = null;
 const replies = new Map(), queuedMessages = [];
+const closing = new Map();
+let nextClose = 0;
 const events = [];
 worker.onmessage = ({data}) => {
   if (data.type === 'reply') {
@@ -105,6 +118,11 @@ async function openWindow() {
     resources = channel.port1;
     const replyPort = resources;
     resources.onmessage = async ({data}) => {
+      if (data.kind === 'close-result') {
+        const request = closing.get(data.id);
+        if (request) { closing.delete(data.id); clearTimeout(request.timer); data.ok ? request.resolve() : request.reject(new Error(data.error)); }
+        return;
+      }
       if (data.kind === 'user-files') {
         try { replyPort.postMessage({id: data.id, kind: data.kind, ok: true, value: await call('userFileRequest', data.request)}); }
         catch (error) { replyPort.postMessage({id: data.id, kind: data.kind, ok: false, error: String(error)}); }
@@ -126,6 +144,12 @@ async function openWindow() {
 
 async function closeWindow() {
   if (!frame) return;
+  if (resources) await new Promise((resolve, reject) => {
+    const id = nextClose++;
+    const timer = setTimeout(() => { closing.delete(id); reject(new Error('The editor did not finish saving')); }, 30000);
+    closing.set(id, {resolve, reject, timer});
+    resources.postMessage({id, kind: 'prepare-close'});
+  });
   await call('guiDestroy');
   resources?.close();
   frame.remove();

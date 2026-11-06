@@ -90,6 +90,8 @@ canvas{position:absolute;touch-action:none}
       if (stopped) throw new Error('The editor has stopped; reopen it to retry user-file operations');
       if (typeof globalThis.wclapHost?.userFiles !== 'function')
         throw new Error('The host does not support durable Surge user files. Update the app and reopen the editor.');
+      if (typeof globalThis.wclapHost?.onBeforeClose !== 'function')
+        throw new Error('The host cannot safely close Surge user files. Update the app and reopen the editor.');
       return globalThis.wclapHost.userFiles(request);
     });
     userFileTail = pending.catch(() => {});
@@ -102,6 +104,13 @@ canvas{position:absolute;touch-action:none}
         ...(data === undefined ? {} : {data: new Uint8Array(data)})}));
       return userFileRequest({op: 'apply', operations});
     },
+  };
+  const closeUserFiles = async () => {
+    // Finish preceding worker UI actions before taking the final file snapshot.
+    if (globalThis.SurgeWclapPage?.worker)
+      await globalThis.SurgeWclapPage.call('surge_browser_patch_count', 'number');
+    await globalThis.SurgeBrowser.flush();
+    await userFileTail;
   };
   // Messages the page answers itself, before or without the editor.
   const intercept = buffer => {
@@ -223,6 +232,9 @@ canvas{position:absolute;touch-action:none}
       setStatus() {},
       onAbort: fail,
       onRuntimeInitialized() {
+        // Registered before the editor becomes interactive. The host preserves
+        // this document until the final durable snapshot succeeds.
+        globalThis.wclapHost.onBeforeClose(closeUserFiles);
         if (user.skipped?.length) SurgeUserFiles.attach(Module, {reportOnly: true});
       },
     };

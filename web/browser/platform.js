@@ -100,39 +100,57 @@ if (typeof window !== 'undefined') {
       if (platform.restoring || platform.storageState === 'memory') return;
       ++platform.generation;
       clearTimeout(platform.flushTimer);
-      platform.flushTimer = setTimeout(() => platform.flush().catch(() => {}), 100);
+      platform.flushTimer = null;
+      if (platform.storageState !== 'error') {
+        platform.storageState = 'saving';
+        platform.report('Saving user files…');
+      }
+      // One snapshot at a time. An active drain takes the newest generation
+      // after its durable reply, rather than queueing copies for every write.
+      if (!platform.pendingFlush)
+        platform.flushTimer = setTimeout(() => {
+          platform.flushTimer = null;
+          platform.flush().catch(() => {});
+        }, 100);
     },
     async flush() {
+      clearTimeout(platform.flushTimer);
+      platform.flushTimer = null;
       if (platform.storageState === 'memory') return;
       if (platform.storageState === 'unavailable') throw platform.storageError;
-      if (platform.pendingFlush) {
-        await platform.pendingFlush;
-        if (platform.savedGeneration < platform.generation) return platform.flush();
-        return;
-      }
-      const generation = platform.generation;
+      if (platform.pendingFlush) return platform.pendingFlush;
       platform.storageState = 'saving';
       platform.report('Saving user files…');
-      platform.pendingFlush = new Promise((resolve, reject) => {
-        FS.syncfs(false, error => error ? reject(error) : resolve());
-      });
-      try {
-        await platform.pendingFlush;
-        platform.savedGeneration = generation;
+      let failed = false;
+      const drain = Promise.resolve().then(async () => {
+        do {
+          const generation = platform.generation;
+          await new Promise((resolve, reject) => {
+            FS.syncfs(false, error => error ? reject(error) : resolve());
+          });
+          platform.savedGeneration = generation;
+        } while (platform.savedGeneration < platform.generation);
         platform.storageState = 'saved';
         platform.storageError = null;
         platform.report('');
-      } catch (error) {
+      }).catch(error => {
+        failed = true;
         platform.storageState = 'error';
         platform.storageError = error;
         platform.report((Module['surgeWclap']
-          ? "Unable to save to the plug-in's user folder. Changes remain in this window; export your work before closing it. "
-          : 'Unable to save browser storage. Changes remain in memory; export your work before closing. ') + String(error));
+          ? "Unable to save to the plug-in's user folder. Keep this window open and retry saving. "
+          : 'Unable to save browser storage. Changes remain in memory; retry saving before closing. ') + String(error));
         throw error;
-      } finally {
+      }).finally(() => {
         platform.pendingFlush = null;
         globalThis.SurgeArchiveRecovery?.refresh(FS);
-      }
+        // A promise callback may have edited the folder after the last loop
+        // check. The caller still waits for that newer durable snapshot.
+        if (!failed && platform.savedGeneration < platform.generation)
+          return platform.flush();
+      });
+      platform.pendingFlush = drain;
+      return drain;
     },
     devicePreference(key, fallback, controls) {
       if (!['midi', 'audio'].includes(key)) throw Error('Unknown device preference');
