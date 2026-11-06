@@ -21,11 +21,18 @@ const BOOTSTRAP = `(() => {
       const request = pending.get(data.id);
       if (!request) return;
       pending.delete(data.id);
-      if (data.ok) request.resolve(new Response(data.body, {headers: {'content-type': data.mime}}));
+      if (data.kind === 'user-files') {
+        if (data.ok) request.resolve(data.value); else request.reject(new Error(data.error));
+      } else if (data.ok) request.resolve(new Response(data.body, {headers: {'content-type': data.mime}}));
       else request.reject(new TypeError('Failed to fetch ' + data.path));
     };
     for (const message of queued.splice(0)) port.postMessage(message);
   });
+  globalThis.wclapHost = {userFiles: request => new Promise((resolve, reject) => {
+    const message = {id: next++, kind: 'user-files', request};
+    pending.set(message.id, {resolve, reject});
+    if (port) port.postMessage(message); else queued.push(message);
+  })};
   const nativeFetch = fetch.bind(globalThis);
   globalThis.fetch = (input, init) => {
     const url = new URL(input instanceof Request ? input.url : String(input), document.baseURI);
@@ -96,11 +103,17 @@ async function openWindow() {
     frameLoaded = true;
     const channel = new MessageChannel();
     resources = channel.port1;
+    const replyPort = resources;
     resources.onmessage = async ({data}) => {
+      if (data.kind === 'user-files') {
+        try { replyPort.postMessage({id: data.id, kind: data.kind, ok: true, value: await call('userFileRequest', data.request)}); }
+        catch (error) { replyPort.postMessage({id: data.id, kind: data.kind, ok: false, error: String(error)}); }
+        return;
+      }
       const found = await call('resource', {path: data.path}).catch(() => null);
-      if (!found) { resources.postMessage({id: data.id, path: data.path, ok: false}); return; }
+      if (!found) { replyPort.postMessage({id: data.id, path: data.path, ok: false}); return; }
       const body = found.data.buffer;
-      resources.postMessage({id: data.id, path: data.path, ok: true, mime: found.mime, body}, [body]);
+      replyPort.postMessage({id: data.id, path: data.path, ok: true, mime: found.mime, body}, [body]);
     };
     frame.contentWindow.postMessage('wclap-host:resources', '*', [channel.port2]);
     for (const buffer of queuedMessages.splice(0)) frame.contentWindow.postMessage(buffer, '*', [buffer]);
