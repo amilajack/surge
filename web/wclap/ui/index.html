@@ -30,10 +30,9 @@ canvas{position:absolute;touch-action:none}
 // (a sandboxed srcdoc frame with an opaque origin and no network).
 // The editor uses threads: the frame needs cross-origin isolation.
 //
-// Before the editor starts, the page asks the plug-in for its user folder (a
-// writable /user directory the host may give the plug-in): the editor keeps its
-// user patches, settings and favourites there and writes them back through the
-// plug-in. Without one, user files live in memory while the window is open.
+// Before the editor starts, the page asks the host for its shared /user folder.
+// Durable saves use the asynchronous host channel, leaving filesystem I/O out
+// of the DSP store lock. An unavailable service is reported before startup.
 (() => {
   'use strict';
   const base = new URL('./', document.baseURI);

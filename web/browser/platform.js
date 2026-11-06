@@ -427,7 +427,7 @@ if (typeof window !== 'undefined') {
   // The WCLAP's user folder: the host's writable /user directory, which the plug-in
   // owns (src/surge-wclap/UserFiles.h). The editor's /user is a copy made before
   // Surge reads it; IDBFS's change tracking marks writes, and saving sends the
-  // differences to the plug-in instead of to IndexedDB, through the same queue,
+  // differences to the asynchronous host user-folder service instead of IndexedDB, through the same queue,
   // status line and retry as the browser's storage.
   function wclapUserFolder(user) {
     const root = '/user';
