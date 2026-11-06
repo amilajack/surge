@@ -9,6 +9,7 @@
 // until an event arrives or the plug-in asks (request_process).
 import {WclapModule, EVENT, PROCESS} from '../lib/clap-host.mjs';
 import {httpFiles, memoryFiles} from '../lib/wasi.mjs';
+import {userFileRequest} from './user-files.js';
 
 let module = null, plugin = null, audioPort = null, windowOpen = false, user = null;
 let asleep = false, sleeps = 0, wakes = 0;
@@ -93,8 +94,10 @@ const methods = {
   guiShow() { return plugin.guiShow(); },
   guiHide() { return plugin.guiHide(); },
   // The plug-in's user folder: every path and size.
+  userFileRequest(request) { return userFileRequest(user, request); },
   userFiles() { return [...user.entries].map(([path, entry]) => ({path, type: entry.type, size: entry.data?.length ?? 0})); },
-  userFile({path}) { return user.read(path); },
+  // Replies transfer their buffers; never transfer the backend's live file.
+  userFile({path}) { return user.read(path)?.slice() ?? null; },
   presets({location}) {
     const discovery = module.discoverPresets();
     try { return {locations: discovery.locations, ...discovery.metadata(location)}; }
@@ -120,6 +123,6 @@ self.onmessage = async ({data, ports}) => {
       : result instanceof Uint8Array ? [result.buffer] : [];
     if (id !== undefined) post({type: 'reply', id, result}, transfer);
   } catch (error) {
-    if (id !== undefined) post({type: 'reply', id, error: String(error && error.stack || error)});
+    if (id !== undefined) post({type: 'reply', id, error: error instanceof Error ? error.message : String(error)});
   }
 };

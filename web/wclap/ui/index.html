@@ -11,17 +11,20 @@ canvas{position:absolute;touch-action:none}
 #wclap-status{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:10px;z-index:2000;background:#141518}
 #wclap-status[hidden]{display:none}
 #wclap-status progress{width:220px;accent-color:#ff9000}
-#file-status,#storage-status{position:fixed;left:8px;bottom:8px;z-index:1000;max-width:60%;background:#202328e6;padding:4px 8px;border-radius:3px}
-#storage-status{bottom:40px}
+#file-feedback{position:fixed;left:8px;bottom:8px;z-index:1000;max-width:60%;display:flex;flex-direction:column;align-items:flex-start;gap:6px}
+#file-status,#storage-status{background:#202328e6;padding:4px 8px;border-radius:3px;max-height:25vh;overflow:auto}
 #file-status:empty,#storage-status:empty{display:none}
-#retry-storage{position:fixed;left:8px;bottom:72px;z-index:1000}
+#storage-actions{display:flex;flex-wrap:wrap;gap:8px}
+#storage-actions:not(:has(button:not([hidden]))){display:none}
 </style>
 </head>
 <body>
 <div id="wclap-status" role="status"><span id="wclap-message">Loading Surge XT…</span><progress id="wclap-progress" max="4" value="0"></progress></div>
-<div id="file-status" role="status"></div>
+<div id="file-feedback">
 <div id="storage-status" role="alert"></div>
-<button id="retry-storage" hidden onclick="SurgeBrowser.flush().catch(()=>{})">Retry saving</button>
+<div id="storage-actions"><button id="retry-storage" hidden onclick="SurgeBrowser.flush().catch(()=>{})">Retry saving</button><button id="discard-storage" hidden>Discard unsaved files and reload</button></div>
+<div id="file-status" role="status"></div>
+</div>
 <script>
 // The Surge XT WCLAP's clap.webview/3 page. It talks to the plug-in only by
 // posting ArrayBuffers to window.parent and receiving them as messages.
@@ -30,16 +33,13 @@ canvas{position:absolute;touch-action:none}
 // (a sandboxed srcdoc frame with an opaque origin and no network).
 // The editor uses threads: the frame needs cross-origin isolation.
 //
-// Before the editor starts, the page asks the plug-in for its user folder (a
-// writable /user directory the host may give the plug-in): the editor keeps its
-// user patches, settings and favourites there and writes them back through the
-// plug-in. Without one, user files live in memory while the window is open.
+// Before the editor starts, the page asks the host for its shared /user folder.
+// Durable saves use the asynchronous host channel, leaving filesystem I/O out
+// of the DSP store lock. An unavailable service is reported before startup.
 (() => {
   'use strict';
   const base = new URL('./', document.baseURI);
-  const VERSION = 2;
-  const T = {UserFiles: 11, UserFileOps: 12, Scale: 68, UserFileList: 70, UserFilesDone: 71};
-  const encoder = new TextEncoder(), decoder = new TextDecoder();
+  const T = {Scale: 68};
   const post = bytes => window.parent.postMessage(bytes.buffer, '*', [bytes.buffer]);
   const status = document.getElementById('wclap-status');
   const message = document.getElementById('wclap-message');
@@ -85,63 +85,119 @@ canvas{position:absolute;touch-action:none}
     }
     deliver();
   };
-  // The user folder, mirrored in memory (platform.js syncs the editor's /user with it).
-  let listed = null, sequence = 0;
-  const done = new Map();
+  // The host persists the same /user folder without entering the DSP store.
+  // Serialize reads and writes; snapshot bytes before a caller can change them.
+  let userFileTail = Promise.resolve(), userFileProtocol = false, unregisterClose = null;
+  const tokenValid = token => typeof token === 'string' && (token === 'directory' || /^file:[0-9a-f]{64}$/.test(token));
+  const userPathValid = path => typeof path === 'string' && path.length > 0 && path.length < 4096 && !path.includes('\0') && !path.includes('\\') && path.split('/').every(part => part && part !== '.' && part !== '..');
+  const fileToken = async data => 'file:' + Array.from(new Uint8Array(await crypto.subtle.digest('SHA-256', data)), byte => byte.toString(16).padStart(2, '0')).join('');
+  const validateListing = reply => {
+    if (reply?.protocol !== 2 || reply.available !== true || !Array.isArray(reply.entries) || !Array.isArray(reply.skipped))
+      throw new Error('The host does not support conflict-safe Surge user files. Update the app and reopen the editor.');
+    const paths = new Set();
+    for (const entry of reply.entries) {
+      if (!entry || !userPathValid(entry.path) || paths.has(entry.path) || !tokenValid(entry.token) ||
+          (entry.kind === 2 ? entry.token !== 'directory' : entry.kind !== 1 || !entry.token.startsWith('file:') || !(entry.data instanceof Uint8Array)))
+        throw new Error('The host returned an invalid user-file base version; reopen the editor.');
+      paths.add(entry.path);
+    }
+    for (const entry of reply.skipped) {
+      if (!entry || !userPathValid(entry.path) || paths.has(entry.path)) throw new Error('The host returned an ambiguous user-file listing; reopen the editor.');
+      paths.add(entry.path);
+    }
+    return reply;
+  };
+  const desiredVersions = async operations => {
+    const final = new Map();
+    for (const operation of operations) final.set(operation.path, operation);
+    return new Map(await Promise.all([...final].map(async ([path, operation]) => [path,
+      operation.op === 1 ? await fileToken(operation.data) : operation.op === 3 ? 'directory' : null])));
+  };
+  const validateVersions = (reply, desired) => {
+    if (reply?.protocol !== 2 || !Array.isArray(reply.versions) || reply.versions.length !== desired.size)
+      throw new Error('The host did not confirm the saved user-file versions; keep this window open and retry saving.');
+    const seen = new Set();
+    for (const entry of reply.versions) {
+      if (!entry || typeof entry.path !== 'string' || seen.has(entry.path) || !desired.has(entry.path) || entry.token !== desired.get(entry.path))
+        throw new Error('The host did not confirm the saved user-file contents; keep this window open and retry saving.');
+      seen.add(entry.path);
+    }
+    return reply;
+  };
+  const userFileRequest = request => {
+    const pending = userFileTail.then(async () => {
+      if (stopped) throw new Error('The editor has stopped; reopen it to retry user-file operations');
+      if (typeof globalThis.wclapHost?.userFiles !== 'function')
+        throw new Error('The host does not support durable Surge user files. Update the app and reopen the editor.');
+      if (typeof globalThis.wclapHost?.onBeforeClose !== 'function')
+        throw new Error('The host cannot safely close Surge user files. Update the app and reopen the editor.');
+      if (typeof globalThis.wclapHost?.exportFile !== 'function')
+        throw new Error('The host cannot download unsaved Surge user files. Update the app and reopen the editor.');
+      if (!globalThis.crypto?.subtle) throw new Error('This page cannot verify durable user-file contents. Open Surge in the updated app.');
+      if (request.op === 'apply' && !userFileProtocol)
+        throw new Error('Conflict-safe user files were not opened; reopen the editor before saving.');
+      const desired = request.op === 'apply' ? await desiredVersions(request.operations) : null;
+      if (request.op === 'list') userFileProtocol = false;
+      const reply = await globalThis.wclapHost.userFiles(request);
+      if (request.op === 'list') { validateListing(reply); userFileProtocol = true; return reply; }
+      return validateVersions(reply, desired);
+    });
+    userFileTail = pending.catch(() => {});
+    return pending;
+  };
   const userFiles = {
-    list: () => new Promise(resolve => {
-      listed = resolve;
-      const bytes = new Uint8Array(8);
-      bytes[0] = T.UserFiles;
-      new DataView(bytes.buffer).setUint32(4, VERSION, true);
-      post(bytes);
-    }),
-    // ops: [{op, path, data}] (Protocol.h UserFileOp). Resolves when the plug-in
-    // has applied them all; rejects with the first failure.
+    list: () => userFileRequest({op: 'list', protocol: 2}),
     send(ops) {
-      const encoded = ops.map(({op, path, data}) => ({op, path: encoder.encode(path), data: data ?? new Uint8Array()}));
-      const size = 12 + encoded.reduce((n, item) => n + 12 + item.path.length + item.data.length, 0);
-      const bytes = new Uint8Array(size), view = new DataView(bytes.buffer), id = ++sequence;
-      bytes[0] = T.UserFileOps;
-      view.setUint32(4, id, true);
-      view.setUint32(8, encoded.length, true);
-      let at = 12;
-      for (const item of encoded) {
-        bytes[at] = item.op;
-        view.setUint32(at + 4, item.path.length, true);
-        bytes.set(item.path, at + 8);
-        view.setUint32(at + 8 + item.path.length, item.data.length, true);
-        bytes.set(item.data, at + 12 + item.path.length);
-        at += 12 + item.path.length + item.data.length;
-      }
-      return new Promise((resolve, reject) => { done.set(id, {resolve, reject}); post(bytes); });
+      const operations = ops.map(({op, path, data, expected}) => {
+        if (![1, 2, 3, 4].includes(op) || !userPathValid(path) || (expected !== null && !tokenValid(expected)) ||
+            (op === 1 && !(data instanceof Uint8Array)))
+          throw new Error('Invalid conflict-safe user-file operation; changes remain in this window.');
+        return {op, path, expected, ...(data === undefined ? {} : {data: new Uint8Array(data)})};
+      });
+      return userFileRequest({op: 'apply', protocol: 2, operations});
     },
   };
-  const parseList = buffer => {
-    const view = new DataView(buffer), bytes = new Uint8Array(buffer), entries = [];
-    let at = 12;
-    for (let i = 0, count = view.getUint32(8, true); i < count; ++i) {
-      const kind = view.getUint8(at), mtime = view.getFloat64(at + 4, true), pathSize = view.getUint32(at + 12, true);
-      const path = decoder.decode(bytes.subarray(at + 16, at + 16 + pathSize));
-      const dataSize = view.getUint32(at + 16 + pathSize, true);
-      entries.push({kind, mtime, path, data: bytes.slice(at + 20 + pathSize, at + 20 + pathSize + dataSize)});
-      at += 20 + pathSize + dataSize;
-    }
-    return {available: view.getUint8(4) === 1, entries};
+  const closeUserFiles = async () => {
+    // Finish preceding worker UI actions before taking the final file snapshot.
+    if (globalThis.SurgeWclapPage?.worker)
+      await globalThis.SurgeWclapPage.call('surge_browser_patch_count', 'number');
+    await globalThis.SurgeBrowser.flush();
+    await userFileTail;
+  };
+  const discardUserFiles = async () => {
+    const platform = globalThis.SurgeBrowser, inert = document.body.inert;
+    if (!platform || platform.storageState !== 'error') return;
+    document.body.inert = true;
+    platform.discarding = true;
+    clearTimeout(platform.flushTimer);
+    platform.flushTimer = null;
+    let timeout;
+    try {
+      const drain = (async () => {
+        if (globalThis.SurgeWclapPage?.worker && !stopped)
+          await globalThis.SurgeWclapPage.call('surge_browser_patch_count', 'number');
+        await platform.pendingFlush?.catch(() => {});
+        await userFileTail;
+      })();
+      await Promise.race([drain, new Promise((_, reject) => {
+        timeout = setTimeout(() => reject(new Error('Outstanding user-file operations did not finish; the window remains open.')), 30000);
+      })]);
+      // Only this explicit destructive action bypasses the durable close hook.
+      // Earlier operations are drained; their committed writes are not undone.
+      unregisterClose?.();
+      unregisterClose = null;
+      window.location.reload();
+    } catch (error) {
+      platform.discarding = false;
+      platform.storageState = 'error';
+      platform.storageError = error;
+      platform.report('Unable to reload safely. Local user files remain in this window. ' + String(error));
+      document.body.inert = inert;
+    } finally { clearTimeout(timeout); }
   };
   // Messages the page answers itself, before or without the editor.
   const intercept = buffer => {
     const type = new Uint8Array(buffer, 0, 1)[0];
-    if (type === T.UserFileList && listed) { listed(parseList(buffer)); listed = null; return true; }
-    if (type === T.UserFilesDone) {
-      const view = new DataView(buffer), waiting = done.get(view.getUint32(4, true));
-      if (waiting) {
-        done.delete(view.getUint32(4, true));
-        if (view.getUint8(8)) waiting.resolve();
-        else waiting.reject(new Error(decoder.decode(new Uint8Array(buffer, 12))));
-      }
-      return true;
-    }
     if (type === T.Scale) {
       // The host's GUI scale overrides the device pixel ratio (BrowserWindowing.cpp
       // sizes the canvas backing store by SurgeHost.pixelRatio()).
@@ -237,10 +293,7 @@ canvas{position:absolute;touch-action:none}
     document.body.append(script);
   });
   (async () => {
-    // A plug-in that does not answer (an older module) leaves user files in memory.
-    const user = await Promise.race([userFiles.list(),
-      new Promise(resolve => setTimeout(() => resolve({available: false, entries: [], unanswered: true}), 10000))]);
-    if (user.unanswered) console.warn('Surge XT: the plug-in did not list its user folder; user files stay in memory.');
+    const user = await userFiles.list();
     const [support, library, glue, wasm] = await Promise.all([
       load('support.js'), load('library.js'), load('surge-xt-wclap-ui.js'), load('surge-xt-wclap-ui.wasm', 'bytes')]);
     message.textContent = 'Starting Surge XT…';
@@ -261,7 +314,13 @@ canvas{position:absolute;touch-action:none}
       },
       setStatus() {},
       onAbort: fail,
-      onRuntimeInitialized() {},
+      onRuntimeInitialized() {
+        // Registered before the editor becomes interactive. The host preserves
+        // this document until the final durable snapshot succeeds.
+        unregisterClose = globalThis.wclapHost.onBeforeClose(closeUserFiles);
+        document.getElementById('discard-storage').onclick = () => discardUserFiles();
+        SurgeUserFiles.attach(Module);
+      },
     };
     await runScript(glueBlob);
   })().catch(fail);

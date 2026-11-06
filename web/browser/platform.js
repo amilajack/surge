@@ -86,11 +86,14 @@ if (typeof window !== 'undefined') {
     savedGeneration: 0,
     pendingFlush: null,
     flushTimer: null,
+    discarding: false,
     report(message) {
       const element = host.status('storage-status', message);
       if (element) element.textContent = message;
       const retry = host.wam ? null : document.getElementById('retry-storage');
       if (retry) retry.hidden = platform.storageState !== 'error';
+      const discard = host.wam ? null : document.getElementById('discard-storage');
+      if (discard) discard.hidden = platform.storageState !== 'error';
     },
     reportFile(message) {
       const element = host.status('file-status', message);
@@ -100,39 +103,59 @@ if (typeof window !== 'undefined') {
       if (platform.restoring || platform.storageState === 'memory') return;
       ++platform.generation;
       clearTimeout(platform.flushTimer);
-      platform.flushTimer = setTimeout(() => platform.flush().catch(() => {}), 100);
+      platform.flushTimer = null;
+      if (platform.discarding) return;
+      if (platform.storageState !== 'error' && platform.storageState !== 'saving') {
+        platform.storageState = 'saving';
+        platform.report('Saving user files…');
+      }
+      // One snapshot at a time. An active drain takes the newest generation
+      // after its durable reply, rather than queueing copies for every write.
+      if (!platform.pendingFlush)
+        platform.flushTimer = setTimeout(() => {
+          platform.flushTimer = null;
+          platform.flush().catch(() => {});
+        }, 100);
     },
     async flush() {
+      clearTimeout(platform.flushTimer);
+      platform.flushTimer = null;
+      if (platform.discarding) throw new Error('Unsaved user files are being discarded for reload.');
       if (platform.storageState === 'memory') return;
       if (platform.storageState === 'unavailable') throw platform.storageError;
-      if (platform.pendingFlush) {
-        await platform.pendingFlush;
-        if (platform.savedGeneration < platform.generation) return platform.flush();
-        return;
-      }
-      const generation = platform.generation;
+      if (platform.pendingFlush) return platform.pendingFlush;
       platform.storageState = 'saving';
       platform.report('Saving user files…');
-      platform.pendingFlush = new Promise((resolve, reject) => {
-        FS.syncfs(false, error => error ? reject(error) : resolve());
-      });
-      try {
-        await platform.pendingFlush;
-        platform.savedGeneration = generation;
+      let failed = false;
+      const drain = Promise.resolve().then(async () => {
+        do {
+          const generation = platform.generation;
+          await new Promise((resolve, reject) => {
+            FS.syncfs(false, error => error ? reject(error) : resolve());
+          });
+          platform.savedGeneration = generation;
+        } while (platform.savedGeneration < platform.generation);
         platform.storageState = 'saved';
         platform.storageError = null;
         platform.report('');
-      } catch (error) {
+      }).catch(error => {
+        failed = true;
         platform.storageState = 'error';
         platform.storageError = error;
         platform.report((Module['surgeWclap']
-          ? "Unable to save to the plug-in's user folder. Changes remain in this window; export your work before closing it. "
-          : 'Unable to save browser storage. Changes remain in memory; export your work before closing. ') + String(error));
+          ? "Unable to save to the plug-in's user folder. Keep this window open and retry saving. "
+          : 'Unable to save browser storage. Changes remain in memory; retry saving before closing. ') + String(error));
         throw error;
-      } finally {
+      }).finally(() => {
         platform.pendingFlush = null;
         globalThis.SurgeArchiveRecovery?.refresh(FS);
-      }
+        // A promise callback may have edited the folder after the last loop
+        // check. The caller still waits for that newer durable snapshot.
+        if (!failed && platform.savedGeneration < platform.generation)
+          return platform.flush();
+      });
+      platform.pendingFlush = drain;
+      return drain;
     },
     devicePreference(key, fallback, controls) {
       if (!['midi', 'audio'].includes(key)) throw Error('Unknown device preference');
@@ -427,15 +450,58 @@ if (typeof window !== 'undefined') {
   // The WCLAP's user folder: the host's writable /user directory, which the plug-in
   // owns (src/surge-wclap/UserFiles.h). The editor's /user is a copy made before
   // Surge reads it; IDBFS's change tracking marks writes, and saving sends the
-  // differences to the plug-in instead of to IndexedDB, through the same queue,
+  // differences to the asynchronous host user-folder service instead of IndexedDB, through the same queue,
   // status line and retry as the browser's storage.
   function wclapUserFolder(user) {
     const root = '/user';
+    if (user.protocol !== 2) throw new Error('The host does not support conflict-safe user files; update the app and reopen the editor.');
+    // Omitted files remain in the host folder. Never infer their removal from
+    // the editor's incomplete in-memory copy, including parent-folder deletes.
+    const skipped = (user.skipped || []).map(entry => entry.path);
     const mtimeOf = stat => stat.mtime instanceof Date ? stat.mtime.getTime() : Number(stat.mtime);
-    // What the plug-in holds, by path below the folder: {folder, mtime}.
+    // Millisecond mtimes alone cannot distinguish same-tick writes or a new
+    // inode at an old path. Track mutations on this mount's actual FS nodes.
+    const revisions = new WeakMap();
+    let revisionError = null;
+    const revision = node => revisions.get(node) ?? 0;
+    const mutate = (node, operation) => {
+      const check = () => {
+        const value = revision(node);
+        if (!Number.isSafeInteger(value) || value < 0 || value >= Number.MAX_SAFE_INTEGER) {
+          revisionError = new Error('The user-file change counter is exhausted; keep this window open to retain unsaved work.');
+          throw revisionError;
+        }
+        return value;
+      };
+      check();
+      const result = operation();
+      revisions.set(node, check() + 1);
+      platform.changed();
+      return result;
+    };
     const remote = new Map();
     IDBFS.queuePersist = () => platform.changed();
-    FS.mount(IDBFS, {autoPersist: true}, root);
+    const mount = FS.mount(IDBFS, {autoPersist: true}, root);
+    const makeNode = mount.node_ops.mknod, setAttributes = mount.node_ops.setattr;
+    mount.node_ops.mknod = function(...args) {
+      const node = makeNode.apply(this, args);
+      for (const kind of ['write', 'allocate', 'msync']) {
+        const original = node.stream_ops[kind];
+        if (typeof original === 'function') node.stream_ops[kind] = function(...args) {
+          // MEMFS does not write MAP_PRIVATE (2) mappings back to the file.
+          if (kind === 'msync' && (args[4] & 2)) return original.apply(this, args);
+          return mutate(args[0].node, () => original.apply(this, args));
+        };
+      }
+      return node;
+    };
+    mount.node_ops.setattr = function(node, attributes) {
+      return mutate(node, () => setAttributes.call(this, node, attributes));
+    };
+    const capture = (path, folder, stat = FS.lstat(path)) => {
+      const node = FS.lookupPath(path).node;
+      return {folder, mtime: mtimeOf(stat), node, revision: revision(node)};
+    };
     const entries = [...user.entries].sort((a, b) => a.path.split('/').length - b.path.split('/').length);
     for (const entry of entries) {
       const path = root + '/' + entry.path;
@@ -446,40 +512,101 @@ if (typeof window !== 'undefined') {
       }
       FS.utime(path, entry.mtime, entry.mtime);
       // As the file system reports it back (it may round), so unchanged files compare equal.
-      remote.set(entry.path, {folder: entry.kind === 2, mtime: mtimeOf(FS.lstat(path))});
+      remote.set(entry.path, {...capture(path, entry.kind === 2), token: entry.token});
     }
     const local = () => {
       const found = new Map(), walk = folder => {
         for (const name of FS.readdir(root + (folder ? '/' + folder : ''))) {
           if (name === '.' || name === '..') continue;
           const path = folder ? folder + '/' + name : name, stat = FS.lstat(root + '/' + path);
-          if (FS.isDir(stat.mode)) { found.set(path, {folder: true, mtime: mtimeOf(stat)}); walk(path); }
-          else if (FS.isFile(stat.mode)) found.set(path, {folder: false, mtime: mtimeOf(stat)});
+          if (FS.isDir(stat.mode)) { found.set(path, capture(root + '/' + path, true, stat)); walk(path); }
+          else if (FS.isFile(stat.mode)) found.set(path, capture(root + '/' + path, false, stat));
         }
       };
       walk('');
       return found;
     };
     const depth = path => path.split('/').length;
-    IDBFS.syncfs = (mount, populate, callback) => {
-      if (populate) return callback(null);
+    // fd_sync calls the mount directly, without platform.flush. Keep its
+    // current snapshot and reply intact; waiting callers share one later
+    // snapshot of the newest dirty files instead of queueing full copies.
+    const persist = callback => {
+      if (platform.discarding) return callback(new Error('Unsaved user files are being discarded for reload.'));
+      if (revisionError) return callback(revisionError);
       const now = local(), ops = [];
+      const replacedFolders = [...now].filter(([path, is]) => is.folder && remote.get(path)?.folder && remote.get(path).node !== is.node).map(([path]) => path);
+      const replaced = path => replacedFolders.some(folder => path === folder || path.startsWith(folder + '/'));
       // Removed files, removed folders (deepest first), new folders (shallowest
       // first), then new and changed files.
-      for (const [path, was] of remote) if (!was.folder && (!now.has(path) || now.get(path).folder)) ops.push({op: 2, path});
-      [...remote].filter(([path, was]) => was.folder && !now.get(path)?.folder).sort(([a], [b]) => depth(b) - depth(a))
+      for (const [path, was] of remote) if (!was.folder && (replaced(path) || !now.has(path) || now.get(path).folder)) ops.push({op: 2, path});
+      [...remote].filter(([path, was]) => was.folder && (replaced(path) || !now.get(path)?.folder)).sort(([a], [b]) => depth(b) - depth(a))
         .forEach(([path]) => ops.push({op: 4, path}));
-      [...now].filter(([path, is]) => is.folder && !remote.get(path)?.folder).sort(([a], [b]) => depth(a) - depth(b))
+      [...now].filter(([path, is]) => is.folder && (replaced(path) || !remote.get(path)?.folder)).sort(([a], [b]) => depth(a) - depth(b))
         .forEach(([path]) => ops.push({op: 3, path}));
       for (const [path, is] of now)
-        if (!is.folder && (remote.get(path)?.folder !== false || remote.get(path).mtime !== is.mtime))
-          ops.push({op: 1, path, data: FS.readFile(root + '/' + path)});
+        if (!is.folder && (replaced(path) || remote.get(path)?.folder !== false || remote.get(path).node !== is.node || remote.get(path).revision !== is.revision || remote.get(path).mtime !== is.mtime)) {
+          // Publish the revision corresponding to these bytes, never the node's
+          // later revision after an asynchronous durable reply.
+          const captured = revision(is.node), data = FS.readFile(root + '/' + path);
+          if (captured !== revision(is.node) || FS.lookupPath(root + '/' + path).node !== is.node)
+            return callback(new Error('The user file changed during its snapshot; retry saving.'));
+          is.revision = captured;
+          ops.push({op: 1, path, data});
+        }
+      for (const operation of ops) operation.expected = remote.get(operation.path)?.token ?? null;
       if (!ops.length) return callback(null);
-      globalThis.SurgeWclapPage.userFiles.send(ops).then(() => {
+      if (ops.some(operation => skipped.some(path => operation.path === path || operation.path.startsWith(path + '/') || path.startsWith(operation.path + '/'))))
+        return callback(new Error('This change would replace or remove a user file that was not loaded. The original remains saved; inspect User files and reopen the editor to retry.'));
+      globalThis.SurgeWclapPage.userFiles.send(ops).then(reply => {
+        const final = new Map();
+        for (const operation of ops) final.set(operation.path, operation.op);
+        if (reply?.protocol !== 2 || !Array.isArray(reply.versions) || reply.versions.length !== final.size)
+          return callback(new Error('The host did not confirm the user-file versions; keep this window open and retry saving.'));
+        const versions = new Map();
+        for (const entry of reply.versions) {
+          if (!entry || typeof entry.path !== 'string') return callback(new Error('The host returned invalid user-file versions; keep this window open and retry saving.'));
+          const op = final.get(entry.path);
+          if (!op || versions.has(entry.path) || (op === 1 ? typeof entry.token !== 'string' || !/^file:[0-9a-f]{64}$/.test(entry.token) : op === 3 ? entry.token !== 'directory' : entry.token !== null))
+            return callback(new Error('The host returned ambiguous user-file versions; keep this window open and retry saving.'));
+          versions.set(entry.path, entry.token);
+        }
+        // Untouched local files keep their original base token. A newer remote
+        // token without matching local bytes would hide another editor's edit.
+        for (const [path, is] of now) is.token = versions.has(path) ? versions.get(path) : remote.get(path)?.token;
         remote.clear();
         for (const [path, is] of now) remote.set(path, is);
         callback(null);
       }, callback);
+    };
+    let syncing = false, activeSyncs = 0;
+    const waitingSyncs = [];
+    const drainSyncs = callbacks => {
+      activeSyncs = callbacks.length;
+      const complete = error => {
+        let callbackError;
+        for (const callback of callbacks) {
+          --activeSyncs;
+          try { callback(error); } catch (failure) { callbackError ??= failure; }
+        }
+        if (error) {
+          const waiting = waitingSyncs.splice(0);
+          syncing = false;
+          for (const callback of waiting) {
+            try { callback(error); } catch (failure) { callbackError ??= failure; }
+          }
+        } else if (waitingSyncs.length) {
+          Promise.resolve().then(() => drainSyncs(waitingSyncs.splice(0)));
+        } else syncing = false;
+        if (callbackError) Promise.resolve().then(() => { throw callbackError; });
+      };
+      try { persist(complete); } catch (error) { complete(error); }
+    };
+    IDBFS.syncfs = (mount, populate, callback) => {
+      if (populate) return callback(null);
+      if (activeSyncs + waitingSyncs.length >= 4096)
+        return callback(new Error('Too many pending user-file synchronization requests; retry saving.'));
+      if (syncing) waitingSyncs.push(callback);
+      else { syncing = true; drainSyncs([callback]); }
     };
     platform.restoring = false;
     platform.storageState = 'saved';

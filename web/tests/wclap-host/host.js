@@ -12,20 +12,43 @@ const CSP = ["default-src 'none'", "script-src 'unsafe-inline' 'unsafe-eval' dat
 // Runs first in the frame: answers fetch() of the page's own (virtual) URLs.
 const BOOTSTRAP = `(() => {
   const pending = new Map(), queued = [];
-  let port = null, next = 0;
+  let port = null, next = 0, beforeClose = null;
   addEventListener('message', event => {
     if (event.source !== parent || event.data !== 'wclap-host:resources' || !event.ports[0]) return;
     event.stopImmediatePropagation();
     port = event.ports[0];
     port.onmessage = ({data}) => {
+      if (data.kind === 'prepare-close') {
+        const inert = document.body.inert;
+        document.body.inert = true;
+        Promise.resolve().then(() => beforeClose?.()).then(
+          () => port.postMessage({id: data.id, kind: 'close-result', ok: true}),
+          error => { document.body.inert = inert; port.postMessage({id: data.id, kind: 'close-result', ok: false, error: error instanceof Error ? error.message : String(error)}); });
+        return;
+      }
       const request = pending.get(data.id);
       if (!request) return;
       pending.delete(data.id);
-      if (data.ok) request.resolve(new Response(data.body, {headers: {'content-type': data.mime}}));
+      if (data.kind === 'user-files' || data.kind === 'export-file') {
+        if (data.ok) request.resolve(data.value); else request.reject(new Error(data.error));
+      } else if (data.ok) request.resolve(new Response(data.body, {headers: {'content-type': data.mime}}));
       else request.reject(new TypeError('Failed to fetch ' + data.path));
     };
     for (const message of queued.splice(0)) port.postMessage(message);
   });
+  const request = (kind, value) => new Promise((resolve, reject) => {
+    const message = {id: next++, kind, request: value};
+    pending.set(message.id, {resolve, reject});
+    if (port) port.postMessage(message); else queued.push(message);
+  });
+  globalThis.wclapHost = {onBeforeClose(callback) {
+    beforeClose = callback;
+    return () => { if (beforeClose === callback) beforeClose = null; };
+  }, userFiles: value => request('user-files', value),
+  exportFile: value => {
+    if (!navigator.userActivation.isActive) return Promise.reject(new Error('Download requires a user click'));
+    return request('export-file', value);
+  }};
   const nativeFetch = fetch.bind(globalThis);
   globalThis.fetch = (input, init) => {
     const url = new URL(input instanceof Request ? input.url : String(input), document.baseURI);
@@ -43,6 +66,8 @@ const say = text => { log.textContent += text + '\n'; };
 const worker = new Worker(new URL('dsp-worker.js', import.meta.url), {type: 'module'});
 let nextId = 0, frame = null, frameLoaded = false, resources = null;
 const replies = new Map(), queuedMessages = [];
+const closing = new Map();
+let nextClose = 0;
 const events = [];
 worker.onmessage = ({data}) => {
   if (data.type === 'reply') {
@@ -95,12 +120,37 @@ async function openWindow() {
   frame.addEventListener('load', () => {
     frameLoaded = true;
     const channel = new MessageChannel();
+    resources?.close();
     resources = channel.port1;
+    const replyPort = resources;
     resources.onmessage = async ({data}) => {
+      if (data.kind === 'close-result') {
+        const request = closing.get(data.id);
+        if (request) { closing.delete(data.id); clearTimeout(request.timer); data.ok ? request.resolve() : request.reject(new Error(data.error)); }
+        return;
+      }
+      if (data.kind === 'user-files') {
+        try { replyPort.postMessage({id: data.id, kind: data.kind, ok: true, value: await call('userFileRequest', data.request)}); }
+        catch (error) { replyPort.postMessage({id: data.id, kind: data.kind, ok: false, error: error instanceof Error ? error.message : String(error)}); }
+        return;
+      }
+      if (data.kind === 'export-file') {
+        try {
+          const {name, data: bytes} = data.request;
+          if (typeof name !== 'string' || !name || name.length > 255 || /[\\/\x00-\x1f\x7f]/.test(name) || !(bytes instanceof Uint8Array) || bytes.byteLength > 256 * 1024 * 1024)
+            throw new Error('Invalid user-file download');
+          const url = URL.createObjectURL(new Blob([bytes.slice()]));
+          const anchor = document.createElement('a');
+          anchor.href = url; anchor.download = name; anchor.click();
+          setTimeout(() => URL.revokeObjectURL(url), 30000);
+          replyPort.postMessage({id: data.id, kind: data.kind, ok: true, value: {started: true}});
+        } catch (error) { replyPort.postMessage({id: data.id, kind: data.kind, ok: false, error: error instanceof Error ? error.message : String(error)}); }
+        return;
+      }
       const found = await call('resource', {path: data.path}).catch(() => null);
-      if (!found) { resources.postMessage({id: data.id, path: data.path, ok: false}); return; }
+      if (!found) { replyPort.postMessage({id: data.id, path: data.path, ok: false}); return; }
       const body = found.data.buffer;
-      resources.postMessage({id: data.id, path: data.path, ok: true, mime: found.mime, body}, [body]);
+      replyPort.postMessage({id: data.id, path: data.path, ok: true, mime: found.mime, body}, [body]);
     };
     frame.contentWindow.postMessage('wclap-host:resources', '*', [channel.port2]);
     for (const buffer of queuedMessages.splice(0)) frame.contentWindow.postMessage(buffer, '*', [buffer]);
@@ -113,6 +163,12 @@ async function openWindow() {
 
 async function closeWindow() {
   if (!frame) return;
+  if (resources) await new Promise((resolve, reject) => {
+    const id = nextClose++;
+    const timer = setTimeout(() => { closing.delete(id); reject(new Error('The editor did not finish saving')); }, 30000);
+    closing.set(id, {resolve, reject, timer});
+    resources.postMessage({id, kind: 'prepare-close'});
+  });
   await call('guiDestroy');
   resources?.close();
   frame.remove();
