@@ -431,6 +431,9 @@ if (typeof window !== 'undefined') {
   // status line and retry as the browser's storage.
   function wclapUserFolder(user) {
     const root = '/user';
+    // Omitted files remain in the host folder. Never infer their removal from
+    // the editor's incomplete in-memory copy, including parent-folder deletes.
+    const skipped = (user.skipped || []).map(entry => entry.path);
     const mtimeOf = stat => stat.mtime instanceof Date ? stat.mtime.getTime() : Number(stat.mtime);
     // What the plug-in holds, by path below the folder: {folder, mtime}.
     const remote = new Map();
@@ -475,6 +478,8 @@ if (typeof window !== 'undefined') {
         if (!is.folder && (remote.get(path)?.folder !== false || remote.get(path).mtime !== is.mtime))
           ops.push({op: 1, path, data: FS.readFile(root + '/' + path)});
       if (!ops.length) return callback(null);
+      if (ops.some(operation => skipped.some(path => operation.path === path || operation.path.startsWith(path + '/') || path.startsWith(operation.path + '/'))))
+        return callback(new Error('This change would replace or remove a user file that was not loaded. The original remains saved; inspect User files and reopen the editor to retry.'));
       globalThis.SurgeWclapPage.userFiles.send(ops).then(() => {
         remote.clear();
         for (const [path, is] of now) remote.set(path, is);

@@ -2,7 +2,9 @@
 (() => {
   globalThis.SurgeUserFiles = {
     attach(module) {
+      const skipped = module['surgeWclapUser']?.skipped || [];
       const open=document.createElement('button');open.id='user-files';open.textContent='User files';
+      if (skipped.length) { open.textContent += ' · ' + skipped.length + ' not loaded'; open.title='Some user files could not be loaded into this editor. They remain saved; open this report for paths and sizes.'; }
       open.style.cssText='position:fixed;right:120px;bottom:8px;z-index:1000';document.body.append(open);
       open.onclick=()=>{
         const FS=module.FS,root='/user';let directory=root;
@@ -10,6 +12,13 @@
         dialog.style.cssText='width:min(700px,85vw);max-height:75vh;background:#202328;color:white;border:1px solid #888';
         const heading=document.createElement('h2');heading.textContent='User files';
         const hint=document.createElement('p');hint.textContent='Download saved patches and other user files. Files remain in browser storage.';
+        const omitted=document.createElement('details');
+        if (skipped.length) {
+          const summary=document.createElement('summary');summary.textContent=skipped.length+' user files not loaded; originals remain saved';
+          const paths=document.createElement('ul');
+          for (const entry of skipped) { const item=document.createElement('li');item.textContent=entry.path+' · '+Number(entry.size || 0).toLocaleString()+' bytes · '+entry.reason;paths.append(item); }
+          omitted.append(summary,paths);
+        }
         const close=document.createElement('button');close.textContent='Close user files';
         const up=document.createElement('button');up.textContent='Parent folder';
         const refresh=document.createElement('button');refresh.textContent='Refresh files';
@@ -82,7 +91,7 @@
         up.onclick=()=>{directory=directory.slice(0,directory.lastIndexOf('/'))||root;render();};
         refresh.onclick=render;close.onclick=()=>dialog.close();
         dialog.addEventListener('close',()=>{dialog.remove();open.focus();});
-        dialog.append(heading,hint,close,up,refresh,exportFolder,location,list,status,error);document.body.append(dialog);dialog.showModal();render();
+        dialog.append(heading,hint,...(skipped.length?[omitted]:[]),close,up,refresh,exportFolder,location,list,status,error);document.body.append(dialog);dialog.showModal();render();
       };
     }
   };
