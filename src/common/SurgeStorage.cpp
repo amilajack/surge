@@ -909,7 +909,14 @@ void SurgeStorage::initializePatchDb(bool force)
         }
         else
         {
+#if SURGE_WEB
+            // The web editors give each factory file its library's stamp, not
+            // the time it was unpacked into memory: any different time, earlier
+            // or later, is a different library and must be indexed again.
+            if (awid[p.path.u8string()].second != p.lastModTime)
+#else
             if (awid[p.path.u8string()].second < p.lastModTime)
+#endif
             {
                 addThese.push_back(p);
             }

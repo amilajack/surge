@@ -103,6 +103,12 @@ export class FactoryLibrary {
     const bytes = await this.download(index);
     const stream = new Blob([bytes]).stream().pipeThrough(new DecompressionStream('gzip'));
     const patches = await new Response(stream).json();
+    // The factory library is immutable per patch index. Stamp every file it
+    // writes with a time derived from that index, so an editor reopened on the
+    // same library finds its patch database current instead of re-indexing all
+    // of it (SurgeStorage compares these stamps for equality on the web).
+    const stamp = (1_000_000_000 + parseInt(index.sha256.slice(0, 7), 16) % 1_000_000_000) * 1000;
+    const stampFile = file => FS.utime(file, stamp, stamp);
     for (const [path, xml] of Object.entries(patches)) {
       const skin = path.startsWith('skins/') && path.endsWith('.surge-skin/skin.xml');
       const preset = /^(fx_presets|modulator_presets)\/.*\.(srgfx|modpreset)$/.test(path);
@@ -112,6 +118,7 @@ export class FactoryLibrary {
       if (path.endsWith('.wtscript') || skin || preset) {
         FS.mkdirTree(destination.slice(0, destination.lastIndexOf('/')));
         FS.writeFile(destination, xml);
+        stampFile(destination);
         continue;
       }
       const metadata = '/factory/.metadata/' + path + '.xml';
@@ -122,6 +129,8 @@ export class FactoryLibrary {
       // must finish install() before the engine is allowed to consume the queue.
       if (!FS.analyzePath(destination).exists) FS.writeFile(destination, new Uint8Array());
       FS.writeFile(metadata, xml);
+      stampFile(destination);
+      stampFile(metadata);
     }
   }
   async install(path, FS) {
