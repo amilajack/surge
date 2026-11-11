@@ -670,7 +670,16 @@ CREATE TABLE IF NOT EXISTS Favorites (
     size_t activeJobs{0};
     void loadQueueFunction()
     {
+#if defined(__EMSCRIPTEN__)
+        // In the web and WCLAP editors every commit is a durable save of the
+        // whole database through the host (OPFS, or the plug-in host's user
+        // folder), and SQLite waits for each journal and database sync. Index a
+        // factory library in one transaction per queued batch instead of one per
+        // ten patches: about 65 commits and 200 host saves become a handful.
+        static constexpr auto transChunkSize = 4096;
+#else
         static constexpr auto transChunkSize = 10; // How many FXP to load in a single txn
+#endif
         int lock_retries{0};
         while (keepRunning)
         {
